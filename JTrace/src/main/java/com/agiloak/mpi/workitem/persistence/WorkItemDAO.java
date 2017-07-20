@@ -10,7 +10,7 @@ import java.sql.Timestamp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.agiloak.jtrace.SimpleConnectionManager;
+import com.agiloak.mpi.SimpleConnectionManager;
 import com.agiloak.mpi.workitem.WorkItem;
 
 public class WorkItemDAO {
