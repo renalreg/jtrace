@@ -12,7 +12,7 @@ import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.agiloak.mpi.index.persistence.SimpleConnectionManager;
+import com.agiloak.jtrace.SimpleConnectionManager;
 import com.agiloak.mpi.normalization.NormalizationManager;
 import com.agiloak.mpi.trace.TraceRequest;
 import com.agiloak.mpi.trace.TraceResponse;
