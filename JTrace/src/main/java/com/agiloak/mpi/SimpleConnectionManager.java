@@ -1,4 +1,4 @@
-package com.agiloak.mpi.index.persistence;
+package com.agiloak.mpi;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -19,7 +19,7 @@ public class SimpleConnectionManager {
 	// TODO - Externalise
 	private static String DB_USER = "postgres";
 	private static String DB_PASSWORD = "postgres";
-	private static String DB_SERVER = "w2k3-02:5432";
+	private static String DB_SERVER = "W2K16-FHIRALARM:5432";
 	private static String DB_NAME = "JTRACE";
 
 	private static Connection dbConn;

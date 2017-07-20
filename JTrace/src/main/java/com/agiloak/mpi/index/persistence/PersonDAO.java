@@ -9,6 +9,7 @@ import java.sql.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.agiloak.mpi.SimpleConnectionManager;
 import com.agiloak.mpi.index.AlternativeReference;
 import com.agiloak.mpi.index.Person;
 
