@@ -1,4 +1,4 @@
-package com.agiloak.jtrace;
+package com.agiloak.mpi;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
