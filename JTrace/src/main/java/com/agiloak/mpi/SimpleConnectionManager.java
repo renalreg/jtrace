@@ -29,7 +29,7 @@ public class SimpleConnectionManager {
 	 *  
 	 *  NOTE: FOR POC ONLY - WILL NEED PROPER CONNECTION MANAGEMENT & POS PERSISTENCE FRAMEWORK FOR LIVE
 	 *  
-	 * @return  Connection  A Connection to the MomTech Database
+	 * @return  Connection  A Connection to the Database
 	 */
 	public static Connection getDBConnection() {
 		logger.info("GetConnection");
