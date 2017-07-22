@@ -13,7 +13,7 @@ public class TraceRequest {
 
 	private String localId; 
 	private String localIdType; 
-	private String localIdOriginator;
+	private String originator;
 	
 	private String givenName; 
 	private String otherGivenNames; 
@@ -39,7 +39,7 @@ public class TraceRequest {
 		this.traceId = uuid.toString();
 		this.localId=person.getLocalId();
 		this.localIdType=person.getLocalIdType();
-		this.localIdOriginator=person.getLocalIdOriginator();
+		this.originator=person.getOriginator();
 		this.givenName=person.getGivenName();
 		this.otherGivenNames=person.getOtherGivenNames();
 		this.surname=person.getSurname();
@@ -79,11 +79,11 @@ public class TraceRequest {
 	public void setLocalIdType(String localIdType) {
 		this.localIdType = localIdType;
 	}
-	public String getLocalIdOriginator() {
-		return localIdOriginator;
+	public String getOriginator() {
+		return originator;
 	}
-	public void setLocalIdOriginator(String localIdOriginator) {
-		this.localIdOriginator = localIdOriginator;
+	public void setOriginator(String originator) {
+		this.originator = originator;
 	}
 	public String getGivenName() {
 		return givenName;

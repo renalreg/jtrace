@@ -32,7 +32,7 @@ public class TraceManagerSingleTest {
 		
 		request.setLocalId("999999");
 		request.setLocalIdType("TST");
-		request.setLocalIdOriginator("JUNIT");
+		request.setOriginator("JUNIT");
 		
 		request.setGivenName("Nicholas");
 		request.setOtherGivenNames("Ioan");
@@ -58,7 +58,7 @@ public class TraceManagerSingleTest {
 		
 		request.setLocalId("100002");
 		request.setLocalIdType("TST");
-		request.setLocalIdOriginator("JUNIT");
+		request.setOriginator("JUNIT");
 		
 		request.setGivenName("Nicholas");
 		request.setOtherGivenNames("Ioan");

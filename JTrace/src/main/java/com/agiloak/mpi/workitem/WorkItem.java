@@ -8,21 +8,45 @@ public class WorkItem {
 	public final static int STATUS_WIP = 2;
 	public final static int STATUS_CLOSED = 3;
 
-	public WorkItem(String desc) {
-		this.status = STATUS_OPEN;
+	public final static int TYPE_DELINK_DUE_TO_CHANGED_DEMOG = 1;
+	public final static int TYPE_NOLINK_DEMOG_NOT_VERIFIED = 2;
+	public final static int TYPE_DEMOGS_MATCH_OTHER_NATIONAL_ID = 3;
+	public final static int TYPE_DEMOGS_NEAR_MATCH = 4;
+
+	public WorkItem(int type, int personId, String desc) {
+		this.type = type;
+		this.personId = personId;
 		this.description = desc;
-		this.creationTime = new Date();
+
+		this.status = STATUS_OPEN;
+		this.lastUpdated = new Date();
 	}
 	
-	private Date creationTime;
+	private Date lastUpdated;
 	private String description;
 	private int status;
+	private int personId;
+	private int type;
 	
-	public Date getCreationTime() {
-		return creationTime;
+	public int getPersonId() {
+		return personId;
 	}
-	public WorkItem setCreationTime(Date creationTime) {
-		this.creationTime = creationTime;
+	public WorkItem setPersonId(int personId) {
+		this.personId = personId;
+		return this;
+	}
+	public int getType() {
+		return type;
+	}
+	public WorkItem setType(int type) {
+		this.type = type;
+		return this;
+	}
+	public Date getCreationTime() {
+		return lastUpdated;
+	}
+	public WorkItem setLastUpdated(Date lastUpdated) {
+		this.lastUpdated = lastUpdated;
 		return this;
 	}
 	public String getDescription() {

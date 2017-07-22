@@ -14,27 +14,27 @@ public class WorkItemTest {
 	@Test
 	public void testCreate() throws MpiException {
 		WorkItemManager wim = new WorkItemManager();
-		wim.create("test");
+		wim.create(WorkItem.TYPE_DELINK_DUE_TO_CHANGED_DEMOG, 1, "test");
 		assert(true);
 	}
 
 	@Test
-	public void testCreateNull() throws MpiException {
+	public void testCreateNullDesc() throws MpiException {
 
 		WorkItemManager wim = new WorkItemManager();
 		exception.expect(MpiException.class);
 
-		wim.create(null);
+		wim.create(WorkItem.TYPE_DEMOGS_NEAR_MATCH,1,null);
 
 	}
 
 	@Test
-	public void testCreateEmpty() throws MpiException {
+	public void testCreateEmptyDesc() throws MpiException {
 
 		WorkItemManager wim = new WorkItemManager();
 		exception.expect(MpiException.class);
 
-		wim.create("");
+		wim.create(WorkItem.TYPE_DEMOGS_MATCH_OTHER_NATIONAL_ID,1,"");
 
 	}
 }
