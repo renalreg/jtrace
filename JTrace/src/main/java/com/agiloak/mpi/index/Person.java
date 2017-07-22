@@ -1,39 +1,29 @@
 package com.agiloak.mpi.index;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 public class Person {
 
-	private long masterId;
+	private int id;
 	private String localId;
 	private String localIdType;
-	private String localIdOriginator;
+	private String originator;
 
-	//TODO - make this a list
-	private String secondaryId;
-	private String secondaryIdType;
-	private String secondaryIdOriginator;
+	private String nationalId;
+	private String nationalIdType;
 
 	private Date dateOfBirth; 
 	private String gender; 
 	private Date dateOfDeath; 
 
-	// Only fields required for search and display held in this class [POC]
 	private String givenName; 
 	private String otherGivenNames; 
 	private String surname; 
 	private String prevSurname;
 	private String title;
-	private List<Name> names;
 
-	// Only fields required for search required separately [POC]
 	private String postcode; 
 	private String street;
-	private List<Address> addresses;
-
-	private List<ContactDetail> contactDetails;
 
 	// Standardised fields
 	private String stdSurname;
@@ -42,223 +32,187 @@ public class Person {
 	private String stdPostcode;
 	
 	public Person(){
-		this.names = new ArrayList<Name>();
-		this.addresses = new ArrayList<Address>();
-		this.contactDetails = new ArrayList<ContactDetail>();
-	}
-	
-
-	public long getMasterId() {
-		return masterId;
 	}
 
-	public void setMasterId(long masterId) {
-		this.masterId = masterId;
+	public int getId() {
+		return id;
+	}
+
+	public Person setId(int id) {
+		this.id = id;
+		return this;
 	}
 
 	public String getLocalId() {
 		return localId;
 	}
 
-	public void setLocalId(String localId) {
+	public Person setLocalId(String localId) {
 		this.localId = localId;
+		return this;
 	}
 
 	public String getLocalIdType() {
 		return localIdType;
 	}
 
-	public void setLocalIdType(String localIdType) {
+	public Person setLocalIdType(String localIdType) {
 		this.localIdType = localIdType;
+		return this;
 	}
 	
-	public String getLocalIdOriginator() {
-		return localIdOriginator;
+	public String getOriginator() {
+		return originator;
 	}
 
 
-	public void setLocalIdOriginator(String localIdOriginator) {
-		this.localIdOriginator = localIdOriginator;
+	public Person setOriginator(String originator) {
+		this.originator = originator;
+		return this;
 	}
 
 	public String getGender() {
 		return gender;
 	}
 
-	public void setGender(String gender) {
+	public Person setGender(String gender) {
 		this.gender = gender;
+		return this;
 	}
 
 	public String getGivenName() {
 		return givenName;
 	}
 
-	public void setGivenName(String givenName) {
+	public Person setGivenName(String givenName) {
 		this.givenName = givenName;
+		return this;
 	}
 
 	public String getOtherGivenNames() {
 		return otherGivenNames;
 	}
 
-	public void setOtherGivenNames(String otherGivenNames) {
+	public Person setOtherGivenNames(String otherGivenNames) {
 		this.otherGivenNames = otherGivenNames;
+		return this;
 	}
 
 	public String getSurname() {
 		return surname;
 	}
 
-	public void setSurname(String surname) {
+	public Person setSurname(String surname) {
 		this.surname = surname;
+		return this;
 	}
 
 	public String getPrevSurname() {
 		return prevSurname;
 	}
 
-	public void setPrevSurname(String prevSurname) {
+	public Person setPrevSurname(String prevSurname) {
 		this.prevSurname = prevSurname;
+		return this;
 	}
 
 	public String getTitle() {
 		return title;
 	}
 
-	public void setTitle(String title) {
+	public Person setTitle(String title) {
 		this.title = title;
+		return this;
 	}
 
 	public String getPostcode() {
 		return postcode;
 	}
 
-	public void setPostcode(String postcode) {
+	public Person setPostcode(String postcode) {
 		this.postcode = postcode;
+		return this;
 	}
 
 	public String getStreet() {
 		return street;
 	}
 
-	public void setStreet(String street) {
+	public Person setStreet(String street) {
 		this.street = street;
+		return this;
 	}
 	
-	public List<Name> getNames() {
-		return names;
-	}
-
-	public void addName(Name name) {
-		this.names.add(name);
-	}
-
-
-	public List<Address> getAddresses() {
-		return addresses;
-	}
-
-	public void addAddress(Address address) {
-		this.addresses.add(address);
-	}
-
-	public List<ContactDetail> getContactDetails() {
-		return contactDetails;
-	}
-
-	public void addContactDetail(ContactDetail contactDetail) {
-		this.contactDetails.add(contactDetail);
-	}
-
 	public String getStdSurname() {
 		return stdSurname;
 	}
 
-
-	public void setStdSurname(String stdSurname) {
+	public Person setStdSurname(String stdSurname) {
 		this.stdSurname = stdSurname;
+		return this;
 	}
-
 
 	public String getStdGivenName() {
 		return stdGivenName;
 	}
 
-
-	public void setStdGivenName(String stdGivenName) {
+	public Person setStdGivenName(String stdGivenName) {
 		this.stdGivenName = stdGivenName;
+		return this;
 	}
-
 
 	public String getStdPrevSurname() {
 		return stdPrevSurname;
 	}
 
-
-	public void setStdPrevSurname(String stdPrevSurname) {
+	public Person setStdPrevSurname(String stdPrevSurname) {
 		this.stdPrevSurname = stdPrevSurname;
+		return this;
 	}
-
 
 	public String getStdPostcode() {
 		return stdPostcode;
 	}
 
-
-	public void setStdPostcode(String stdPostcode) {
+	public Person setStdPostcode(String stdPostcode) {
 		this.stdPostcode = stdPostcode;
+		return this;
 	}
 
-
-	public String getSecondaryId() {
-		return secondaryId;
+	public String getNationalId() {
+		return nationalId;
 	}
 
-
-	public void setSecondaryId(String secondaryId) {
-		this.secondaryId = secondaryId;
+	public Person setNationalId(String nationalId) {
+		this.nationalId = nationalId;
+		return this;
 	}
 
-
-	public String getSecondaryIdType() {
-		return secondaryIdType;
+	public String getNationalIdType() {
+		return nationalIdType;
 	}
 
-
-	public void setSecondaryIdType(String secondaryIdType) {
-		this.secondaryIdType = secondaryIdType;
+	public Person setNationalIdType(String nationalIdType) {
+		this.nationalIdType = nationalIdType;
+		return this;
 	}
-
-	public String getSecondaryIdOriginator() {
-		return secondaryIdOriginator;
-	}
-
-
-	public void setSecondaryIdOriginator(String secondaryIdOriginator) {
-		this.secondaryIdOriginator = secondaryIdOriginator;
-	}
-
 
 	public Date getDateOfBirth() {
 		return dateOfBirth;
 	}
 
-
-	public void setDateOfBirth(Date dateOfBirth) {
+	public Person setDateOfBirth(Date dateOfBirth) {
 		this.dateOfBirth = dateOfBirth;
+		return this;
 	}
-
 
 	public Date getDateOfDeath() {
 		return dateOfDeath;
 	}
 
-
-	public void setDateOfDeath(Date dateOfDeath) {
+	public Person setDateOfDeath(Date dateOfDeath) {
 		this.dateOfDeath = dateOfDeath;
+		return this;
 	}
 
-
-
-	
 }

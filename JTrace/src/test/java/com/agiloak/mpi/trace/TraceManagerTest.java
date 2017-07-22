@@ -37,7 +37,7 @@ public class TraceManagerTest {
 		
 		request.setLocalId("1000002");
 		request.setLocalIdType("TST");
-		request.setLocalIdOriginator("JUNIT");
+		request.setOriginator("JUNIT");
 		
 		request.setGivenName("Brittany");
 		request.setSurname("Newman");
@@ -62,7 +62,7 @@ public class TraceManagerTest {
 		
 		request.setLocalId("1000002");
 		request.setLocalIdType("TST");
-		request.setLocalIdOriginator("JUNIT");
+		request.setOriginator("JUNIT");
 		
 		request.setGivenName("Nick");
 		request.setSurname("JONES");
@@ -92,7 +92,7 @@ public class TraceManagerTest {
 		
 		request.setLocalId("1000002");
 		request.setLocalIdType("TST");
-		request.setLocalIdOriginator("JUNIT");
+		request.setOriginator("JUNIT");
 		
 		request.setGivenName("Nick");
 		request.setSurname("JONES");
@@ -123,7 +123,7 @@ public class TraceManagerTest {
 		
 		request.setLocalId("1000002");
 		request.setLocalIdType("TST");
-		request.setLocalIdOriginator("JUNIT");
+		request.setOriginator("JUNIT");
 		
 		request.setGivenName("JONES");
 		request.setSurname("Nick");
@@ -148,7 +148,7 @@ public class TraceManagerTest {
 		
 		request.setLocalId("1000002");
 		request.setLocalIdType("TST");
-		request.setLocalIdOriginator("JUNIT");
+		request.setOriginator("JUNIT");
 		
 		request.setGivenName("JONES");
 		request.setSurname("Nick");
@@ -174,7 +174,7 @@ public class TraceManagerTest {
 		
 		request.setLocalId("1000002");
 		request.setLocalIdType("TST");
-		request.setLocalIdOriginator("JUNIT");
+		request.setOriginator("JUNIT");
 
 		request.setDateOfBirthStart(getDate("1962-08-31"));
 		

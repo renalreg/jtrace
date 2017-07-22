@@ -2,18 +2,18 @@ package com.agiloak.mpi.index;
 
 public class AlternativeReference {
 
-	private long arid;
-	public long getArid() {
+	private int arid;
+	public int getArid() {
 		return arid;
 	}
-	public void setArid(long arid) {
+	public void setArid(int arid) {
 		this.arid = arid;
 	}
 	private String id;
 	private String type;
 	private String originator;
 	private String supercededBy;
-	private long masterId;
+	private int personId;
 	
 	public String getId() {
 		return id;
@@ -39,10 +39,10 @@ public class AlternativeReference {
 	public void setSupercededBy(String supercededBy) {
 		this.supercededBy = supercededBy;
 	}
-	public long getMasterId() {
-		return masterId;
+	public int getPersonId() {
+		return personId;
 	}
-	public void setMasterId(long masterId) {
-		this.masterId = masterId;
+	public void setPersonId(int personId) {
+		this.personId = personId;
 	}
 }

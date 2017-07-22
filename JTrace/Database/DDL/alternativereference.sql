@@ -1,11 +1,11 @@
 -- Table: jtrace.alternativereference
 
--- DROP TABLE jtrace.alternativereference;
+DROP TABLE IF EXISTS jtrace.alternativereference;
 
 CREATE TABLE jtrace.alternativereference
 (
   arid serial NOT NULL,
-  masterid integer NOT NULL,
+  personid integer NOT NULL,
   altid character(10) NOT NULL,
   altidtype character varying(50) NOT NULL,
   originator character varying(50) NOT NULL,

@@ -3,6 +3,7 @@ package com.agiloak.mpi.index;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.agiloak.mpi.MpiException;
 import com.agiloak.mpi.index.persistence.PersonDAO;
 import com.agiloak.mpi.normalization.NormalizationManager;
 
@@ -15,10 +16,10 @@ public class UKRDCIndexManager {
 	 *  
 	 * @param person
 	 */
-	public void createOrUpdate(Person person) {
+	public void createOrUpdate(Person person) throws MpiException {
 		
 		// Does person exist?
-		Person storedPerson = PersonDAO.findPerson(person.getLocalIdType(), person.getLocalId(), person.getLocalIdOriginator());
+		Person storedPerson = PersonDAO.findByLocalId(person.getLocalIdType(), person.getLocalId(), person.getOriginator());
 		if (storedPerson != null) {
 			logger.info("RECORD EXISTS");
 			return;
@@ -35,12 +36,8 @@ public class UKRDCIndexManager {
 		person.setStdPostcode(NormalizationManager.getStandardPostcode(person.getPostcode()));
 		
 		// Store the record
-		PersonDAO.insert(person);
+		PersonDAO.create(person);
 		
 	}
 		
-	public Person read(String localidtype, String localid, String originator){
-		Person person = PersonDAO.findPerson(localidtype, localid, originator);
-		return person;
-	}
 }

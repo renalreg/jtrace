@@ -1,6 +1,6 @@
 -- Table: jtrace.traceresponse
 
--- DROP TABLE jtrace.traceresponse;
+DROP TABLE IF EXISTS jtrace.traceresponse;
 
 CREATE TABLE jtrace.traceresponse
 (

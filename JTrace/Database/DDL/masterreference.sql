@@ -1,6 +1,6 @@
 -- Table: jtrace.masterreference
 
--- DROP TABLE jtrace.masterreference;
+DROP TABLE IF EXISTS jtrace.masterreference;
 
 CREATE TABLE jtrace.masterreference
 (

@@ -351,7 +351,7 @@ public class TraceDAO {
 		// traceid is set by at database sequence
 		
 		String insertSQL = "Insert into jtrace.tracerequest "+
-				"(traceid, tracetype, nameswap, localid, localidtype, localidoriginator, "+
+				"(traceid, tracetype, nameswap, localid, localidtype, originator, "+
 	            "givenname, othergivennames, surname, gender, postcode, dateofbirthstart, dateofbirthend,"+ 
 	            "street, longname, longaddress)"+
 				" values (?,?,?,?,?,?,"+
@@ -371,7 +371,7 @@ public class TraceDAO {
 			preparedStatement.setString(3, request.getNameSwap());
 			preparedStatement.setString(4, request.getLocalId());
 			preparedStatement.setString(5, request.getLocalIdType());
-			preparedStatement.setString(6, request.getLocalIdOriginator());
+			preparedStatement.setString(6, request.getOriginator());
 
 			preparedStatement.setString(7, request.getGivenName());
 			preparedStatement.setString(8, request.getOtherGivenNames());

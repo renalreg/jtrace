@@ -1,6 +1,6 @@
 -- Table: jtrace.tracerequest
 
--- DROP TABLE jtrace.tracerequest;
+DROP TABLE IF EXISTS jtrace.tracerequest;
 
 CREATE TABLE jtrace.tracerequest
 (
@@ -9,7 +9,7 @@ CREATE TABLE jtrace.tracerequest
   nameswap character(1) NOT NULL,
   localid character(10) NOT NULL,
   localidtype character(5) NOT NULL,
-  localidoriginator character varying(50) NOT NULL,
+  originator character varying(50) NOT NULL,
   givenname character varying(50),
   othergivennames character varying(50),
   surname character varying(50),

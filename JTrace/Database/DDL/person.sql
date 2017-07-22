@@ -1,13 +1,15 @@
 -- Table: jtrace.person
 
--- DROP TABLE jtrace.person;
+DROP TABLE IF EXISTS jtrace.person;
 
 CREATE TABLE jtrace.person
 (
-  masterid SERIAL UNIQUE,
+  id SERIAL UNIQUE,
+  originator character varying(50) NOT NULL,
   localid character(10) NOT NULL,
   localidtype character(5) NOT NULL,
-  localidoriginator character varying(50) NOT NULL,
+  nationalid character(10),
+  nationalidtype character(5),
   dateofbirth date NOT NULL,
   gender character(2) NOT NULL,
   dateofdeath date,

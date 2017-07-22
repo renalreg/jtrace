@@ -7,6 +7,7 @@ public class MasterRecord {
 	private Date lastUpdated;
 	private int id;
 	private String nationalId;
+	private String nationalIdType;
 	private Date dateOfBirth; 
 	private String gender; 
 	private String givenName; 
@@ -14,6 +15,15 @@ public class MasterRecord {
 
 	public MasterRecord() {
 		this.lastUpdated = new Date();
+	}
+	public MasterRecord(Person person) {
+		this.lastUpdated = new Date();
+		this.dateOfBirth = person.getDateOfBirth();
+		this.gender=person.getGender();
+		this.givenName=person.getGivenName();
+		this.surname=person.getSurname();
+		this.nationalId=person.getNationalId();
+		this.nationalIdType=person.getNationalIdType();
 	}
 	
 	public Date getLastUpdated() {
@@ -39,6 +49,15 @@ public class MasterRecord {
 
 	public MasterRecord setNationalId(String nationalId) {
 		this.nationalId = nationalId;
+		return this;
+	}
+
+	public String getNationalIdType() {
+		return nationalIdType;
+	}
+
+	public MasterRecord setNationalIdType(String nationalIdType) {
+		this.nationalIdType = nationalIdType;
 		return this;
 	}
 

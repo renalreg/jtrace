@@ -10,6 +10,7 @@ import java.sql.Timestamp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.agiloak.mpi.MpiException;
 import com.agiloak.mpi.SimpleConnectionManager;
 import com.agiloak.mpi.workitem.WorkItem;
 
@@ -17,12 +18,12 @@ public class WorkItemDAO {
 	
 	private final static Logger logger = LoggerFactory.getLogger(WorkItemDAO.class);
 
-	public static void insert(WorkItem workItem) {
+	public static void create(WorkItem workItem) throws MpiException {
 
 		
 		String insertSQL = "Insert into jtrace.workitem "+
-				"(description, status, creationdate)"+ 
-				" values (?,?,?)";
+				"(personid, type, description, status, creationdate)"+ 
+				" values (?,?,?,?,?)";
 		
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;
@@ -32,9 +33,11 @@ public class WorkItemDAO {
 			conn = SimpleConnectionManager.getDBConnection();
 			
 			preparedStatement = conn.prepareStatement(insertSQL, Statement.RETURN_GENERATED_KEYS);
-			preparedStatement.setString(1, workItem.getDescription());
-			preparedStatement.setInt(2, workItem.getStatus());
-			preparedStatement.setTimestamp(3,new Timestamp(workItem.getCreationTime().getTime()));
+			preparedStatement.setInt(1, workItem.getPersonId());
+			preparedStatement.setInt(2, workItem.getType());
+			preparedStatement.setString(3, workItem.getDescription());
+			preparedStatement.setInt(4, workItem.getStatus());
+			preparedStatement.setTimestamp(5,new Timestamp(workItem.getCreationTime().getTime()));
 
 			int affectedRows = preparedStatement.executeUpdate();
 			logger.debug("Affected Rows:"+affectedRows);
@@ -51,6 +54,7 @@ public class WorkItemDAO {
 		 
 		} catch (SQLException e) {
 			logger.error("Failure inserting WorkItem:",e);
+			throw new MpiException("LinkRecord insert failed");
 
 		} finally {
 
@@ -59,6 +63,7 @@ public class WorkItemDAO {
 					preparedStatement.close();
 				} catch (SQLException e) {
 					logger.error("Failure closing Prepared Statement:",e);
+					throw new MpiException("LinkRecord insert failed");
 				}
 			}
 
