@@ -23,13 +23,33 @@ public class PersonTest {
 
 	@Before
 	public void setup()  throws MpiException {
+		
+		int masterId = 0;
+		MasterRecord mr = MasterRecordDAO.findByNationalId("NHS0000001","NHS");
+		if (mr !=null) {
+			masterId = mr.getId();
+			MasterRecordDAO.deleteByNationalId("NHS0000001","NHS");
+		}
+		
 		Person person = PersonDAO.findByLocalId("MR", "TST1000001", "TST");
 		if (person != null) {
 			PersonDAO.delete(person);
+			if (mr !=null) {
+				LinkRecord lr = LinkRecordDAO.find(masterId, person.getId());
+				if (lr != null) {
+					LinkRecordDAO.delete(lr);
+				}
+			}
 		}
 		Person person2 = PersonDAO.findByLocalId("MR", "TST1000002", "TST");
 		if (person2 != null) {
 			PersonDAO.delete(person2);
+			if (mr !=null) {
+				LinkRecord lr = LinkRecordDAO.find(masterId, person2.getId());
+				if (lr != null) {
+					LinkRecordDAO.delete(lr);
+				}
+			}
 		}
 	}
 
@@ -37,7 +57,7 @@ public class PersonTest {
 	public void testFindByMasterId() throws MpiException {
 		
 		Person person = new Person();
-		person.setOriginator("TST").setLocalId("TST1000003").setLocalIdType("MR");
+		person.setOriginator("TST").setLocalId("TST1000001").setLocalIdType("MR");
 		person.setNationalIdType("NHS").setNationalId("NHS0000001");
 		person.setTitle("MR").setGivenName("Nick").setOtherGivenNames("Ioan").setSurname("JONES");
 		person.setDateOfBirth(getDate("1962-08-31"));
@@ -47,7 +67,7 @@ public class PersonTest {
 		PersonDAO.create(person);
 		assert(true);
 		Person person2 = new Person();
-		person2.setOriginator("TST").setLocalId("TST1000004").setLocalIdType("MR");
+		person2.setOriginator("TST").setLocalId("TST1000002").setLocalIdType("MR");
 		person2.setNationalIdType("NHS").setNationalId("NHS0000001");
 		person2.setTitle("MR").setGivenName("Nick").setOtherGivenNames("Ioan").setSurname("JONES");
 		person2.setDateOfBirth(getDate("1962-08-31"));

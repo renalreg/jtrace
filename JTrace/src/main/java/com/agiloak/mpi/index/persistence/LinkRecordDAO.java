@@ -81,7 +81,7 @@ public class LinkRecordDAO {
 	
 	public static void delete(LinkRecord link) throws MpiException {
 		
-		String deleteSQL = "delete jtrace.linkrecord where masterid = ? and personid = ?";
+		String deleteSQL = "delete from jtrace.linkrecord where masterid = ? and personid = ?";
 		
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;
@@ -114,5 +114,68 @@ public class LinkRecordDAO {
 
 		}
 
-	}		
+	}	
+	
+	/**
+	 * Only required for testing at the moment
+	 * @param masterId
+	 * @param personId
+	 * @return
+	 * @throws MpiException
+	 */
+	public static LinkRecord find(int masterId, int personId) throws MpiException {
+
+		String findSQL = "select * from jtrace.linkrecord where masterid = ? and personid = ? ";
+		
+		PreparedStatement preparedStatement = null;
+		Connection conn = null;
+		ResultSet rs = null;
+		
+		LinkRecord link = null;
+		
+		try {
+
+			conn = SimpleConnectionManager.getDBConnection();
+			
+			preparedStatement = conn.prepareStatement(findSQL);
+			preparedStatement.setInt(1, masterId);
+			preparedStatement.setInt(2, personId);
+
+			rs = preparedStatement.executeQuery();
+			
+			if (rs.next()){
+				int mid = rs.getInt("masterid");
+				int pid = rs.getInt("personid");
+				link = new LinkRecord(mid,pid);
+				link.setId(rs.getInt("id"));
+			}
+			
+		} catch (SQLException e) {
+			logger.error("Failure querying LinkRecord.",e);
+			throw new MpiException("Failure querying LinkRecord. "+e.getMessage());
+		} finally {
+
+			if (rs != null) {
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing resultset.",e);
+					throw new MpiException("Failure closing resultset. "+e.getMessage());
+				}
+			}
+			
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing prepared statement.",e);
+					throw new MpiException("Failure closing prepared statement. "+e.getMessage());
+				}
+			}
+
+		}
+		
+		return link;
+
+	}
 }
