@@ -26,6 +26,14 @@ public class MasterRecord {
 		this.nationalIdType=person.getNationalIdType();
 	}
 	
+	public void updateDemographics(Person person) {
+		this.lastUpdated = new Date();
+		this.dateOfBirth = person.getDateOfBirth();
+		this.gender=person.getGender();
+		this.givenName=person.getGivenName();
+		this.surname=person.getSurname();
+	}
+
 	public Date getLastUpdated() {
 		return lastUpdated;
 	}
@@ -48,7 +56,11 @@ public class MasterRecord {
 	}
 
 	public MasterRecord setNationalId(String nationalId) {
-		this.nationalId = nationalId;
+		if (nationalId!=null) {
+			this.nationalId = nationalId.trim();
+		} else {
+			this.nationalId = null;
+		}
 		return this;
 	}
 
@@ -57,7 +69,11 @@ public class MasterRecord {
 	}
 
 	public MasterRecord setNationalIdType(String nationalIdType) {
-		this.nationalIdType = nationalIdType;
+		if (nationalIdType!=null) {
+			this.nationalIdType = nationalIdType.trim();
+		} else {
+			this.nationalIdType = null;
+		}
 		return this;
 	}
 

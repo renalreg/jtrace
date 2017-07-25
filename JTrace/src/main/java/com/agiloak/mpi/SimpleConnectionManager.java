@@ -32,11 +32,11 @@ public class SimpleConnectionManager {
 	 * @return  Connection  A Connection to the Database
 	 */
 	public static Connection getDBConnection() {
-		logger.info("GetConnection");
+		//logger.info("GetConnection");
 		if (dbConn!=null) {
 			try {
 				if (dbConn.isValid(1)){
-					logger.debug("Connection valid - reuse");
+					//logger.debug("Connection valid - reuse");
 					return dbConn;
 				}
 			} catch (SQLException e) {

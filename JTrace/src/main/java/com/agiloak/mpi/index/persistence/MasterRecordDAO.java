@@ -53,7 +53,7 @@ public class MasterRecordDAO {
 				master.setLastUpdated(rs.getTimestamp("lastupdated"));
 			}
 			
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			logger.error("Failure querying MasterRecord.",e);
 			throw new MpiException("Failure querying MasterRecord. "+e.getMessage());
 		} finally {
@@ -100,8 +100,8 @@ public class MasterRecordDAO {
 			conn = SimpleConnectionManager.getDBConnection();
 			
 			preparedStatement = conn.prepareStatement(findSQL);
-			preparedStatement.setString(1, person.getGivenName().trim());
-			preparedStatement.setString(2, person.getSurname().trim());
+			preparedStatement.setString(1, person.getGivenName());
+			preparedStatement.setString(2, person.getSurname());
 			preparedStatement.setDate(3, new java.sql.Date(person.getDateOfBirth().getTime()) );
 
 			rs = preparedStatement.executeQuery();
@@ -120,7 +120,7 @@ public class MasterRecordDAO {
 				masterRecords.add(master);
 			}
 			
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			logger.error("Failure querying MasterRecord.",e);
 			throw new MpiException("Failure querying MasterRecord. "+e.getMessage());
 		} finally {
@@ -185,7 +185,7 @@ public class MasterRecordDAO {
 	            }
 		    }
 		 
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			logger.error("Failure inserting MasterRecord:",e);
 			throw new MpiException("MasterRecord insert failed. "+e.getMessage());
 
@@ -227,7 +227,7 @@ public class MasterRecordDAO {
 			int affectedRows = preparedStatement.executeUpdate();
 			logger.debug("Affected Rows:"+affectedRows);
 					 
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			logger.error("Failure update MasterRecord:",e);
 			throw new MpiException("MasterRecord update failed. "+e.getMessage());
 
@@ -264,7 +264,7 @@ public class MasterRecordDAO {
 			int affectedRows = preparedStatement.executeUpdate();
 			logger.debug("Affected Rows:"+affectedRows);
 			
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			logger.error("Failure deleting MasterRecord:",e);
 			throw new MpiException("MasterRecord delete failed");
 		} finally {

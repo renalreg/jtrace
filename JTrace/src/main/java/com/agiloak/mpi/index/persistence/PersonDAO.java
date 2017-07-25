@@ -70,7 +70,7 @@ public class PersonDAO {
 				person.setStdPostcode(rs.getString("stdpostcode"));
 }
 			
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			logger.error("Failure querying Person.",e);
 			throw new MpiException("Person read failed. "+e.getMessage());
 		} finally {
@@ -150,7 +150,7 @@ public class PersonDAO {
 				
 			}
 			
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			logger.error("Failure querying Person.",e);
 			throw new MpiException("Person read failed. "+e.getMessage());
 		} finally {
@@ -189,7 +189,7 @@ public class PersonDAO {
 				"(dateofbirth, gender, dateofdeath,"+ 
 	            "givenname, surname, othergivennames, title, postcode, street, "+ 
 	            "stdsurname, stdgivenname, stdpostcode,"+
-	            "prevsurname, stdprevsurname, nationalId, nationalIdType,"+
+	            "prevsurname, stdprevsurname, nationalid, nationalidtype,"+
 	            "localid, localidtype, originator)"+
 				" values (?,?,?,"+
 	            " ?,?,?,?,?,?,"+
@@ -224,7 +224,7 @@ public class PersonDAO {
 	            }
 		    }
 		 
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			logger.error("Failure creating Person:",e);
 			throw new MpiException("Person create failed. "+e.getMessage());
 		} finally {
@@ -269,7 +269,7 @@ public class PersonDAO {
 			int affectedRows = preparedStatement.executeUpdate();
 			logger.debug("Affected Rows:"+affectedRows);
 			
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			logger.error("Failure updating Person.",e);
 			throw new MpiException("Person update failed. "+e.getMessage());
 		} finally {
@@ -304,7 +304,7 @@ public class PersonDAO {
 			int affectedRows = preparedStatement.executeUpdate();
 			logger.debug("Affected Rows:"+affectedRows);
 			
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			logger.error("Failure deleting Person:",e);
 			throw new MpiException("Person delete failed. "+e.getMessage());
 		} finally {
@@ -322,11 +322,20 @@ public class PersonDAO {
 
 	}
 			
-	private static void populatePersonStatement(PreparedStatement preparedStatement, Person person) throws SQLException{
+	private static void populatePersonStatement(PreparedStatement preparedStatement, Person person) throws SQLException {
 
-		preparedStatement.setTimestamp(1, new Timestamp(person.getDateOfBirth().getTime()));
+		if (person.getDateOfBirth() != null ) {
+			preparedStatement.setTimestamp(1, new Timestamp(person.getDateOfBirth().getTime()));
+			preparedStatement.setNull(3,java.sql.Types.TIMESTAMP);
+		}
+		
 		preparedStatement.setString(2, person.getGender());
-		preparedStatement.setTimestamp(3, new Timestamp(person.getDateOfDeath().getTime()));
+		
+		if (person.getDateOfDeath() != null ) {
+			preparedStatement.setTimestamp(3, new Timestamp(person.getDateOfDeath().getTime()));
+		} else {
+			preparedStatement.setNull(3,java.sql.Types.TIMESTAMP);
+		}
 	
 		preparedStatement.setString(4, person.getGivenName());
 		preparedStatement.setString(5, person.getSurname());

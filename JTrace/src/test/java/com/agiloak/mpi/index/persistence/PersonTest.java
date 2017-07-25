@@ -2,6 +2,7 @@ package com.agiloak.mpi.index.persistence;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 import org.junit.Before;
@@ -105,15 +106,24 @@ public class PersonTest {
 		Person person2 = PersonDAO.findByLocalId("MR", "TST1000001", "TST");
 		assert(person2 != null);
 		
-		// TODO: extend to check all fields
-		assert(person2.getOriginator().equals("TST"));
-		assert(person2.getLocalId().equals("TST1000001"));
-		assert(person2.getLocalIdType().trim().equals("MR"));
-		assert(person2.getGivenName().equals("Nick"));
-		assert(person2.getPostcode().trim().equals("CH1 6LB"));
+		assert(safeCompare(person2.getOriginator(),person.getOriginator()));
+		assert(safeCompare(person2.getLocalId(),person.getLocalId()));
+		assert(safeCompare(person2.getLocalIdType(),person.getLocalIdType()));
+		assert(safeCompare(person2.getNationalId(),person.getNationalId()));
+		assert(safeCompare(person2.getNationalIdType(),person.getNationalIdType()));
 		
-		assert(person2.getDateOfBirth().compareTo(person.getDateOfBirth())==0);
-		assert(person2.getDateOfDeath().compareTo(person.getDateOfDeath())==0);
+		assert(safeCompare(person2.getGivenName(),person.getGivenName()));
+		assert(safeCompare(person2.getOtherGivenNames(),person.getOtherGivenNames()));
+		assert(safeCompare(person2.getSurname(),person.getSurname()));
+		assert(safeCompare(person2.getTitle(),person.getTitle()));
+		assert(safeCompare(person2.getPrevSurname(),person.getPrevSurname()));
+
+		assert(safeCompare(person2.getPostcode(),person.getPostcode()));
+		assert(safeCompare(person2.getStreet(),person.getStreet()));
+
+		assert(safeCompare(person2.getGender(),person.getGender()));
+		assert(safeCompare(person2.getDateOfBirth(),person.getDateOfBirth()));
+		assert(safeCompare(person2.getDateOfDeath(),person.getDateOfDeath()));
 		
 	}
 
@@ -159,6 +169,27 @@ public class PersonTest {
 		person.setPostcode("CH1 6LB").setStreet("Oakdene, Townfield Lane");
 		PersonDAO.create(person);
 		assert(true);
+
+		Person person2 = PersonDAO.findByLocalId("MR", "TST1000001", "TST");
+		assert(safeCompare(person2.getOriginator(),person.getOriginator()));
+		assert(safeCompare(person2.getLocalId(),person.getLocalId()));
+		assert(safeCompare(person2.getLocalIdType(),person.getLocalIdType()));
+		assert(safeCompare(person2.getNationalId(),person.getNationalId()));
+		assert(safeCompare(person2.getNationalIdType(),person.getNationalIdType()));
+		
+		assert(safeCompare(person2.getGivenName(),person.getGivenName()));
+		assert(safeCompare(person2.getOtherGivenNames(),person.getOtherGivenNames()));
+		assert(safeCompare(person2.getSurname(),person.getSurname()));
+		assert(safeCompare(person2.getTitle(),person.getTitle()));
+		assert(safeCompare(person2.getPrevSurname(),person.getPrevSurname()));
+
+		assert(safeCompare(person2.getPostcode(),person.getPostcode()));
+		assert(safeCompare(person2.getStreet(),person.getStreet()));
+
+		assert(safeCompare(person2.getGender(),person.getGender()));
+		assert(safeCompare(person2.getDateOfBirth(),person.getDateOfBirth()));
+		assert(safeCompare(person2.getDateOfDeath(),person.getDateOfDeath()));
+
 	}
 
 	@Test
@@ -174,6 +205,27 @@ public class PersonTest {
 		
 		PersonDAO.create(person);
 		assert(true);
+		
+		Person person2 = PersonDAO.findByLocalId("MR", "TST1000001", "TST");
+		assert(safeCompare(person2.getOriginator(),person.getOriginator()));
+		assert(safeCompare(person2.getLocalId(),person.getLocalId()));
+		assert(safeCompare(person2.getLocalIdType(),person.getLocalIdType()));
+		assert(safeCompare(person2.getNationalId(),person.getNationalId()));
+		assert(safeCompare(person2.getNationalIdType(),person.getNationalIdType()));
+		
+		assert(safeCompare(person2.getGivenName(),person.getGivenName()));
+		assert(safeCompare(person2.getOtherGivenNames(),person.getOtherGivenNames()));
+		assert(safeCompare(person2.getSurname(),person.getSurname()));
+		assert(safeCompare(person2.getTitle(),person.getTitle()));
+		assert(safeCompare(person2.getPrevSurname(),person.getPrevSurname()));
+
+		assert(safeCompare(person2.getPostcode(),person.getPostcode()));
+		assert(safeCompare(person2.getStreet(),person.getStreet()));
+
+		assert(safeCompare(person2.getGender(),person.getGender()));
+		assert(safeCompare(person2.getDateOfBirth(),person.getDateOfBirth()));
+		assert(safeCompare(person2.getDateOfDeath(),person.getDateOfDeath()));
+
 	}
 
 	@Test
@@ -194,14 +246,53 @@ public class PersonTest {
 		PersonDAO.update(person);
 		assert(person != null);
 		
-		// TODO : Extend to all fields
-
 		Person person2 = PersonDAO.findByLocalId("MR", "TST1000001", "TST");
-		assert(person2.getGivenName().equals("Nicholas"));
-		assert(person2.getPostcode().trim().equals("IA52245"));
+		assert(safeCompare(person2.getOriginator(),person.getOriginator()));
+		assert(safeCompare(person2.getLocalId(),person.getLocalId()));
+		assert(safeCompare(person2.getLocalIdType(),person.getLocalIdType()));
+		assert(safeCompare(person2.getNationalId(),person.getNationalId()));
+		assert(safeCompare(person2.getNationalIdType(),person.getNationalIdType()));
+		
+		assert(safeCompare(person2.getGivenName(),person.getGivenName()));
+		assert(safeCompare(person2.getOtherGivenNames(),person.getOtherGivenNames()));
+		assert(safeCompare(person2.getSurname(),person.getSurname()));
+		assert(safeCompare(person2.getTitle(),person.getTitle()));
+		assert(safeCompare(person2.getPrevSurname(),person.getPrevSurname()));
+
+		assert(safeCompare(person2.getPostcode(),person.getPostcode()));
+		assert(safeCompare(person2.getStreet(),person.getStreet()));
+
+		assert(safeCompare(person2.getGender(),person.getGender()));
+		assert(safeCompare(person2.getDateOfBirth(),person.getDateOfBirth()));
+		assert(safeCompare(person2.getDateOfDeath(),person.getDateOfDeath()));
 
 	}
-	
+	private boolean safeCompare(String a, String b) {
+		boolean match = true;
+		boolean nomatch = false;
+		
+		if (a==null) {
+			if (b==null) { 
+				return match;
+			} else {
+				return nomatch;
+			}
+		}
+		return (a.compareTo(b)==0);
+	}
+	private boolean safeCompare(Date a, Date b) {
+		boolean match = true;
+		boolean nomatch = false;
+		
+		if (a==null) {
+			if (b==null) { 
+				return match;
+			} else {
+				return nomatch;
+			}
+		}
+		return (a.compareTo(b)==0);
+	}	
 	private static java.util.Date getDate(String sDate){
 		
 		java.util.Date uDate = null;

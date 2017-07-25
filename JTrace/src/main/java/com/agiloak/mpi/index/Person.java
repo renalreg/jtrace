@@ -48,7 +48,11 @@ public class Person {
 	}
 
 	public Person setLocalId(String localId) {
-		this.localId = localId;
+		if (localId!=null) {
+			this.localId = localId.trim();
+		} else {
+			this.localId = null;
+		}
 		return this;
 	}
 
@@ -57,7 +61,11 @@ public class Person {
 	}
 
 	public Person setLocalIdType(String localIdType) {
-		this.localIdType = localIdType;
+		if (localIdType!=null) {
+			this.localIdType = localIdType.trim();
+		} else {
+			this.localIdType = null;
+		}
 		return this;
 	}
 	
@@ -67,7 +75,11 @@ public class Person {
 
 
 	public Person setOriginator(String originator) {
-		this.originator = originator;
+		if (originator!=null) {
+			this.originator = originator.trim();
+		} else {
+			this.originator = null;
+		}
 		return this;
 	}
 
@@ -76,7 +88,11 @@ public class Person {
 	}
 
 	public Person setGender(String gender) {
-		this.gender = gender;
+		if (gender!=null) {
+			this.gender = gender.trim();
+		} else {
+			this.gender = null;
+		}
 		return this;
 	}
 
@@ -130,7 +146,11 @@ public class Person {
 	}
 
 	public Person setPostcode(String postcode) {
-		this.postcode = postcode;
+		if (postcode!=null) {
+			this.postcode = postcode.trim();
+		} else {
+			this.postcode = null;
+		}
 		return this;
 	}
 
@@ -184,7 +204,11 @@ public class Person {
 	}
 
 	public Person setNationalId(String nationalId) {
-		this.nationalId = nationalId;
+		if (nationalId!=null) {
+			this.nationalId = nationalId.trim();
+		} else {
+			this.nationalId = nationalId;
+		}
 		return this;
 	}
 
@@ -193,7 +217,11 @@ public class Person {
 	}
 
 	public Person setNationalIdType(String nationalIdType) {
-		this.nationalIdType = nationalIdType;
+		if (nationalIdType!=null) {
+			this.nationalIdType = nationalIdType.trim();
+		} else {
+			this.nationalIdType = null;
+		}
 		return this;
 	}
 
@@ -213,6 +241,11 @@ public class Person {
 	public Person setDateOfDeath(Date dateOfDeath) {
 		this.dateOfDeath = dateOfDeath;
 		return this;
+	}
+	
+	public String toString() {
+		return "[LID:"+originator+"-"+localIdType+"-"+localId+"]"+
+			   "[NID:"+nationalIdType+"-"+nationalId+"]";
 	}
 
 }
