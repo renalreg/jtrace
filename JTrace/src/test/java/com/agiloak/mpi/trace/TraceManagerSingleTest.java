@@ -5,6 +5,8 @@ import java.text.SimpleDateFormat;
 
 import org.junit.Test;
 
+import com.agiloak.mpi.MpiException;
+
 public class TraceManagerSingleTest {
 
 	public static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
@@ -23,7 +25,7 @@ public class TraceManagerSingleTest {
 	}
 
 	@Test
-	public void testTrace() {
+	public void testTrace() throws MpiException {
 		TraceResponse response;
 		TraceRequest request = new TraceRequest();
 		

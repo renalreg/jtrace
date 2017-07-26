@@ -12,6 +12,9 @@ import com.agiloak.mpi.index.persistence.LinkRecordDAO;
 import com.agiloak.mpi.index.persistence.MasterRecordDAO;
 import com.agiloak.mpi.index.persistence.PersonDAO;
 import com.agiloak.mpi.normalization.NormalizationManager;
+import com.agiloak.mpi.trace.TraceManager;
+import com.agiloak.mpi.trace.TraceRequest;
+import com.agiloak.mpi.trace.TraceResponse;
 import com.agiloak.mpi.workitem.WorkItem;
 import com.agiloak.mpi.workitem.persistence.WorkItemDAO;
 
@@ -33,6 +36,7 @@ public class UKRDCIndexManager {
 		Person storedPerson = PersonDAO.findByLocalId(person.getLocalIdType(), person.getLocalId(), person.getOriginator());
 		if (storedPerson != null) {
 			logger.debug("RECORD EXISTS");
+			person.setId(storedPerson.getId());
 
 			// Standardise
 			person.setStdSurname(NormalizationManager.getStandardSurname(person.getSurname()));
@@ -172,7 +176,22 @@ public class UKRDCIndexManager {
 		
 	private void warnDemographicAlgorithmicMatch(Person person, int masterId) throws MpiException {
 
-		// TODO
+		TraceManager tm = new TraceManager();
+		TraceRequest request = new TraceRequest(person);
+		request.setTraceType("AUTO");
+		request.setNameSwap("N");
+		TraceResponse response = tm.trace(request);
+		if (response.getMatchCount() > 0) {
+			if (response.getMaxWeight() > 95) {
+				logger.debug("Algorithmic Matching demographics on MPI - WORK:"+response.getMaxWeight());
+			    WorkItem work = new WorkItem(WorkItem.TYPE_DEMOGS_NEAR_MATCH, person.getId(), "Alg match:"+response.getMaxWeight()+". traceid:"+response.getTraceId());
+			    WorkItemDAO.create(work);
+			} else {
+				logger.debug("Algorithmic Match below threshhold:"+response.getMaxWeight());
+			}
+		} else {
+			logger.debug("Algorithmic Matching found no potential matches");
+		}
 		
 	}
 		

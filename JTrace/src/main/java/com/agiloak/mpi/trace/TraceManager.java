@@ -11,6 +11,7 @@ import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.agiloak.mpi.MpiException;
 import com.agiloak.mpi.normalization.NormalizationManager;
 import com.agiloak.mpi.trace.persistence.TraceDAO;
 import com.google.gson.Gson;
@@ -60,10 +61,11 @@ public class TraceManager {
 		return jsonResponse;
 	}
 
-	public TraceResponse trace(TraceRequest request){
+	public TraceResponse trace(TraceRequest request) throws MpiException {
 		
-		// 0) Initialise response
-		TraceResponse response = new TraceResponse();
+		TraceResponse response = null ;
+		
+		response = new TraceResponse();
 		response.setTraceId(request.getTraceId());
 		String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss.SSS").format(new Date());
 		response.setTraceStartTime(timeStamp);
@@ -74,15 +76,15 @@ public class TraceManager {
 		response.setTraceEndTime(timeStamp);
 		
 		TraceDAO.saveResponse(response);
-
+			
 		return response;
 	}
 
-	public TraceResponse getTraceResponse(String traceId){
+	public TraceResponse getTraceResponse(String traceId) throws MpiException {
 		return TraceDAO.getResponse(traceId);
 	}
 	
-	private TraceResponse doTrace(TraceRequest request, TraceResponse response){
+	private TraceResponse doTrace(TraceRequest request, TraceResponse response) throws MpiException {
 		
 		// 1) Validate and store request
 		if (request==null){

@@ -4,7 +4,7 @@ import java.util.Date;
 
 public class TraceResponseLine {
 	
-	private long masterId;
+	private int personId;
 	private Double weight;
 	
 	private String givenName; 
@@ -20,11 +20,11 @@ public class TraceResponseLine {
 	private String longName;
 	private String longAddress;
 	
-	public long getMasterId() {
-		return masterId;
+	public int getPersonId() {
+		return personId;
 	}
-	public void setMasterId(long masterId) {
-		this.masterId = masterId;
+	public void setPersonId(int personId) {
+		this.personId = personId;
 	}
 	public Double getWeight() {
 		return weight;

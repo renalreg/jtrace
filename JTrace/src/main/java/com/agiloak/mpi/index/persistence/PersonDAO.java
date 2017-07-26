@@ -244,6 +244,11 @@ public class PersonDAO {
 
 	public static void update(Person person) throws MpiException {
 
+		if (person.getId()==0) {
+			logger.error("Person has no ID - cannot update.");
+			throw new MpiException("Person has no ID - cannot update.");
+		}
+		
 		String updateSQL = "Update jtrace.person SET "+
 			   "dateofbirth=?, gender=?,"+ 
 		       "dateofdeath=?, givenname=?, surname=?, othergivennames=?,"+ 

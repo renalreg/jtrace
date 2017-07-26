@@ -5,7 +5,7 @@ DROP TABLE IF EXISTS jtrace.traceresponseline;
 CREATE TABLE jtrace.traceresponseline
 (
   traceid character(36) NOT NULL,
-  masterid integer NOT NULL,
+  personid integer NOT NULL,
   weight double precision,
   givenname character varying(50),
   othergivennames character varying(50),
@@ -17,7 +17,7 @@ CREATE TABLE jtrace.traceresponseline
   street character varying(50),
   longname character varying(100),
   longaddress character varying(100),
-  CONSTRAINT traceresponseline_pkey PRIMARY KEY (traceid, masterid)
+  CONSTRAINT traceresponseline_pkey PRIMARY KEY (traceid, personid)
 )
 WITH (
   OIDS=FALSE
