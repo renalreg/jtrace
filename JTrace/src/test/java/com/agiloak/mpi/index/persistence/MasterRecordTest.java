@@ -2,7 +2,6 @@ package com.agiloak.mpi.index.persistence;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 
 import org.junit.BeforeClass;
@@ -76,7 +75,6 @@ public class MasterRecordTest {
 		
 		MasterRecord mr2 = MasterRecordDAO.findByNationalId("NHS0000005","NHS");
 		assert(mr2.getId()==(mr.getId()));
-		// TODO Rework the date only check to work
 		assert(mr2.getDateOfBirth().compareTo(mr.getDateOfBirth())==0);
 		assert(mr2.getGender().equals(mr.getGender()));
 		assert(mr2.getGivenName().equals(mr.getGivenName()));
