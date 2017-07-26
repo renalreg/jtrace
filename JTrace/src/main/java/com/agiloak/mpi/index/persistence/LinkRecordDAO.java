@@ -6,6 +6,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import com.agiloak.mpi.MpiException;
 import com.agiloak.mpi.SimpleConnectionManager;
 import com.agiloak.mpi.index.LinkRecord;
+import com.agiloak.mpi.workitem.WorkItem;
 
 /**
  * Maintains a link between the MasterRecord and the Person
@@ -116,6 +119,41 @@ public class LinkRecordDAO {
 
 	}	
 	
+	public static void deleteByPerson(int personId) throws MpiException {
+		
+		String deleteSQL = "delete from jtrace.linkrecord where personid = ?";
+		
+		PreparedStatement preparedStatement = null;
+		Connection conn = null;
+		
+		try {
+
+			conn = SimpleConnectionManager.getDBConnection();
+			
+			preparedStatement = conn.prepareStatement(deleteSQL);
+			preparedStatement.setInt(1, personId);
+
+			int affectedRows = preparedStatement.executeUpdate();
+			logger.debug("Affected Rows:"+affectedRows);
+					 
+		} catch (SQLException e) {
+			logger.error("Failure deleting LinkRecord:",e);
+			throw new MpiException("LinkRecord delete failed");
+
+		} finally {
+
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing Prepared Statement:",e);
+					throw new MpiException("LinkRecord delete failed");
+				}
+			}
+
+		}
+
+	}		
 	/**
 	 * Only required for testing at the moment
 	 * @param masterId
@@ -178,4 +216,62 @@ public class LinkRecordDAO {
 		return link;
 
 	}
+	
+	public static List<LinkRecord> findByPerson(int personId) throws MpiException {
+
+		String findSQL = "select * from jtrace.linkrecord where personid = ? ";
+		
+		PreparedStatement preparedStatement = null;
+		Connection conn = null;
+		ResultSet rs = null;
+		
+		List<LinkRecord> linkRecords = new ArrayList<LinkRecord>();
+		
+		try {
+
+			conn = SimpleConnectionManager.getDBConnection();
+			
+			preparedStatement = conn.prepareStatement(findSQL);
+			preparedStatement.setInt(1, personId);
+
+			rs = preparedStatement.executeQuery();
+			
+			while (rs.next()){
+				int pid = rs.getInt("personid");
+				int mid = rs.getInt("masterid");
+				LinkRecord link = new LinkRecord(mid,pid);
+				link.setLastUpdated(rs.getTimestamp("lastUpdated"));
+				link.setId(rs.getInt("id"));
+				
+				linkRecords.add(link);
+			}
+			
+		} catch (Exception e) {
+			logger.error("Failure querying WorkItem.",e);
+			throw new MpiException("Failure querying WorkItem. "+e.getMessage());
+		} finally {
+
+			if (rs != null) {
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing resultset.",e);
+					throw new MpiException("Failure closing resultset. "+e.getMessage());
+				}
+			}
+			
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing prepared statement.",e);
+					throw new MpiException("Failure closing prepared statement. "+e.getMessage());
+				}
+			}
+
+		}
+		
+		return linkRecords;
+
+	}		
 }
