@@ -11,6 +11,7 @@ import com.agiloak.mpi.MpiException;
 import com.agiloak.mpi.index.persistence.LinkRecordDAO;
 import com.agiloak.mpi.index.persistence.MasterRecordDAO;
 import com.agiloak.mpi.index.persistence.PersonDAO;
+import com.agiloak.mpi.trace.persistence.TraceDAO;
 import com.agiloak.mpi.workitem.persistence.WorkItemDAO;
 
 public class UKRDCIndexManagerUpdateRecordSystemTest {
@@ -250,13 +251,17 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 	    
 	}
 	
-	public static void clear(String localId, String localIdType)  throws MpiException {
+	public static void clear(String localId, String originator)  throws MpiException {
 		
-		Person person = PersonDAO.findByLocalId("MR", localId, localIdType);
+		Person person = PersonDAO.findByLocalId("MR", localId, originator);
 		if (person != null) {
 			LinkRecordDAO.deleteByPerson(person.getId());
 			WorkItemDAO.deleteByPerson(person.getId());
 			PersonDAO.delete(person);
+			String traceId = TraceDAO.getTraceId(localId, "MR", originator, "AUTO");
+			if (traceId != null) {
+				TraceDAO.clearByTraceId(traceId);
+			}
 		}
 
 	}	

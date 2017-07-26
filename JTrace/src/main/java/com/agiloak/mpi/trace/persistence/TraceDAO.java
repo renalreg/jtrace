@@ -629,4 +629,111 @@ public class TraceDAO {
 		}
 
 	}
+	
+	public static void clearByTraceId(String traceId) throws MpiException {
+
+		// traceid is set by at database sequence
+		
+		String deleteSQL1 = "delete from jtrace.tracerequest where traceid = ?";
+		String deleteSQL2 = "delete from jtrace.traceresponse where traceid = ?";
+		String deleteSQL3 = "delete from jtrace.traceresponseline where traceid = ?";
+
+		PreparedStatement preparedStatement = null;
+		Connection conn = null;
+		
+		try {
+
+			conn = SimpleConnectionManager.getDBConnection();
+			
+			preparedStatement = conn.prepareStatement(deleteSQL1);
+			preparedStatement.setString(1, traceId);
+			int affectedRows = preparedStatement.executeUpdate();
+			logger.debug("Affected TraceRequest Rows:"+affectedRows);
+			preparedStatement.close();
+					 
+			preparedStatement = conn.prepareStatement(deleteSQL2);
+			preparedStatement.setString(1, traceId);
+			affectedRows = preparedStatement.executeUpdate();
+			logger.debug("Affected TraceResponse Rows:"+affectedRows);
+			preparedStatement.close();
+					 
+			preparedStatement = conn.prepareStatement(deleteSQL3);
+			preparedStatement.setString(1, traceId);
+			affectedRows = preparedStatement.executeUpdate();
+			logger.debug("Affected TraceResponseLine Rows:"+affectedRows);
+			preparedStatement.close();
+					 
+		} catch (SQLException e) {
+			logger.error("Failure deleting trace:",e);
+			throw new MpiException("trace delete failed");
+
+		} finally {
+
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing Prepared Statement:",e);
+					throw new MpiException("trace delete failed");
+				}
+			}
+
+		}
+
+	}	
+	
+	public static String getTraceId(String localId, String localIdType, String originator, String traceType) throws MpiException {
+
+		String readSQL = "Select * from jtrace.tracerequest where tracetype = ? and localid = ? and localidtype = ? and originator = ? ";
+
+		PreparedStatement preparedStatement = null;
+		Connection conn = null;
+		ResultSet rs = null;
+		
+		String traceId = null;
+		
+		try {
+
+			conn = SimpleConnectionManager.getDBConnection();
+			
+			preparedStatement = conn.prepareStatement(readSQL);
+			preparedStatement.setString(1, traceType);
+			preparedStatement.setString(2, localId);
+			preparedStatement.setString(3, localIdType);
+			preparedStatement.setString(4, originator);
+
+			rs = preparedStatement.executeQuery();
+			
+			
+			if (rs.next()){
+				traceId = rs.getString("traceid");
+			}
+			
+		} catch (SQLException e) {
+			logger.error("Failure reading TraceRequest.",e);
+			throw new MpiException("TraceRequest read failed");
+		} finally {
+
+			if (rs != null) {
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing resultset.",e);
+					throw new MpiException("TraceRequest read failed");
+				}
+			}
+			
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing prepared statement.",e);
+					throw new MpiException("TraceRequest read failed");
+				}
+			}
+
+		}
+
+		return traceId;
+	}	
 }
