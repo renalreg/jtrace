@@ -22,12 +22,20 @@ public class WorkItem {
 		this.lastUpdated = new Date();
 	}
 	
+	private int id;
 	private Date lastUpdated;
 	private String description;
 	private int status;
 	private int personId;
 	private int type;
 	
+	public int getId() {
+		return id;
+	}
+	public WorkItem setId(int id) {
+		this.id = id;
+		return this;
+	}
 	public int getPersonId() {
 		return personId;
 	}
@@ -42,7 +50,7 @@ public class WorkItem {
 		this.type = type;
 		return this;
 	}
-	public Date getCreationTime() {
+	public Date getLastUpdated() {
 		return lastUpdated;
 	}
 	public WorkItem setLastUpdated(Date lastUpdated) {
