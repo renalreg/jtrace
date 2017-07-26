@@ -120,6 +120,7 @@ public class UKRDCIndexManager {
 				} else {
 					logger.debug("Record not verified - creating work item");
 					WorkItem work = new WorkItem(WorkItem.TYPE_NOLINK_DEMOG_NOT_VERIFIED, person.getId(), "Master Record: "+master.getId());
+					WorkItemDAO.create(work);
 				}
 				
 			} else {
