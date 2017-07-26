@@ -26,7 +26,7 @@ public class UKRDCIndexManager {
 	 */
 	public void createOrUpdate(Person person) throws MpiException {
 
-		logger.debug("Processing person record:"+person);
+		logger.debug("*********Processing person record:"+person);
 		// TODO - Add auditing
 		
 		// Does person exist?
@@ -55,6 +55,8 @@ public class UKRDCIndexManager {
 				if  (person.getNationalId()==null || person.getNationalId().length()==0) {
 					logger.debug("This record has no national id - DELINK");
 					delinkMasterRecords(storedPerson);
+					warnDemographicMatch(person, 0);
+					warnDemographicAlgorithmicMatch(person, 0);
 					return;
 				}
 				if (nationalIdMatch(storedPerson.getNationalId(), person.getNationalId(),
@@ -69,7 +71,9 @@ public class UKRDCIndexManager {
 						master.updateDemographics(person);
 						MasterRecordDAO.update(master);
 						// verify and delink all links as appropriate
-						verifyLinks(master);
+						verifyLinks(master,storedPerson);
+					} else {
+						logger.debug("No change in demographics");
 					}
 				} else {
 					// National Id has changed on this record, delete the old link and add the new link
@@ -110,7 +114,7 @@ public class UKRDCIndexManager {
 			MasterRecord master = MasterRecordDAO.findByNationalId(person.getNationalId(), person.getNationalIdType());
 			if (master != null) {
 				
-				logger.debug("Master found for this national id");
+				logger.debug("Master found for this national id. MASTERID:"+master.getId());
 				// a master record exists for this national id
 				// Verify that the details match
 				if (verifyMatch(person, master)) {
@@ -136,17 +140,8 @@ public class UKRDCIndexManager {
 				LinkRecord link = new LinkRecord(master.getId(), person.getId());
 				LinkRecordDAO.create(link);
 
-				// DQ Check 1) do these demogs exist for another National Id?
-				List <MasterRecord> otherMasters = MasterRecordDAO.findByDemographics(person);
-				for (MasterRecord otherMaster : otherMasters) {
-					if (master.getId() != otherMaster.getId()) {
-						logger.debug("Matching demographics on another Master Record - WORK");
-					    WorkItem work = new WorkItem(WorkItem.TYPE_DEMOGS_MATCH_OTHER_NATIONAL_ID, person.getId(), "Master Record: "+otherMaster.getId());
-					    WorkItemDAO.create(work);
-					}
-				}
-				
-				// DQ Check 2) run the algorithmic trace - TODO
+				warnDemographicMatch(person, master.getId());
+				warnDemographicAlgorithmicMatch(person, master.getId());
 				
 			}
 			
@@ -154,18 +149,30 @@ public class UKRDCIndexManager {
 			logger.debug("No National Id found on the incoming record");
 			// No national id on the incoming record
 			
-			// Look for a master record exactly matching demographics and create a work item. Should these 
-			List <MasterRecord> otherMasters = MasterRecordDAO.findByDemographics(person);
-			for (MasterRecord otherMaster : otherMasters) {
-				logger.debug("Matching demographics on a Master Record - WORK");
+			warnDemographicMatch(person, 0);
+			warnDemographicAlgorithmicMatch(person, 0);
+			
+		}
+		
+	}
+	
+	private void warnDemographicMatch(Person person, int masterId) throws MpiException {
+
+		// DQ Check - do these demogs exist for another National Id?
+		List <MasterRecord> otherMasters = MasterRecordDAO.findByDemographics(person);
+		for (MasterRecord otherMaster : otherMasters) {
+			if (otherMaster.getId() != masterId) {
+				logger.debug("Matching demographics on another Master Record - WORK");
 			    WorkItem work = new WorkItem(WorkItem.TYPE_DEMOGS_MATCH_OTHER_NATIONAL_ID, person.getId(), "Master Record: "+otherMaster.getId());
 			    WorkItemDAO.create(work);
 			}
-
-			// TODO: Perform an algorithmic trace for a near match
-			// Raise a work item if a better than 95% match found
-			
 		}
+		
+	}
+		
+	private void warnDemographicAlgorithmicMatch(Person person, int masterId) throws MpiException {
+
+		// TODO
 		
 	}
 		
@@ -194,6 +201,8 @@ public class UKRDCIndexManager {
 					logger.debug("No remaining link records - delete the master record");
 					// No other records linked to this master so delete it
 					MasterRecordDAO.deleteByNationalId(person.getNationalId(), person.getNationalIdType());
+				} else {
+					logger.debug("Other records linked - master record will not be deleted");
 				}
 				
 			} else {
@@ -208,24 +217,28 @@ public class UKRDCIndexManager {
 		
 	/**
 	 * Verifies all links to a master record and deletes if appropriate
-	 * Used after the demograohics on a master are updated
+	 * Used after the demographics on a master are updated
 	 * @param person
 	 */
-	private void verifyLinks(MasterRecord master) throws MpiException {
+	private void verifyLinks(MasterRecord master, Person person) throws MpiException {
 
 		logger.debug("Verifying Links:");
 		List<Person> linkedPersons = PersonDAO.findByMasterId(master.getId());
 		
-		for (Person person : linkedPersons) {
-			if (!verifyMatch(person,master)) {
-				logger.debug("Link record no longer verifies - DELINK and raise WORK");
-				LinkRecord link = new LinkRecord(master.getId(), person.getId());
-				LinkRecordDAO.delete(link);
-				
-			    WorkItem work = new WorkItem(WorkItem.TYPE_DELINK_DUE_TO_CHANGED_DEMOG, person.getId(), "Master Record: "+master.getId());
-			    WorkItemDAO.create(work);
+		for (Person linkedPerson : linkedPersons) {
+			if (linkedPerson.getId()==person.getId()) {
+				logger.debug("Skipping link to current person. PERSONID:"+linkedPerson.getId());
 			} else {
-				logger.debug("Link still valid");
+				if (!verifyMatch(linkedPerson,master)) {
+					logger.debug("Link record no longer verifies - DELINK and raise WORK. PERSONID:"+linkedPerson.getId());
+					LinkRecord link = new LinkRecord(master.getId(), linkedPerson.getId());
+					LinkRecordDAO.delete(link);
+					
+				    WorkItem work = new WorkItem(WorkItem.TYPE_DELINK_DUE_TO_CHANGED_DEMOG, linkedPerson.getId(), "Master Record: "+master.getId());
+				    WorkItemDAO.create(work);
+				} else {
+					logger.debug("Link still valid. PERSONID:"+linkedPerson.getId());
+				}
 			}
 		}
 		

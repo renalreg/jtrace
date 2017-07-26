@@ -11,39 +11,38 @@ import com.agiloak.mpi.MpiException;
 import com.agiloak.mpi.index.persistence.LinkRecordDAO;
 import com.agiloak.mpi.index.persistence.MasterRecordDAO;
 import com.agiloak.mpi.index.persistence.PersonDAO;
+import com.agiloak.mpi.workitem.persistence.WorkItemDAO;
 
 public class UKRDCIndexManagerNewRecordSystemTest {
 	
 	private Date d1 = getDate("1962-08-31");
 	private Date d2 = getDate("1962-08-30");
 	private Date d3 = getDate("1962-07-31");
-	private Date d4 = getDate("1961-08-31");
-	private Date d5 = getDate("1961-07-30");
 
 	public static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
 	
 	@BeforeClass
 	public static void setup()  throws MpiException {
-		
-		int masterId = getAndDeleteMasterId("NHS0000001","NHS");
-		clear( "PRE1000001", "PRE1", masterId);
-		clear( "NSYS100001", "NSYS1", masterId);
-		clear( "NSYS100002", "NSYS1", masterId);
-		
-		masterId = getAndDeleteMasterId("NHS2000001","NHS");
-		clear( "PRE2000001", "PRE2", masterId);
-		masterId = getAndDeleteMasterId("NHS2000002","NHS");
-		clear( "NSYS200002", "NSYS2", masterId);
-		masterId = getAndDeleteMasterId("NHS2000003","NHS");
-		clear( "NSYS200001", "NSYS2", masterId);
 
-		masterId = getAndDeleteMasterId("NHS3000001","NHS");
-		clear( "PRE3000001", "PRE3", masterId);
-		clear( "NSYS300001", "NSYS3", 0);
-		clear( "NSYS300002", "NSYS3", 0);
+		MasterRecordDAO.deleteByNationalId("NHS0000001","NHS");
+		clear("PRE1000001", "PRE1");
+		clear("NSYS100001", "NSYS1");
+		clear("NSYS100002", "NSYS1");
 		
-		//TODO Clear work items
+		MasterRecordDAO.deleteByNationalId("NHS2000001","NHS");
+		clear( "PRE2000001", "PRE2");
 
+		MasterRecordDAO.deleteByNationalId("NHS2000002","NHS");
+		clear( "NSYS200002", "NSYS2");
+
+		MasterRecordDAO.deleteByNationalId("NHS2000003","NHS");
+		clear( "NSYS200001", "NSYS2");
+
+		MasterRecordDAO.deleteByNationalId("NHS3000001","NHS");
+		clear( "PRE3000001", "PRE3");
+		clear( "NSYS300001", "NSYS3");
+		clear( "NSYS300002", "NSYS3");
+		
 	}
 
 
@@ -137,28 +136,14 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 	    return uDate;
 	    
 	}
-	public static int getAndDeleteMasterId(String id, String type) throws MpiException {
-		int masterId = 0;
-		MasterRecord mr = MasterRecordDAO.findByNationalId(id,type);
-		if (mr !=null) {
-			masterId = mr.getId();
-			MasterRecordDAO.deleteByNationalId(id, type);
-		}
-		return masterId;
-		
-	}
 	
-	public static void clear(String localId, String localIdType, int masterId)  throws MpiException {
+	public static void clear(String localId, String localIdType)  throws MpiException {
 		
 		Person person = PersonDAO.findByLocalId("MR", localId, localIdType);
 		if (person != null) {
+			LinkRecordDAO.deleteByPerson(person.getId());
+			WorkItemDAO.deleteByPerson(person.getId());
 			PersonDAO.delete(person);
-			if (masterId > 0) {
-				LinkRecord lr = LinkRecordDAO.find(masterId, person.getId());
-				if (lr != null) {
-					LinkRecordDAO.delete(lr);
-				}
-			}
 		}
 
 	}	

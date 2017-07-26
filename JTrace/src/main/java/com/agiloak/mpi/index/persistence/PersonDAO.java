@@ -68,7 +68,7 @@ public class PersonDAO {
 				person.setStdGivenName(rs.getString("stdgivenname"));
 				person.setStdPrevSurname(rs.getString("stdprevsurname"));
 				person.setStdPostcode(rs.getString("stdpostcode"));
-}
+			}
 			
 		} catch (Exception e) {
 			logger.error("Failure querying Person.",e);
