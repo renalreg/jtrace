@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import com.agiloak.mpi.MpiException;
 import com.agiloak.mpi.SimpleConnectionManager;
 import com.agiloak.mpi.index.LinkRecord;
-import com.agiloak.mpi.workitem.WorkItem;
 
 /**
  * Maintains a link between the MasterRecord and the Person
@@ -233,6 +232,63 @@ public class LinkRecordDAO {
 			
 			preparedStatement = conn.prepareStatement(findSQL);
 			preparedStatement.setInt(1, personId);
+
+			rs = preparedStatement.executeQuery();
+			
+			while (rs.next()){
+				int pid = rs.getInt("personid");
+				int mid = rs.getInt("masterid");
+				LinkRecord link = new LinkRecord(mid,pid);
+				link.setLastUpdated(rs.getTimestamp("lastUpdated"));
+				link.setId(rs.getInt("id"));
+				
+				linkRecords.add(link);
+			}
+			
+		} catch (Exception e) {
+			logger.error("Failure querying WorkItem.",e);
+			throw new MpiException("Failure querying WorkItem. "+e.getMessage());
+		} finally {
+
+			if (rs != null) {
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing resultset.",e);
+					throw new MpiException("Failure closing resultset. "+e.getMessage());
+				}
+			}
+			
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing prepared statement.",e);
+					throw new MpiException("Failure closing prepared statement. "+e.getMessage());
+				}
+			}
+
+		}
+		
+		return linkRecords;
+
+	}		
+	public static List<LinkRecord> findByMaster(int masterId) throws MpiException {
+
+		String findSQL = "select * from jtrace.linkrecord where masterid = ? ";
+		
+		PreparedStatement preparedStatement = null;
+		Connection conn = null;
+		ResultSet rs = null;
+		
+		List<LinkRecord> linkRecords = new ArrayList<LinkRecord>();
+		
+		try {
+
+			conn = SimpleConnectionManager.getDBConnection();
+			
+			preparedStatement = conn.prepareStatement(findSQL);
+			preparedStatement.setInt(1, masterId);
 
 			rs = preparedStatement.executeQuery();
 			

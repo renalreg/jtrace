@@ -35,7 +35,7 @@ public class UKRDCIndexManager {
 		// Does person exist?
 		Person storedPerson = PersonDAO.findByLocalId(person.getLocalIdType(), person.getLocalId(), person.getOriginator());
 		if (storedPerson != null) {
-			logger.debug("RECORD EXISTS");
+			logger.debug("RECORD EXISTS:"+storedPerson.getId());
 			person.setId(storedPerson.getId());
 
 			// Standardise
@@ -76,6 +76,8 @@ public class UKRDCIndexManager {
 						MasterRecordDAO.update(master);
 						// verify and delink all links as appropriate
 						verifyLinks(master,storedPerson);
+						warnDemographicMatch(person, master.getId());
+						warnDemographicAlgorithmicMatch(person, master.getId());
 					} else {
 						logger.debug("No change in demographics");
 					}
@@ -130,6 +132,9 @@ public class UKRDCIndexManager {
 					WorkItem work = new WorkItem(WorkItem.TYPE_NOLINK_DEMOG_NOT_VERIFIED, person.getId(), "Master Record: "+master.getId());
 					WorkItemDAO.create(work);
 				}
+
+				warnDemographicMatch(person, master.getId());
+				warnDemographicAlgorithmicMatch(person, master.getId());
 				
 			} else {
 				
