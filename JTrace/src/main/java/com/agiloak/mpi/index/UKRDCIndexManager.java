@@ -12,9 +12,6 @@ import com.agiloak.mpi.index.persistence.LinkRecordDAO;
 import com.agiloak.mpi.index.persistence.MasterRecordDAO;
 import com.agiloak.mpi.index.persistence.PersonDAO;
 import com.agiloak.mpi.normalization.NormalizationManager;
-import com.agiloak.mpi.trace.TraceManager;
-import com.agiloak.mpi.trace.TraceRequest;
-import com.agiloak.mpi.trace.TraceResponse;
 import com.agiloak.mpi.workitem.WorkItem;
 import com.agiloak.mpi.workitem.persistence.WorkItemDAO;
 
@@ -30,9 +27,7 @@ public class UKRDCIndexManager {
 	public void createOrUpdate(Person person) throws MpiException {
 
 		logger.debug("*********Processing person record:"+person);
-		// TODO - Add auditing
-		
-		// Does person exist?
+
 		Person storedPerson = PersonDAO.findByLocalId(person.getLocalIdType(), person.getLocalId(), person.getOriginator());
 		if (storedPerson != null) {
 			logger.debug("RECORD EXISTS:"+storedPerson.getId());
@@ -42,52 +37,41 @@ public class UKRDCIndexManager {
 			person.setStdSurname(NormalizationManager.getStandardSurname(person.getSurname()));
 			person.setStdGivenName(NormalizationManager.getStandardGivenName(person.getGivenName()));
 			person.setStdPostcode(NormalizationManager.getStandardPostcode(person.getPostcode()));
+			if (!person.getSurname().equals(storedPerson.getSurname())) {
+				person.setPrevSurname(storedPerson.getSurname());
+				person.setStdPrevSurname(NormalizationManager.getStandardSurname(person.getPrevSurname()));
+			}
 
 			// Store the record
 			PersonDAO.update(person);
 			
-			// If nationalId was previously blank, check the current national id and link as appropriate
-			if (storedPerson.getNationalId()==null) {
-				logger.debug("Previous record had no national id");
-				updateMasterRecords(person);
-			} else {
-				logger.debug("Previous record had national id");
-				
-				// national id was previously present on this record
-
-				// If not present on the current record then de-link
-				if  (person.getNationalId()==null || person.getNationalId().length()==0) {
-					logger.debug("This record has no national id - DELINK");
-					delinkMasterRecords(storedPerson);
-					warnDemographicMatch(person, 0);
-					warnDemographicAlgorithmicMatch(person, 0);
-					return;
-				}
-				if (nationalIdMatch(storedPerson.getNationalId(), person.getNationalId(),
-									storedPerson.getNationalIdType(), person.getNationalIdType())) {
-					// If no change in the national id, check for changed demographics
-					logger.debug("No change in national id");
-					if (demographicsChanged(person, storedPerson)) {
-						logger.debug("Demographics have changed - update master and verify links");
-						// get the master record
-						MasterRecord master = MasterRecordDAO.findByNationalId(person.getNationalId(), person.getNationalIdType());
-						// update it
-						master.updateDemographics(person);
-						MasterRecordDAO.update(master);
-						// verify and delink all links as appropriate
-						verifyLinks(master,storedPerson);
-						warnDemographicMatch(person, master.getId());
-						warnDemographicAlgorithmicMatch(person, master.getId());
-					} else {
-						logger.debug("No change in demographics");
+			// Remove any national identifiers which are no longer in the person record (expensive!)
+			List<LinkRecord> links = LinkRecordDAO.findByPerson(storedPerson.getId());
+			for (LinkRecord link : links) {
+				MasterRecord master = MasterRecordDAO.get(link.getMasterId());
+				boolean found = false;
+				for (NationalIdentity natId : person.getNationalIds()) {
+					if (natId.getType().equals(master.getNationalIdType())) {
+						// This is the same type - update it
+						// If the ID has changed. delete the old link and if not other links exist to the master then delete the master
+						// If the ID is the same then compare details
+						// If details have not changed - update the effective date (if current record is later)
+						// If details have changed - update if newer. reverify and mark master as suspect if not verified.
+						// Mark the record as processed 
 					}
-				} else {
-					// National Id has changed on this record, delete the old link and add the new link
-					logger.debug("National Id has changed - DELINK and RELINK");
-					delinkMasterRecords(storedPerson);
-					updateMasterRecords(person);
+				}			
+				if (!found) {
+					// delete the old link. If no other links to this master then delete the master
 				}
 			}
+			// Update any national identifiers not marked as processed - these will be new links so process as for a new record
+			for (NationalIdentity natId : person.getNationalIds()) {
+				createNationalIdLinks(person, natId.getId(), natId.getType());
+				
+			}			
+			
+			// Update the UKRDC link
+			
 			
 		} else {
 			logger.debug("NEW RECORD");
@@ -99,7 +83,13 @@ public class UKRDCIndexManager {
 			// Store the record
 			PersonDAO.create(person);
 			
-			updateMasterRecords(person);
+			// Link to other national identifiers as required
+			for (NationalIdentity natId : person.getNationalIds()) {
+				createNationalIdLinks(person, natId.getId(), natId.getType());
+			}			
+			
+			// Link to the UKRDC number
+			createUKRDCLink(person);
 			
 		}
 		
@@ -110,18 +100,18 @@ public class UKRDCIndexManager {
 	 * 
 	 * @param person
 	 */
-	private void updateMasterRecords(Person person) throws MpiException {
+	private void createUKRDCLink(Person person) throws MpiException {
 
-		logger.debug("UpdateMasterRecords");
+		logger.debug("createUKRDCLink");
 		
-		if ((person.getNationalIdType() != null) && (person.getNationalId() != null)) {
-			logger.debug("National Id found on the incoming record");
+		if ((person.getPrimaryIdType() != null) && (person.getPrimaryId() != null)) {
+			logger.debug("Primary Id found on the incoming record");
 			
-			MasterRecord master = MasterRecordDAO.findByNationalId(person.getNationalId(), person.getNationalIdType());
+			MasterRecord master = MasterRecordDAO.findByNationalId(person.getPrimaryId(), person.getPrimaryIdType());
 			if (master != null) {
 				
-				logger.debug("Master found for this national id. MASTERID:"+master.getId());
-				// a master record exists for this national id
+				logger.debug("Master found for this Primary id. MASTERID:"+master.getId());
+				// a master record exists for this Primary id
 				// Verify that the details match
 				if (verifyMatch(person, master)) {
 					logger.debug("Record verified - creating link");
@@ -133,14 +123,11 @@ public class UKRDCIndexManager {
 					WorkItemDAO.create(work);
 				}
 
-				warnDemographicMatch(person, master.getId());
-				warnDemographicAlgorithmicMatch(person, master.getId());
-				
 			} else {
 				
-				logger.debug("No Master found for this national id - creating it");
+				logger.debug("No Master found for this Primary id - creating it");
 				
-				// a master record does not exist for this national id so create one
+				// a master record does not exist for this Primary id so create one
 				master = new MasterRecord(person);
 				MasterRecordDAO.create(master);
 
@@ -149,94 +136,152 @@ public class UKRDCIndexManager {
 				LinkRecord link = new LinkRecord(master.getId(), person.getId());
 				LinkRecordDAO.create(link);
 
-				warnDemographicMatch(person, master.getId());
-				warnDemographicAlgorithmicMatch(person, master.getId());
-				
 			}
 			
 		} else {
-			logger.debug("No National Id found on the incoming record");
-			// No national id on the incoming record
+			logger.debug("No Primary Id found on the incoming record");
+			// No Primary id on the incoming record - try to match using another national id to corroborate
 			
-			warnDemographicMatch(person, 0);
-			warnDemographicAlgorithmicMatch(person, 0);
-			
+			// For each national id on this record
+			MasterRecord master;
+			for (NationalIdentity natId : person.getNationalIds()) {
+				
+				// get the master for this national id (e.g. NHS Number)
+				master = MasterRecordDAO.findByNationalId(natId.getId(), natId.getType());
+				if (master!=null) {
+					
+					// Get any records linked to this national id
+					List<LinkRecord> links = LinkRecordDAO.findByMaster(master.getId());
+					
+					for (LinkRecord link : links ){
+						// Ignore the link to the record being processed
+						if (link.getPersonId()!= person.getId()) {
+							
+							// Find the UKRDC Master linked to this person (if any)
+							LinkRecord ukrdcLink = LinkRecordDAO.findByPersonAndType(link.getPersonId(), "UKRDC");
+							
+							if (ukrdcLink != null) {
+								
+								// If found - we have identified a Person linked to a UKRDC Number AND by National Id to the incoming Person
+								//            Does the incoming Person verify against the UKRDC Master
+								MasterRecord ukrdcMaster = MasterRecordDAO.get(ukrdcLink.getMasterId());
+								boolean verified = verifyMatch(person, ukrdcMaster);
+								if (verified) {
+									logger.debug("Linking to the found and verified master record");
+									LinkRecord newLink = new LinkRecord(ukrdcMaster.getId(), person.getId());
+									LinkRecordDAO.create(newLink);
+								} else {
+									logger.debug("Link to potential UKRDC Match not verified");
+									WorkItem work = new WorkItem(WorkItem.TYPE_NOLINK_DEMOG_NOT_VERIFIED, person.getId(), "Link to potential UKRDC Match not verified: "+master.getId());
+									WorkItemDAO.create(work);
+								}
+							}
+						}
+					}
+				}
+			}			
 		}
 		
 	}
 	
-	private void warnDemographicMatch(Person person, int masterId) throws MpiException {
-
-		// DQ Check - do these demogs exist for another National Id?
-		List <MasterRecord> otherMasters = MasterRecordDAO.findByDemographics(person);
-		for (MasterRecord otherMaster : otherMasters) {
-			if (otherMaster.getId() != masterId) {
-				logger.debug("Matching demographics on another Master Record - WORK");
-			    WorkItem work = new WorkItem(WorkItem.TYPE_DEMOGS_MATCH_OTHER_NATIONAL_ID, person.getId(), "Master Record: "+otherMaster.getId());
-			    WorkItemDAO.create(work);
-			}
-		}
-		
-	}
-		
-	private void warnDemographicAlgorithmicMatch(Person person, int masterId) throws MpiException {
-
-		TraceManager tm = new TraceManager();
-		TraceRequest request = new TraceRequest(person);
-		request.setTraceType("AUTO");
-		request.setNameSwap("N");
-		TraceResponse response = tm.trace(request);
-		if (response.getMatchCount() > 0) {
-			if (response.getMaxWeight() > 95) {
-				logger.debug("Algorithmic Matching demographics on MPI - WORK:"+response.getMaxWeight());
-			    WorkItem work = new WorkItem(WorkItem.TYPE_DEMOGS_NEAR_MATCH, person.getId(), "Alg match:"+response.getMaxWeight()+". traceid:"+response.getTraceId());
-			    WorkItemDAO.create(work);
-			} else {
-				logger.debug("Algorithmic Match below threshhold:"+response.getMaxWeight());
-			}
-		} else {
-			logger.debug("Algorithmic Matching found no potential matches");
-		}
-		
-	}
-		
 	/**
-	 * Checks for and removes any links to a master record. 
-	 * If, once the link is removed, a master record has no more links then delete the master record
+	 * Checks for and links to a master record. If none found then one may be created
 	 * 
 	 * @param person
 	 */
-	private void delinkMasterRecords(Person person) throws MpiException {
+	private void createNationalIdLinks(Person person, String id, String type) throws MpiException {
+
+		logger.debug("createNationalIdLinks");
 		
-		if ((person.getNationalIdType() != null) && (person.getNationalId() != null)) {
-			
-			MasterRecord master = MasterRecordDAO.findByNationalId(person.getNationalId(), person.getNationalIdType());
-			if (master != null) {
-				
-				logger.debug("Deleting the link record");
-				// a master record exists for this national id
-				// Delete the link from this person record
-				LinkRecord link = new LinkRecord(master.getId(), person.getId());
-				LinkRecordDAO.delete(link);
-				
-				// Any other links?
-				List<Person> linkedPersons = PersonDAO.findByMasterId(master.getId());
-				if (linkedPersons.size()==0) {
-					logger.debug("No remaining link records - delete the master record");
-					// No other records linked to this master so delete it
-					MasterRecordDAO.deleteByNationalId(person.getNationalId(), person.getNationalIdType());
-				} else {
-					logger.debug("Other records linked - master record will not be deleted");
-				}
-				
-			} else {
-				
-				// this should not happen - WARN
-				logger.warn("deleteMasterRecords unable to find a master for:"+person.getNationalIdType()+":"+person.getNationalId());
-			}
-			
+		if ((type == null) || (id == null)) {
+			logger.error("No Id set");
+			throw new MpiException("NationalId not set");
+
 		}
+			
+		MasterRecord master = MasterRecordDAO.findByNationalId(id, type);
+		if (master != null) {
+			
+			logger.debug("Master found for this national id. MASTERID:"+master.getId());
+			// a master record exists for this national id
+			// Verify that the details match
+			if (verifyMatch(person, master)) {
+				logger.debug("Record verified - creating link");
+				LinkRecord link = new LinkRecord(master.getId(), person.getId());
+				LinkRecordDAO.create(link);
+			} else {
+				logger.debug("Record not verified - creating work item");
+				WorkItem work = new WorkItem(WorkItem.TYPE_NOLINK_DEMOG_NOT_VERIFIED, person.getId(), "Master Record: "+master.getId());
+				WorkItemDAO.create(work);
+			}
+
+		} else {
+			
+			logger.debug("No Master found for this national id - creating it");
+			
+			// a master record does not exist for this national id so create one
+			// demographics from the person
+			master = new MasterRecord(person);
+			// use the national id being processed
+			master.setNationalId(id).setNationalIdType(type);
+			MasterRecordDAO.create(master);
+
+			logger.debug("Linking to the new master record");
+			// and link this record to it
+			LinkRecord link = new LinkRecord(master.getId(), person.getId());
+			LinkRecordDAO.create(link);
+
+		}
+	}
+
+	/**
+	 * Checks for and links to a National ID master record. If none found then one may be created
+	 * 
+	 * @param person
+	 */
+	private void updateNationalIdLinks(Person person, String id, String type) throws MpiException {
+
+		logger.debug("updateNationalIdLinks");
 		
+		if ((type == null) || (id == null)) {
+			logger.error("No Id set");
+			throw new MpiException("NationalId not set");
+		}
+			
+		MasterRecord master = MasterRecordDAO.findByNationalId(id, type);
+		if (master != null) {
+			
+			logger.debug("Master found for this national id. MASTERID:"+master.getId());
+			// a master record exists for this national id
+			// Verify that the details match
+			if (verifyMatch(person, master)) {
+				logger.debug("Record verified - creating link");
+				LinkRecord link = new LinkRecord(master.getId(), person.getId());
+				LinkRecordDAO.create(link);
+			} else {
+				logger.debug("Record not verified - creating work item");
+				WorkItem work = new WorkItem(WorkItem.TYPE_NOLINK_DEMOG_NOT_VERIFIED, person.getId(), "Master Record: "+master.getId());
+				WorkItemDAO.create(work);
+			}
+
+		} else {
+			
+			logger.debug("No Master found for this national id - creating it");
+			
+			// a master record does not exist for this national id so create one
+			// demographics from the person
+			master = new MasterRecord(person);
+			// use the national id being processed
+			master.setNationalId(id).setNationalIdType(type);
+			MasterRecordDAO.create(master);
+
+			logger.debug("Linking to the new master record");
+			// and link this record to it
+			LinkRecord link = new LinkRecord(master.getId(), person.getId());
+			LinkRecordDAO.create(link);
+
+		}
+				
 	}
 		
 	/**
@@ -278,23 +323,7 @@ public class UKRDCIndexManager {
 		
 		boolean nomatch = false;
 		boolean match = true;
-		
-		if (person.getNationalIdType() == null || person.getNationalIdType().length()==0) {
-			return nomatch;
-		}
-		if (!person.getNationalIdType().equals(master.getNationalIdType())) {
-			return nomatch;
-		}
-		
-		if (person.getNationalId() == null || person.getNationalId().length()==0) {
-			return nomatch;
-		}
-		if (!person.getNationalId().equals(master.getNationalId())) {
-			return nomatch;
-		}
-		
-		// National ids match so check the other demographics
-		
+				
 		// If DOB Matches exactly then this is a match
 		if (person.getDateOfBirth().compareTo(master.getDateOfBirth())==0) {
 			return match;

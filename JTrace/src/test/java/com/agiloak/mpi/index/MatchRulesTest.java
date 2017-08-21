@@ -71,12 +71,12 @@ public class MatchRulesTest {
 		UKRDCIndexManager im = new UKRDCIndexManager();
 
 		// Basic test 1 - person matches mr version of himself
-		Person p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICK").setNationalIdType("NHS").setNationalId("9000000001");
+		Person p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICK").setPrimaryIdType("NHS").setPrimaryId("9000000001");
 		MasterRecord m1 = new MasterRecord(p1);
 		assert(im.verifyMatch(p1, m1));
 
 		// Basic test 2 - person matches mr version of same data created differently
-		Person p2 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICK").setNationalIdType("NHS").setNationalId("9000000001");
+		Person p2 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICK").setPrimaryIdType("NHS").setPrimaryId("9000000001");
 		MasterRecord m2 = new MasterRecord().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICK").setNationalIdType("NHS").setNationalId("9000000001");
 		assert(im.verifyMatch(p2, m2));
 
@@ -88,28 +88,28 @@ public class MatchRulesTest {
 		UKRDCIndexManager im = new UKRDCIndexManager();
 
 		// null type on person
-		Person p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICK").setNationalId("9000000001");
+		Person p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICK").setPrimaryId("9000000001");
 		MasterRecord m1 = new MasterRecord().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICK").setNationalIdType("NHS").setNationalId("9000000001");
 		assert(!im.verifyMatch(p1, m1));
 
 		// empty type on person
-		p1 = new Person().setNationalIdType("");
+		p1 = new Person().setPrimaryIdType("");
 		assert(!im.verifyMatch(p1, m1));
 
 		// different type on person
-		p1 = new Person().setNationalIdType("CHI");
+		p1 = new Person().setPrimaryIdType("CHI");
 		assert(!im.verifyMatch(p1, m1));
 		
 		// null id on person
-		p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICK").setNationalIdType("NHS");
+		p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICK").setPrimaryIdType("NHS");
 		assert(!im.verifyMatch(p1, m1));
 
 		// empty id on person
-		p1 = new Person().setNationalId("");
+		p1 = new Person().setPrimaryId("");
 		assert(!im.verifyMatch(p1, m1));
 
 		// different id on person
-		p1 = new Person().setNationalId("9000000002");
+		p1 = new Person().setPrimaryId("9000000002");
 		assert(!im.verifyMatch(p1, m1));
 
 	}
@@ -121,49 +121,49 @@ public class MatchRulesTest {
 
 		// DOB Full Match
 		// Surname different  = OK
-		Person p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICK").setNationalIdType("NHS").setNationalId("9000000001");
+		Person p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICK").setPrimaryIdType("NHS").setPrimaryId("9000000001");
 		MasterRecord m1 = new MasterRecord().setDateOfBirth(d1).setSurname("SMITH").setGivenName("NICK").setNationalIdType("NHS").setNationalId("9000000001");
 		assert(im.verifyMatch(p1, m1));
 
 		// DOB Full Match
 		// Given name different  = OK
-		p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICK").setNationalIdType("NHS").setNationalId("9000000001");
+		p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICK").setPrimaryIdType("NHS").setPrimaryId("9000000001");
 		m1 = new MasterRecord().setDateOfBirth(d1).setSurname("SMITH").setGivenName("BILL").setNationalIdType("NHS").setNationalId("9000000001");
 		assert(im.verifyMatch(p1, m1));
 
 		// DOB 2-Part Match
 		// Surname different 4th character = OK
-		p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICK").setNationalIdType("NHS").setNationalId("9000000001");
+		p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICK").setPrimaryIdType("NHS").setPrimaryId("9000000001");
 		m1 = new MasterRecord().setDateOfBirth(d2).setSurname("JONS").setGivenName("NICK").setNationalIdType("NHS").setNationalId("9000000001");
 		assert(im.verifyMatch(p1, m1));
 
 		// DOB 2-Part Match
 		// Surname different 3rd character = NOT OK
-		p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICK").setNationalIdType("NHS").setNationalId("9000000001");
+		p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICK").setPrimaryIdType("NHS").setPrimaryId("9000000001");
 		m1 = new MasterRecord().setDateOfBirth(d2).setSurname("JOS").setGivenName("NICK").setNationalIdType("NHS").setNationalId("9000000001");
 		assert(!im.verifyMatch(p1, m1));
 
 		// DOB 2-Part Match
 		// Given name different 2nd character = OK
-		p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICK").setNationalIdType("NHS").setNationalId("9000000001");
+		p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICK").setPrimaryIdType("NHS").setPrimaryId("9000000001");
 		m1 = new MasterRecord().setDateOfBirth(d2).setSurname("JONES").setGivenName("NK").setNationalIdType("NHS").setNationalId("9000000001");
 		assert(im.verifyMatch(p1, m1));
 
 		// DOB 2-Part Match
 		// Given name different 1st character = NOT OK
-		p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICK").setNationalIdType("NHS").setNationalId("9000000001");
+		p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICK").setPrimaryIdType("NHS").setPrimaryId("9000000001");
 		m1 = new MasterRecord().setDateOfBirth(d2).setSurname("JONES").setGivenName("M").setNationalIdType("NHS").setNationalId("9000000001");
 		assert(!im.verifyMatch(p1, m1));
 
 		// DOB 1-Part Match
 		// Surname and given name the same = NO MATCH
-		p1 = new Person().setDateOfBirth(d2).setSurname("JONES").setGivenName("NICK").setNationalIdType("NHS").setNationalId("9000000001");
+		p1 = new Person().setDateOfBirth(d2).setSurname("JONES").setGivenName("NICK").setPrimaryIdType("NHS").setPrimaryId("9000000001");
 		m1 = new MasterRecord().setDateOfBirth(d3).setSurname("JONES").setGivenName("NICK").setNationalIdType("NHS").setNationalId("9000000001");
 		assert(!im.verifyMatch(p1, m1));
 
 		// DOB 0-Part Match
 		// Surname and given name the same = NO MATCH
-		p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICK").setNationalIdType("NHS").setNationalId("9000000001");
+		p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICK").setPrimaryIdType("NHS").setPrimaryId("9000000001");
 		m1 = new MasterRecord().setDateOfBirth(d5).setSurname("JONES").setGivenName("NICK").setNationalIdType("NHS").setNationalId("9000000001");
 		assert(!im.verifyMatch(p1, m1));
 

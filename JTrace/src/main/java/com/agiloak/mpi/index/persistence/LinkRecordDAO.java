@@ -216,6 +216,64 @@ public class LinkRecordDAO {
 
 	}
 	
+	public static LinkRecord findByPersonAndType(int personId, String type) throws MpiException {
+
+		String findSQL = "select * from jtrace.linkrecord lr, jtrace.masterrecord mr where "+
+				         "lr.masterid = mr.id and lr.personid = ? and mr.nationalidtype = ? ";
+		
+		PreparedStatement preparedStatement = null;
+		Connection conn = null;
+		ResultSet rs = null;
+		
+		LinkRecord link =null;
+		
+		try {
+
+			conn = SimpleConnectionManager.getDBConnection();
+			
+			preparedStatement = conn.prepareStatement(findSQL);
+			preparedStatement.setInt(1, personId);
+			preparedStatement.setString(2, type);
+
+			rs = preparedStatement.executeQuery();
+			
+			if (rs.next()){
+				int pid = rs.getInt("personid");
+				int mid = rs.getInt("masterid");
+				link = new LinkRecord(mid,pid);
+				link.setLastUpdated(rs.getTimestamp("lastUpdated"));
+				link.setId(rs.getInt("id"));
+			}
+			
+		} catch (Exception e) {
+			logger.error("Failure querying WorkItem.",e);
+			throw new MpiException("Failure querying WorkItem. "+e.getMessage());
+		} finally {
+
+			if (rs != null) {
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing resultset.",e);
+					throw new MpiException("Failure closing resultset. "+e.getMessage());
+				}
+			}
+			
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing prepared statement.",e);
+					throw new MpiException("Failure closing prepared statement. "+e.getMessage());
+				}
+			}
+
+		}
+		
+		return link;
+
+	}		
+
 	public static List<LinkRecord> findByPerson(int personId) throws MpiException {
 
 		String findSQL = "select * from jtrace.linkrecord where personid = ? ";
@@ -273,6 +331,7 @@ public class LinkRecordDAO {
 		return linkRecords;
 
 	}		
+	
 	public static List<LinkRecord> findByMaster(int masterId) throws MpiException {
 
 		String findSQL = "select * from jtrace.linkrecord where masterid = ? ";

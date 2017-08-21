@@ -39,8 +39,8 @@ public class IndexManagerTest {
 		person.setPostcode("CH1 6LB");
 		person.setStreet("Oakdene, Townfield Lane");
 		
-		person.setNationalId("9000000001");
-		person.setNationalIdType("NHS");
+		person.setPrimaryId("9000000001");
+		person.setPrimaryIdType("NHS");
 		
 		IndexManager im = new IndexManager();
 		im.create(person);
@@ -76,28 +76,28 @@ public class IndexManagerTest {
 		// test case 7
 		person.setLocalId("101");
 		person.setOriginator("DEF");
-		person.setNationalId("9000000002");
+		person.setPrimaryId("9000000002");
 		im.update(person);
 		assert(true);
 
 		// test case 8
 		person.setLocalId("102");
 		person.setOriginator("DEF");
-		person.setNationalId(null);
-		person.setNationalIdType(null);
+		person.setPrimaryId(null);
+		person.setPrimaryIdType(null);
 		person.setDateOfBirth(getDate("1963-08-31"));
 		im.create(person);
 		assert(true);
 
 		// test case 9 - add 2ndary ref
-		person.setNationalId("9990001");
-		person.setNationalIdType("UKRDC");
+		person.setPrimaryId("9990001");
+		person.setPrimaryIdType("UKRDC");
 		im.update(person);
 		assert(true);
 
 		// test case 10 - delete 2ndary ref
-		person.setNationalId(null);
-		person.setNationalIdType(null);
+		person.setPrimaryId(null);
+		person.setPrimaryIdType(null);
 		im.update(person);
 		assert(true);
 
@@ -119,8 +119,8 @@ public class IndexManagerTest {
 		person.setPostcode("CH1 6LB");
 		person.setStreet("Oakdene, Townfield Lane");
 		
-		person.setNationalId("9000000001");
-		person.setNationalIdType("NHS");
+		person.setPrimaryId("9000000001");
+		person.setPrimaryIdType("NHS");
 		
 		IndexManager im = new IndexManager();
 		im.create(person);

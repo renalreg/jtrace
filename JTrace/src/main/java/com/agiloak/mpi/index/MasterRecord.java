@@ -22,8 +22,8 @@ public class MasterRecord {
 		this.gender=person.getGender();
 		this.givenName=person.getGivenName();
 		this.surname=person.getSurname();
-		this.nationalId=person.getNationalId();
-		this.nationalIdType=person.getNationalIdType();
+		this.nationalId=person.getPrimaryId();
+		this.nationalIdType=person.getPrimaryIdType();
 	}
 	
 	public void updateDemographics(Person person) {

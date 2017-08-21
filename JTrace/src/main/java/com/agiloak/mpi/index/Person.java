@@ -1,6 +1,8 @@
 package com.agiloak.mpi.index;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class Person {
 
@@ -9,9 +11,10 @@ public class Person {
 	private String localIdType;
 	private String originator;
 
-	private String nationalId;
-	private String nationalIdType;
+	private String primaryId;
+	private String primaryIdType;
 
+	private List<NationalIdentity> nationalIds;
 	private Date dateOfBirth; 
 	private String gender; 
 	private Date dateOfDeath; 
@@ -32,6 +35,7 @@ public class Person {
 	private String stdPostcode;
 	
 	public Person(){
+		this.nationalIds = new ArrayList<NationalIdentity>();
 	}
 
 	public int getId() {
@@ -199,29 +203,42 @@ public class Person {
 		return this;
 	}
 
-	public String getNationalId() {
-		return nationalId;
+	public String getPrimaryId() {
+		return primaryId;
 	}
 
-	public Person setNationalId(String nationalId) {
-		if (nationalId!=null) {
-			this.nationalId = nationalId.trim();
+	public Person setPrimaryId(String primaryId) {
+		if (primaryId!=null) {
+			this.primaryId = primaryId.trim();
 		} else {
-			this.nationalId = nationalId;
+			this.primaryId = primaryId;
 		}
 		return this;
 	}
 
-	public String getNationalIdType() {
-		return nationalIdType;
+	public String getPrimaryIdType() {
+		return primaryIdType;
 	}
 
-	public Person setNationalIdType(String nationalIdType) {
-		if (nationalIdType!=null) {
-			this.nationalIdType = nationalIdType.trim();
+	public Person setPrimaryIdType(String primaryIdType) {
+		if (primaryIdType!=null) {
+			this.primaryIdType = primaryIdType.trim();
 		} else {
-			this.nationalIdType = null;
+			this.primaryIdType = null;
 		}
+		return this;
+	}
+	
+	public List<NationalIdentity> getNationalIds() {
+		return nationalIds;
+	}
+
+	public Person setNationalIds(List<NationalIdentity> nationalIds) {
+		this.nationalIds = nationalIds;
+		return this;
+	}
+	public Person addNationalId(NationalIdentity nationalId) {
+		nationalIds.add(nationalId);
 		return this;
 	}
 
@@ -245,7 +262,7 @@ public class Person {
 	
 	public String toString() {
 		return "[LID:"+originator+"-"+localIdType+"-"+localId+"]"+
-			   "[NID:"+nationalIdType+"-"+nationalId+"]";
+			   "[NID:"+primaryIdType+"-"+primaryId+"]";
 	}
 
 }
