@@ -42,12 +42,25 @@ public class LinkRecordTest {
 		assert(links.size()==1);
 
 		LinkRecord lr2 = links.get(0);
-		assert(lr2.getId()==lr.getId());
-		assert(lr2.getMasterId()==lr.getMasterId());
-		assert(lr2.getPersonId()==lr.getPersonId());
-		// Note the following assertion fails if coded the other way around! looks like a bug in compareTo - beware
-		assert(lr2.getLastUpdated().compareTo(lr.getLastUpdated())==0);
 		
+		verifyEqual(lr2, lr);
+	}
+	
+	@Test
+	public void testCreateAllFields() throws MpiException {
+		int personToTest = 1;
+		LinkRecord lr = new LinkRecord(1,personToTest);
+		lr.setUpdatedBy("Nick");
+		lr.setLinkCode(1);
+		lr.setLinkType(2);
+		LinkRecordDAO.create(lr);
+		
+		List<LinkRecord> links = LinkRecordDAO.findByPerson(personToTest);
+		assert(links.size()==1);
+
+		LinkRecord lr2 = links.get(0);
+		verifyEqual(lr2, lr);
+
 	}
 	
 	@Test
@@ -138,5 +151,20 @@ public class LinkRecordTest {
 		assert(lr.getId()==link.getId());
 	}
 
-
+	private void verifyEqual(LinkRecord lr2, LinkRecord lr1) throws MpiException {
+		assert(lr2.getId()==lr1.getId());
+		assert(lr2.getMasterId()==lr1.getMasterId());
+		assert(lr2.getPersonId()==lr1.getPersonId());
+		// Note the following assertion fails if coded the other way around! looks like a bug in compareTo - beware
+		assert(lr2.getLastUpdated().compareTo(lr1.getLastUpdated())==0);
+		assert(lr2.getLinkCode()==lr1.getLinkCode());
+		assert(lr2.getLinkType()==lr1.getLinkType());
+		if (lr2.getUpdatedBy()==null) {
+			assert(lr2.getUpdatedBy()==null);
+		} else {
+			assert(lr2.getUpdatedBy().equals(lr1.getUpdatedBy()));
+		}
+		
+	}
+	
 }
