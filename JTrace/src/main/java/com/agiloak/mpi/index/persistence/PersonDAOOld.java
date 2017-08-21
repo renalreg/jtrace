@@ -202,8 +202,8 @@ public class PersonDAOOld {
 		preparedStatement.setString(11, person.getStdGivenName());
 		preparedStatement.setString(12, person.getStdPostcode());
 		
-		preparedStatement.setString(13, person.getNationalId());
-		preparedStatement.setString(14, person.getNationalIdType());
+		preparedStatement.setString(13, person.getPrimaryId());
+		preparedStatement.setString(14, person.getPrimaryIdType());
 		
 	}
 	

@@ -48,8 +48,8 @@ public class PersonDAO {
 				person.setLocalId(rs.getString("localid"));
 				person.setLocalIdType(rs.getString("localidtype"));
 
-				person.setNationalId(rs.getString("nationalid"));
-				person.setNationalIdType(rs.getString("nationalidtype"));
+				person.setPrimaryId(rs.getString("nationalid"));
+				person.setPrimaryIdType(rs.getString("nationalidtype"));
 
 				person.setDateOfBirth(rs.getTimestamp("dateofbirth"));
 				person.setGender(rs.getString("gender"));
@@ -125,8 +125,8 @@ public class PersonDAO {
 				person.setLocalId(rs.getString("localid"));
 				person.setLocalIdType(rs.getString("localidtype"));
 
-				person.setNationalId(rs.getString("nationalid"));
-				person.setNationalIdType(rs.getString("nationalidtype"));
+				person.setPrimaryId(rs.getString("nationalid"));
+				person.setPrimaryIdType(rs.getString("nationalidtype"));
 
 				person.setDateOfBirth(rs.getTimestamp("dateofbirth"));
 				person.setGender(rs.getString("gender"));
@@ -354,8 +354,8 @@ public class PersonDAO {
 		preparedStatement.setString(11, person.getStdGivenName());
 		preparedStatement.setString(12, person.getStdPostcode());
 		
-		preparedStatement.setString(13, person.getNationalId());
-		preparedStatement.setString(14, person.getNationalIdType());
+		preparedStatement.setString(13, person.getPrimaryId());
+		preparedStatement.setString(14, person.getPrimaryIdType());
 		
 	}
 	

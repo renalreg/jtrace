@@ -19,7 +19,8 @@ public class SimpleConnectionManager {
 	// TODO - Externalise
 	private static String DB_USER = "postgres";
 	private static String DB_PASSWORD = "postgres";
-	private static String DB_SERVER = "W2K16-FHIRALARM:5432";
+	// private static String DB_SERVER = "W2K16-FHIRALARM:5432";
+	private static String DB_SERVER = "localhost:5432";
 	private static String DB_NAME = "JTRACE";
 
 	private static Connection dbConn;

@@ -59,7 +59,7 @@ public class PersonTest {
 		
 		Person person = new Person();
 		person.setOriginator("TST").setLocalId("TST1000001").setLocalIdType("MR");
-		person.setNationalIdType("NHS").setNationalId("NHS0000001");
+		person.setPrimaryIdType("NHS").setPrimaryId("NHS0000001");
 		person.setTitle("MR").setGivenName("Nick").setOtherGivenNames("Ioan").setSurname("JONES");
 		person.setDateOfBirth(getDate("1962-08-31"));
 		person.setDateOfDeath(getDate("2062-08-31"));
@@ -69,7 +69,7 @@ public class PersonTest {
 		assert(true);
 		Person person2 = new Person();
 		person2.setOriginator("TST").setLocalId("TST1000002").setLocalIdType("MR");
-		person2.setNationalIdType("NHS").setNationalId("NHS0000001");
+		person2.setPrimaryIdType("NHS").setPrimaryId("NHS0000001");
 		person2.setTitle("MR").setGivenName("Nick").setOtherGivenNames("Ioan").setSurname("JONES");
 		person2.setDateOfBirth(getDate("1962-08-31"));
 		person2.setDateOfDeath(getDate("2062-08-31"));
@@ -109,8 +109,8 @@ public class PersonTest {
 		assert(safeCompare(person2.getOriginator(),person.getOriginator()));
 		assert(safeCompare(person2.getLocalId(),person.getLocalId()));
 		assert(safeCompare(person2.getLocalIdType(),person.getLocalIdType()));
-		assert(safeCompare(person2.getNationalId(),person.getNationalId()));
-		assert(safeCompare(person2.getNationalIdType(),person.getNationalIdType()));
+		assert(safeCompare(person2.getPrimaryId(),person.getPrimaryId()));
+		assert(safeCompare(person2.getPrimaryIdType(),person.getPrimaryIdType()));
 		
 		assert(safeCompare(person2.getGivenName(),person.getGivenName()));
 		assert(safeCompare(person2.getOtherGivenNames(),person.getOtherGivenNames()));
@@ -174,8 +174,8 @@ public class PersonTest {
 		assert(safeCompare(person2.getOriginator(),person.getOriginator()));
 		assert(safeCompare(person2.getLocalId(),person.getLocalId()));
 		assert(safeCompare(person2.getLocalIdType(),person.getLocalIdType()));
-		assert(safeCompare(person2.getNationalId(),person.getNationalId()));
-		assert(safeCompare(person2.getNationalIdType(),person.getNationalIdType()));
+		assert(safeCompare(person2.getPrimaryId(),person.getPrimaryId()));
+		assert(safeCompare(person2.getPrimaryIdType(),person.getPrimaryIdType()));
 		
 		assert(safeCompare(person2.getGivenName(),person.getGivenName()));
 		assert(safeCompare(person2.getOtherGivenNames(),person.getOtherGivenNames()));
@@ -201,7 +201,7 @@ public class PersonTest {
 		person.setDateOfDeath(getDate("2062-08-31"));
 		person.setGender("1");
 		person.setPostcode("CH1 6LB").setStreet("Oakdene, Townfield Lane");
-		person.setNationalIdType("NHS").setNationalId("900000001");
+		person.setPrimaryIdType("NHS").setPrimaryId("900000001");
 		
 		PersonDAO.create(person);
 		assert(true);
@@ -210,8 +210,8 @@ public class PersonTest {
 		assert(safeCompare(person2.getOriginator(),person.getOriginator()));
 		assert(safeCompare(person2.getLocalId(),person.getLocalId()));
 		assert(safeCompare(person2.getLocalIdType(),person.getLocalIdType()));
-		assert(safeCompare(person2.getNationalId(),person.getNationalId()));
-		assert(safeCompare(person2.getNationalIdType(),person.getNationalIdType()));
+		assert(safeCompare(person2.getPrimaryId(),person.getPrimaryId()));
+		assert(safeCompare(person2.getPrimaryIdType(),person.getPrimaryIdType()));
 		
 		assert(safeCompare(person2.getGivenName(),person.getGivenName()));
 		assert(safeCompare(person2.getOtherGivenNames(),person.getOtherGivenNames()));
@@ -250,8 +250,8 @@ public class PersonTest {
 		assert(safeCompare(person2.getOriginator(),person.getOriginator()));
 		assert(safeCompare(person2.getLocalId(),person.getLocalId()));
 		assert(safeCompare(person2.getLocalIdType(),person.getLocalIdType()));
-		assert(safeCompare(person2.getNationalId(),person.getNationalId()));
-		assert(safeCompare(person2.getNationalIdType(),person.getNationalIdType()));
+		assert(safeCompare(person2.getPrimaryId(),person.getPrimaryId()));
+		assert(safeCompare(person2.getPrimaryIdType(),person.getPrimaryIdType()));
 		
 		assert(safeCompare(person2.getGivenName(),person.getGivenName()));
 		assert(safeCompare(person2.getOtherGivenNames(),person.getOtherGivenNames()));

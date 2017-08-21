@@ -31,6 +31,7 @@ public class MasterRecordTest {
 		MasterRecordDAO.deleteByNationalId("NHS0000006","NHS");
 		MasterRecordDAO.deleteByNationalId("NHS0000007","NHS");
 		MasterRecordDAO.deleteByNationalId("NHS0000008","NHS");
+		MasterRecordDAO.deleteByNationalId("NHS0000009","NHS");
 	}
 	
 	@Test
@@ -57,6 +58,27 @@ public class MasterRecordTest {
 		mr.setNationalId("NHS0000001").setNationalIdType("NHS");
 		MasterRecordDAO.create(mr);
 		assert(true);
+	}
+
+	@Test
+	public void testGet() throws MpiException {
+		MasterRecord mr = new MasterRecord();
+		mr.setDateOfBirth(getDate("1962-08-31")).setGender("M");
+		mr.setGivenName("Nick").setSurname("Jones");
+		mr.setNationalId("NHS9000001").setNationalIdType("NHS");
+		MasterRecordDAO.create(mr);
+		assert(true);
+		
+		MasterRecord mr2 = MasterRecordDAO.get(mr.getId());
+		assert(mr2.getId()==(mr.getId()));
+		assert(mr2.getDateOfBirth().compareTo(mr.getDateOfBirth())==0);
+		assert(mr2.getGender().equals(mr.getGender()));
+		assert(mr2.getGivenName().equals(mr.getGivenName()));
+		assert(mr2.getSurname().equals(mr.getSurname()));
+		assert(mr2.getNationalId().equals(mr.getNationalId()));
+		assert(mr2.getNationalIdType().trim().equals(mr.getNationalIdType().trim()));
+		assert(mr2.getLastUpdated().compareTo(mr.getLastUpdated())==0);
+		
 	}
 
 	@Test

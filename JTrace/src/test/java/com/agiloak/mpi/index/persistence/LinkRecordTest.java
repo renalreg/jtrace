@@ -1,5 +1,6 @@
 package com.agiloak.mpi.index.persistence;
 
+import java.util.Date;
 import java.util.List;
 
 import org.junit.Before;
@@ -9,8 +10,11 @@ import org.junit.rules.ExpectedException;
 
 import com.agiloak.mpi.MpiException;
 import com.agiloak.mpi.index.LinkRecord;
+import com.agiloak.mpi.index.MasterRecord;
 
 public class LinkRecordTest {
+	final static String UKRDC_TYPE = "UKRDC";
+	final static String RR1 = "RR1";
 
 	@Rule
 	public final ExpectedException exception = ExpectedException.none();
@@ -25,6 +29,7 @@ public class LinkRecordTest {
 		LinkRecordDAO.deleteByPerson(6);
 		LinkRecordDAO.deleteByPerson(7);
 		LinkRecordDAO.deleteByPerson(8);
+		MasterRecordDAO.deleteByNationalId(RR1, UKRDC_TYPE);
 	}
 	
 	@Test
@@ -80,7 +85,6 @@ public class LinkRecordTest {
 		assert(links2.size()==0);
 	}
 
-
 	@Test
 	public void testNoFind() throws MpiException {
 		int personToTest = 5;
@@ -119,5 +123,20 @@ public class LinkRecordTest {
 		assert(links2.size()==0);
 		
 	}
+
+	@Test
+	public void testFindByPersonAndType() throws MpiException {
+		int personToTest = 8;
+		MasterRecord mr = new MasterRecord();
+		mr.setNationalId(RR1).setNationalIdType(UKRDC_TYPE);
+		mr.setDateOfBirth(new Date());
+		MasterRecordDAO.create(mr);
+		LinkRecord lr = new LinkRecord(mr.getId(),personToTest);
+		LinkRecordDAO.create(lr);
+		
+		LinkRecord link = LinkRecordDAO.findByPersonAndType(personToTest, UKRDC_TYPE);
+		assert(lr.getId()==link.getId());
+	}
+
 
 }

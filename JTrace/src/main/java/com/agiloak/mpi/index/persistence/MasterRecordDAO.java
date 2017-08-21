@@ -21,6 +21,66 @@ public class MasterRecordDAO {
 	
 	private final static Logger logger = LoggerFactory.getLogger(MasterRecordDAO.class);
 	
+	public static MasterRecord get(int id) throws MpiException {
+
+		String getSQL = "select * from jtrace.masterrecord where id = ? ";
+		
+		PreparedStatement preparedStatement = null;
+		Connection conn = null;
+		ResultSet rs = null;
+		
+		MasterRecord master = null;
+		
+		try {
+
+			conn = SimpleConnectionManager.getDBConnection();
+			
+			preparedStatement = conn.prepareStatement(getSQL);
+			preparedStatement.setInt(1, id);
+
+			rs = preparedStatement.executeQuery();
+			
+			if (rs.next()){
+				master = new MasterRecord();
+				master.setId(rs.getInt("id"));
+				master.setNationalId(rs.getString("nationalid"));
+				master.setNationalIdType(rs.getString("nationalidtype"));
+				master.setSurname(rs.getString("surname"));
+				master.setGivenName(rs.getString("givenname"));
+				master.setGender(rs.getString("gender"));
+				master.setDateOfBirth(rs.getDate("dateofbirth"));
+				master.setLastUpdated(rs.getTimestamp("lastupdated"));
+			}
+			
+		} catch (Exception e) {
+			logger.error("Failure getting MasterRecord.",e);
+			throw new MpiException("Failure getting MasterRecord. "+e.getMessage());
+		} finally {
+
+			if (rs != null) {
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing resultset.",e);
+					throw new MpiException("Failure closing resultset. "+e.getMessage());
+				}
+			}
+			
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing prepared statement.",e);
+					throw new MpiException("Failure closing prepared statement. "+e.getMessage());
+				}
+			}
+
+		}
+		
+		return master;
+
+	}
+
 	public static MasterRecord findByNationalId(String nationalId, String nationalIdType) throws MpiException {
 
 		String findSQL = "select * from jtrace.masterrecord where nationalid = ? and nationalidtype = ? ";

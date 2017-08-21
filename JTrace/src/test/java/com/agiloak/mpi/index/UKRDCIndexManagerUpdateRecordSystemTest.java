@@ -69,7 +69,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		Person p1 = new Person().setDateOfBirth(d1).setSurname("ERIKSON").setGivenName("ERICA").setGender("2");
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId("PUP5000001").setLocalIdType("MR").setOriginator("PUP5");
-		p1.setNationalIdType("NHS").setNationalId("UHS5000001");
+		p1.setPrimaryIdType("NHS").setPrimaryId("UHS5000001");
 		im.createOrUpdate(p1);
 		// VERIFY SETUP
 		Person person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
@@ -82,7 +82,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		
 		// TEST1 - update to remove the nationalId. Will DELINK and delete the master
 		p1.setId(0); // reset the id - incoming record won't have this.
-		p1.setNationalIdType(null).setNationalId(null);
+		p1.setPrimaryIdType(null).setPrimaryId(null);
 		im.createOrUpdate(p1);
 		// VERIFY
 		person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
@@ -96,7 +96,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		Person p2 = new Person().setDateOfBirth(d1).setSurname("FLINTOFF").setGivenName("FRED").setGender("1");
 		p2.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p2.setLocalId("PUP5000002").setLocalIdType("MR").setOriginator("PUP5");
-		p2.setNationalIdType("NHS").setNationalId("UHS5000002");
+		p2.setPrimaryIdType("NHS").setPrimaryId("UHS5000002");
 		im.createOrUpdate(p2);
 		// VERIFY SETUP
 		person = PersonDAO.findByLocalId(p2.getLocalIdType(), p2.getLocalId(), p2.getOriginator());
@@ -114,12 +114,12 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		Person p3 = new Person().setDateOfBirth(d1).setSurname("FLINTOFF").setGivenName("FRED").setGender("1");
 		p3.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p3.setLocalId("PUP5000003").setLocalIdType("MR").setOriginator("PUP5A");
-		p3.setNationalIdType("NHS").setNationalId("UHS5000002");
+		p3.setPrimaryIdType("NHS").setPrimaryId("UHS5000002");
 		im.createOrUpdate(p3);
 		
 		// TEST2 - update to remove the nationalId. Will DELINK P2 but leave the master linked to P3. Raise a WORK because of the demog match with P3
 		p2.setId(0); // reset the id - incoming record won't have this.
-		p2.setNationalIdType(null).setNationalId(null);
+		p2.setPrimaryIdType(null).setPrimaryId(null);
 		im.createOrUpdate(p2);
 		// VERIFY
 		person = PersonDAO.findByLocalId(p2.getLocalIdType(), p2.getLocalId(), p2.getOriginator());
@@ -165,7 +165,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		Person p2 = new Person().setDateOfBirth(d1).setSurname("DAVIES").setGivenName("DEREK").setGender("1");
 		p2.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p2.setLocalId("PUP4000002").setLocalIdType("MR").setOriginator("PUP4");
-		p2.setNationalIdType("NHS").setNationalId("UHS4000001");
+		p2.setPrimaryIdType("NHS").setPrimaryId("UHS4000001");
 		im.createOrUpdate(p2);
 
 		// TEST2 - now update p1 again and "find" demog match - work created
@@ -199,7 +199,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		
 		// TEST1 - add a National Id which doesn't exist. Add a master and a link. No similar demogs so no WORK
 		p1.setId(0); // reset the id - incoming record won't have this.
-		p1.setNationalIdType("NHS").setNationalId("UHS3000001");
+		p1.setPrimaryIdType("NHS").setPrimaryId("UHS3000001");
 		im.createOrUpdate(p1);
 		// VERIFY
 		Person person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
@@ -229,7 +229,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		
 		// TEST2 - add a National Id which doesn't exist. Add a master and a link. Similar demogs exist so another WORK created
 		p2.setId(0); // reset the id - incoming record won't have this.
-		p2.setNationalIdType("NHS").setNationalId("UHS3000002");
+		p2.setPrimaryIdType("NHS").setPrimaryId("UHS3000002");
 		im.createOrUpdate(p2);
 		// VERIFY
 		person = PersonDAO.findByLocalId(p2.getLocalIdType(), p2.getLocalId(), p2.getOriginator());
@@ -266,7 +266,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		
 		// TEST3 add a National Id which does exist and verifies. Links to that master. Algorithmic WORK created and Demog Match WORK created to UHS3000001
 		p3.setId(0); // reset the id - incoming record won't have this.
-		p3.setNationalIdType("NHS").setNationalId("UHS3000002");
+		p3.setPrimaryIdType("NHS").setPrimaryId("UHS3000002");
 		im.createOrUpdate(p3);
 		// VERIFY
 		person = PersonDAO.findByLocalId(p3.getLocalIdType(), p3.getLocalId(), p3.getOriginator());
@@ -300,7 +300,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		
 		// TEST4 - add a National Id which does exist but does not verify. No link but a WORK item created for fail to match and another for the algorithmic match
 		p4.setId(0); // reset the id - incoming record won't have this.
-		p4.setNationalIdType("NHS").setNationalId("UHS3000002");
+		p4.setPrimaryIdType("NHS").setPrimaryId("UHS3000002");
 		im.createOrUpdate(p4);
 		// VERIFY
 		person = PersonDAO.findByLocalId(p4.getLocalIdType(), p4.getLocalId(), p4.getOriginator());
@@ -323,13 +323,13 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		UKRDCIndexManager im = new UKRDCIndexManager();
 		
 		//SETUP person with NationalId. New Person, New MAster and new link to the master
-		Person p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("KAREN").setNationalIdType("NHS").setNationalId("UHS1000001").setGender("2");
+		Person p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("KAREN").setPrimaryIdType("NHS").setPrimaryId("UHS1000001").setGender("2");
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId("PUP1000001").setLocalIdType("MR").setOriginator("PUP1");
 		im.createOrUpdate(p1);
 		
 		// SETUP another record linked to the NationalId for P1. This should be delinked by later demographic update as only a partial DOB match and given name different. WORK for ALGO match
-		Person p2 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("KAREN").setNationalIdType("NHS").setNationalId("UHS1000001").setGender("2");
+		Person p2 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("KAREN").setPrimaryIdType("NHS").setPrimaryId("UHS1000001").setGender("2");
 		p2.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p2.setLocalId("PUP1000002").setLocalIdType("MR").setOriginator("PUP1");
 		im.createOrUpdate(p2);
@@ -344,7 +344,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		assert(items.get(0).getType()==WorkItem.TYPE_DEMOGS_NEAR_MATCH); // TODO - Suppress as this is triggered by a linked record
 
 		// SETUP another record linked to the NationalId for P1. This should NOT be delinked by later demographic update as the full DOB matches the update which will arrive in P1A
-		Person p3 = new Person().setDateOfBirth(d2).setSurname("JONES").setGivenName("KAREN").setNationalIdType("NHS").setNationalId("UHS1000001").setGender("2");
+		Person p3 = new Person().setDateOfBirth(d2).setSurname("JONES").setGivenName("KAREN").setPrimaryIdType("NHS").setPrimaryId("UHS1000001").setGender("2");
 		p3.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p3.setLocalId("PUP1000003").setLocalIdType("MR").setOriginator("PUP1");
 		im.createOrUpdate(p3);
@@ -403,7 +403,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		UKRDCIndexManager im = new UKRDCIndexManager();
 		
 		// SETUP Person and Master for update with no other links
-		Person p1 = new Person().setDateOfBirth(d1).setSurname("ANDERSON").setGivenName("ALAN").setNationalIdType("NHS").setNationalId("UHS2000001").setGender("2");
+		Person p1 = new Person().setDateOfBirth(d1).setSurname("ANDERSON").setGivenName("ALAN").setPrimaryIdType("NHS").setPrimaryId("UHS2000001").setGender("2");
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId("PUP2000001").setLocalIdType("MR").setOriginator("PUP2");
 		im.createOrUpdate(p1);
@@ -417,7 +417,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		assert(items.size()==0);
 
 		// SETUP Person and Master for update which will have other links - master and other link should remain when this patient changes NHS Number
-		Person p2 = new Person().setDateOfBirth(d2).setSurname("BEVAN").setGivenName("BOB").setNationalIdType("NHS").setNationalId("UHS2000002").setGender("2");
+		Person p2 = new Person().setDateOfBirth(d2).setSurname("BEVAN").setGivenName("BOB").setPrimaryIdType("NHS").setPrimaryId("UHS2000002").setGender("2");
 		p2.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p2.setLocalId("PUP2000002").setLocalIdType("MR").setOriginator("PUP2");
 		im.createOrUpdate(p2);
@@ -431,7 +431,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		assert(items.size()==0);
 
 		// SETUP - 2nd Person to link to P1
-		Person p3 = new Person().setDateOfBirth(d2).setSurname("BEVAN").setGivenName("BOB").setNationalIdType("NHS").setNationalId("UHS2000002").setGender("2");
+		Person p3 = new Person().setDateOfBirth(d2).setSurname("BEVAN").setGivenName("BOB").setPrimaryIdType("NHS").setPrimaryId("UHS2000002").setGender("2");
 		p3.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p3.setLocalId("PUP2000003").setLocalIdType("MR").setOriginator("PUP2");
 		im.createOrUpdate(p3);
@@ -446,7 +446,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		assert(items.get(0).getType()==WorkItem.TYPE_DEMOGS_NEAR_MATCH); // TODO - Suppress as this is triggered by a linked record
 
 		// TEST1 - Change NHS Number. Should delink this person from the existing master and delete that master. Then add and link to a new master
-		p1.setNationalIdType("NHS").setNationalId("UHS2000003");
+		p1.setPrimaryIdType("NHS").setPrimaryId("UHS2000003");
 		im.createOrUpdate(p1);
 		// VERIFY
 		master = MasterRecordDAO.findByNationalId("UHS2000001", "NHS");
@@ -460,7 +460,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		assert(items.size()==0);
 
 		// TEST2 - Change NHS Number. Should delink this person from the existing master but not delete that master because of PUP2000003. Then add and link to a new master. Raise WORK due to same demographics
-		p2.setNationalIdType("NHS").setNationalId("UHS2000004");
+		p2.setPrimaryIdType("NHS").setPrimaryId("UHS2000004");
 		im.createOrUpdate(p2);
 		// VERIFY
 		master = MasterRecordDAO.findByNationalId("UHS2000002", "NHS");
