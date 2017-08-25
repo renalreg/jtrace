@@ -53,6 +53,7 @@ public class LinkRecordTest {
 		lr.setUpdatedBy("Nick");
 		lr.setLinkCode(1);
 		lr.setLinkType(2);
+		lr.setLinkDesc("XYZ uses preferred name of patient");
 		LinkRecordDAO.create(lr);
 		
 		List<LinkRecord> links = LinkRecordDAO.findByPerson(personToTest);
@@ -143,6 +144,7 @@ public class LinkRecordTest {
 		MasterRecord mr = new MasterRecord();
 		mr.setNationalId(RR1).setNationalIdType(UKRDC_TYPE);
 		mr.setDateOfBirth(new Date());
+		mr.setEffectiveDate(new Date());
 		MasterRecordDAO.create(mr);
 		LinkRecord lr = new LinkRecord(mr.getId(),personToTest);
 		LinkRecordDAO.create(lr);

@@ -29,6 +29,7 @@ public class MasterRecord {
 		this.surname=person.getSurname();
 		this.nationalId=person.getPrimaryId();
 		this.nationalIdType=person.getPrimaryIdType();
+		this.effectiveDate=person.getEffectiveDate();
 	}
 	
 	public void updateDemographics(Person person) {
@@ -37,6 +38,7 @@ public class MasterRecord {
 		this.gender=person.getGender();
 		this.givenName=person.getGivenName();
 		this.surname=person.getSurname();
+		this.effectiveDate=person.getEffectiveDate();
 	}
 
 	public Date getLastUpdated() {

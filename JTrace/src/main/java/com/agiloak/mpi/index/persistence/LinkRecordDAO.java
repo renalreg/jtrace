@@ -33,8 +33,8 @@ public class LinkRecordDAO {
 	public static void create(LinkRecord link) throws MpiException {
 		
 		String insertSQL = "Insert into jtrace.linkrecord "+
-				"(masterid, personid, lastupdated, linktype, linkcode, updatedby)"+
-				" values (?,?,?,?,?,?)";
+				"(masterid, personid, lastupdated, linktype, linkcode, linkdesc, updatedby)"+
+				" values (?,?,?,?,?,?,?)";
 		
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;
@@ -49,7 +49,8 @@ public class LinkRecordDAO {
 			preparedStatement.setTimestamp(3,new Timestamp(link.getLastUpdated().getTime()));
 			preparedStatement.setInt(4, link.getLinkType());
 			preparedStatement.setInt(5, link.getLinkCode());
-			preparedStatement.setString(6, link.getUpdatedBy());
+			preparedStatement.setString(6, link.getLinkDesc());
+			preparedStatement.setString(7, link.getUpdatedBy());
 
 			int affectedRows = preparedStatement.executeUpdate();
 			logger.debug("Affected Rows:"+affectedRows);
@@ -388,6 +389,7 @@ public class LinkRecordDAO {
 				linkRecord.setId(rs.getInt("id"));
 				linkRecord.setLinkType(rs.getInt("linktype"));
 				linkRecord.setLinkCode(rs.getInt("linkcode"));
+				linkRecord.setUpdatedBy(rs.getString("linkdesc"));
 				linkRecord.setUpdatedBy(rs.getString("updatedby"));
 
 		} catch (Exception e) {

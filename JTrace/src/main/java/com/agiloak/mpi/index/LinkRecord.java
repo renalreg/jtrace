@@ -17,6 +17,7 @@ public class LinkRecord {
 	
 	private int linkType;
 	private int linkCode;
+	private String linkDesc;
 	private String updatedBy;
 	
 	public int getId() {
@@ -59,6 +60,13 @@ public class LinkRecord {
 	}
 	public LinkRecord setLinkCode(int linkCode) {
 		this.linkCode = linkCode;
+		return this;
+	}
+	public String getLinkDesc() {
+		return linkDesc;
+	}
+	public LinkRecord setLinkDesc(String linkDesc) {
+		this.linkDesc = linkDesc;
 		return this;
 	}
 	public String getUpdatedBy() {

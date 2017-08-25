@@ -27,7 +27,11 @@ public class UKRDCIndexManager {
 	public void createOrUpdate(Person person) throws MpiException {
 
 		logger.debug("*********Processing person record:"+person);
-
+		
+		if (person.getEffectiveDate()==null) {
+			person.setEffectiveDate(new Date());
+		}
+		
 		Person storedPerson = PersonDAO.findByLocalId(person.getLocalIdType(), person.getLocalId(), person.getOriginator());
 		if (storedPerson != null) {
 			logger.debug("RECORD EXISTS:"+storedPerson.getId());
@@ -117,10 +121,27 @@ public class UKRDCIndexManager {
 					logger.debug("Record verified - creating link");
 					LinkRecord link = new LinkRecord(master.getId(), person.getId());
 					LinkRecordDAO.create(link);
+					if (master.getEffectiveDate().compareTo(person.getEffectiveDate()) < 0 ) {
+						logger.debug("TEST:T4-2");
+						master.updateDemographics(person);
+						MasterRecordDAO.update(master);
+					} else {
+						logger.debug("TEST:T4-3");						
+					}
 				} else {
-					logger.debug("Record not verified - creating work item");
+					logger.debug("TEST:T1-3");
+					logger.debug("Record not verified - creating work item, link and mark master for investigation");
 					WorkItem work = new WorkItem(WorkItem.TYPE_NOLINK_DEMOG_NOT_VERIFIED, person.getId(), "Master Record: "+master.getId());
 					WorkItemDAO.create(work);
+					LinkRecord link = new LinkRecord(master.getId(), person.getId());
+					LinkRecordDAO.create(link);
+					master.setStatus(MasterRecord.INVESTIGATE);
+					if (master.getEffectiveDate().compareTo(person.getEffectiveDate()) < 0 ) {
+						logger.debug("TEST:T?-??");
+						master.updateDemographics(person);
+					} else {
+					}
+					MasterRecordDAO.update(master);
 				}
 
 			} else {
@@ -128,7 +149,7 @@ public class UKRDCIndexManager {
 				logger.debug("No Master found for this Primary id - creating it");
 				
 				// a master record does not exist for this Primary id so create one
-				master = new MasterRecord(person);
+				master = new MasterRecord(person);		
 				MasterRecordDAO.create(master);
 
 				logger.debug("Linking to the new master record");
