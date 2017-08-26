@@ -112,7 +112,7 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		assert(links.get(0).getMasterId()==master.getId());
 		items = WorkItemDAO.findByPerson(person.getId());
 		assert(items.size()==1);
-		assert(items.get(0).getType()==WorkItem.TYPE_NOLINK_DEMOG_NOT_VERIFIED);
+		assert(items.get(0).getType()==WorkItem.TYPE_INVESTIGATE_DEMOG_NOT_VERIFIED);
 
 	}
 
@@ -163,7 +163,7 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		p3.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p3.setLocalId("NSYS400003").setLocalIdType("MR").setOriginator("NSYS4");
 		p3.setEffectiveDate(getDate("2017-08-01"));
-		im.createOrUpdate(p2);
+		im.createOrUpdate(p3);
 		// VERIFY 
 		person = PersonDAO.findByLocalId(p3.getLocalIdType(), p3.getLocalId(), p3.getOriginator());
 		assert(person!=null);
@@ -186,7 +186,7 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		String rrid = "RR5000001";
 		UKRDCIndexManager im = new UKRDCIndexManager();
 		
-		// T4-1 NationalId for P1. New Person, New Master and new link to the master
+		// T5-1 Setup step. NationalId for P1. New Person, New Master and new link to the master
 		Person p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICHOLAS").setPrimaryIdType(UKRDC_TYPE).setPrimaryId(rrid).setGender("1");
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId("NSYS500001").setLocalIdType("MR").setOriginator(orig);
@@ -204,8 +204,9 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		List<WorkItem> items = WorkItemDAO.findByPerson(person.getId());
 		assert(items.size()==0);
 
-		// T4-2 - New + NationalId + NationalId exists + Matches. New Person & Link to existing Master. Effective date is later than previous update so master is updated 
-		Person p2 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICHOLAS2").setPrimaryIdType(UKRDC_TYPE).setPrimaryId(rrid).setGender("1");
+		// T5-2 - New + NationalId + NationalId exists + Not verified. New Person & Link to existing Master. Effective date is later than previous update so master is updated 
+		// WorkItem created for mismatch. Master marked for investigation
+		Person p2 = new Person().setDateOfBirth(d3).setSurname("JONES").setGivenName("NICHOLAS2").setPrimaryIdType(UKRDC_TYPE).setPrimaryId(rrid).setGender("1");
 		p2.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p2.setLocalId("NSYS500002").setLocalIdType("MR").setOriginator(orig);
 		p2.setEffectiveDate(getDate("2017-08-02"));
@@ -217,18 +218,20 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		assert(master!=null);
 		assert(master.getEffectiveDate().compareTo(getDate("2017-08-02"))==0);
 		assert(master.getGivenName().equals(p2.getGivenName()));
+		assert(master.getStatus()==MasterRecord.INVESTIGATE);
 		links = LinkRecordDAO.findByPerson(person.getId());
 		assert(links.size()==1);
 		assert(links.get(0).getMasterId()==master.getId()); 
 		items = WorkItemDAO.findByPerson(person.getId());
-		assert(items.size()==0);
+		assert(items.size()==1);
 		
-		// T4-3 - New + NationalId + NationalId exists + Matches. New Person & Link to existing Master. Effective date is earlier than previous update so no master is updated 
+		// T5-3 - New + NationalId + NationalId exists + Not verified. New Person & Link to existing Master. Effective date is earlier than previous update so no master update 
+		// WorkItem created for mismatch. Master marked for investigation
 		Person p3 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICHOLAS3").setPrimaryIdType(UKRDC_TYPE).setPrimaryId(rrid).setGender("1");
 		p3.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p3.setLocalId("NSYS500003").setLocalIdType("MR").setOriginator(orig);
 		p3.setEffectiveDate(getDate("2017-08-01"));
-		im.createOrUpdate(p2);
+		im.createOrUpdate(p3);
 		// VERIFY 
 		person = PersonDAO.findByLocalId(p3.getLocalIdType(), p3.getLocalId(), p3.getOriginator());
 		assert(person!=null);
@@ -236,11 +239,12 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		assert(master!=null);
 		assert(master.getEffectiveDate().compareTo(getDate("2017-08-02"))==0);
 		assert(master.getGivenName().equals(p2.getGivenName()));
+		assert(master.getStatus()==MasterRecord.INVESTIGATE);
 		links = LinkRecordDAO.findByPerson(person.getId());
 		assert(links.size()==1);
 		assert(links.get(0).getMasterId()==master.getId());
 		items = WorkItemDAO.findByPerson(person.getId());
-		assert(items.size()==0);
+		assert(items.size()==1);
 
 	}	
 	@Test

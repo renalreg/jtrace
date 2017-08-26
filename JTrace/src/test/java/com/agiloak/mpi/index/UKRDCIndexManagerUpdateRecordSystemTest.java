@@ -310,7 +310,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		items = WorkItemDAO.findByPerson(person.getId());
 		assert(items.size()==3);
 		assert(items.get(0).getType()==WorkItem.TYPE_DEMOGS_NEAR_MATCH);
-		assert(items.get(1).getType()==WorkItem.TYPE_NOLINK_DEMOG_NOT_VERIFIED);
+		assert(items.get(1).getType()==WorkItem.TYPE_INVESTIGATE_DEMOG_NOT_VERIFIED);
 		assert(items.get(2).getType()==WorkItem.TYPE_DEMOGS_NEAR_MATCH); // TODO - Suppress duplicates
 		
 		assert(true);
