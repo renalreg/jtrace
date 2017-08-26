@@ -40,6 +40,23 @@ public class MasterRecordTest {
 		MasterRecord mr = new MasterRecord();
 		mr.setDateOfBirth(getDate("1962-08-31")).setGender("M");
 		mr.setGivenName("Nick").setSurname("Jones");
+		mr.setNationalId("NHS0000011").setNationalIdType("NHS");
+		mr.setEffectiveDate(getDate("2017-08-22"));
+		MasterRecordDAO.create(mr);
+		MasterRecord mr2 = MasterRecordDAO.findByNationalId("NHS0000011","NHS");
+		assert(mr2!=null);
+		MasterRecordDAO.delete(mr);
+		MasterRecord mr3 = MasterRecordDAO.findByNationalId("NHS0000011","NHS");
+		assert(mr3==null);
+		MasterRecord mr4 = MasterRecordDAO.get(mr.getId());
+		assert(mr4==null);
+	}
+
+	@Test
+	public void testDeleteByNationalId() throws MpiException {
+		MasterRecord mr = new MasterRecord();
+		mr.setDateOfBirth(getDate("1962-08-31")).setGender("M");
+		mr.setGivenName("Nick").setSurname("Jones");
 		mr.setNationalId("NHS0000004").setNationalIdType("NHS");
 		mr.setEffectiveDate(getDate("2017-08-22"));
 		MasterRecordDAO.create(mr);
@@ -51,7 +68,6 @@ public class MasterRecordTest {
 		MasterRecord mr3 = MasterRecordDAO.findByNationalId("NHS0000004","NHS");
 		assert(mr3==null);
 	}
-
 	@Test
 	public void testCreate() throws MpiException {
 		MasterRecord mr = new MasterRecord();

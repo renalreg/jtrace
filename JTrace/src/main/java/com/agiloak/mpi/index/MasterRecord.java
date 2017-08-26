@@ -7,6 +7,11 @@ public class MasterRecord {
 	public static final int OK = 0;
 	public static final int INVESTIGATE = 1;
 	
+	public static final String UKRDC_TYPE = "UKRDC";
+	public static final String NHS_TYPE = "NHS";
+	public static final String CHI_TYPE = "CHI";
+	public static final String HSI_TYPE = "HIS";
+	
 	private Date lastUpdated;
 	private int id;
 	private String nationalId;

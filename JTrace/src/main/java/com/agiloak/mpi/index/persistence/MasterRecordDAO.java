@@ -272,6 +272,41 @@ public class MasterRecordDAO {
 
 	}
 
+	public static void delete(MasterRecord master) throws MpiException {
+		
+		String deleteSQL = "delete from jtrace.masterrecord where id = ? ";
+		
+		PreparedStatement preparedStatement = null;
+		Connection conn = null;
+		
+		try {
+
+			conn = SimpleConnectionManager.getDBConnection();
+			
+			preparedStatement = conn.prepareStatement(deleteSQL);
+			conn = SimpleConnectionManager.getDBConnection();
+			preparedStatement.setInt(1, master.getId());
+			int affectedRows = preparedStatement.executeUpdate();
+			logger.debug("Affected Rows:"+affectedRows);
+			
+		} catch (Exception e) {
+			logger.error("Failure deleting MasterRecord:",e);
+			throw new MpiException("MasterRecord delete failed");
+		} finally {
+
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing Prepared Statement:",e);
+					throw new MpiException("MasterRecord delete failed");
+				}
+			}
+
+		}
+
+	}
+	
 	public static void deleteByNationalId(String nationalId, String nationalIdType) throws MpiException {
 		
 		String deleteSQL = "delete from jtrace.masterrecord where nationalid = ? and nationalidtype = ? ";
