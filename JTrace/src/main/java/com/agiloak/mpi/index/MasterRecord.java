@@ -10,7 +10,7 @@ public class MasterRecord {
 	public static final String UKRDC_TYPE = "UKRDC";
 	public static final String NHS_TYPE = "NHS";
 	public static final String CHI_TYPE = "CHI";
-	public static final String HSI_TYPE = "HIS";
+	public static final String HSI_TYPE = "HSI";
 	
 	private Date lastUpdated;
 	private int id;
