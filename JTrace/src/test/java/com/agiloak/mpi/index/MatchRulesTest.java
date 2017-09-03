@@ -83,38 +83,6 @@ public class MatchRulesTest {
 	}
 	
 	@Test
-	public void testVerifyMatchNationalIdFails() throws MpiException {
-
-		UKRDCIndexManager im = new UKRDCIndexManager();
-
-		// null type on person
-		Person p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICK").setPrimaryId("9000000001");
-		MasterRecord m1 = new MasterRecord().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICK").setNationalIdType("NHS").setNationalId("9000000001");
-		assert(!im.verifyMatch(p1, m1));
-
-		// empty type on person
-		p1 = new Person().setPrimaryIdType("");
-		assert(!im.verifyMatch(p1, m1));
-
-		// different type on person
-		p1 = new Person().setPrimaryIdType("CHI");
-		assert(!im.verifyMatch(p1, m1));
-		
-		// null id on person
-		p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICK").setPrimaryIdType("NHS");
-		assert(!im.verifyMatch(p1, m1));
-
-		// empty id on person
-		p1 = new Person().setPrimaryId("");
-		assert(!im.verifyMatch(p1, m1));
-
-		// different id on person
-		p1 = new Person().setPrimaryId("9000000002");
-		assert(!im.verifyMatch(p1, m1));
-
-	}
-	
-	@Test
 	public void testVerifyMatchPartials() throws MpiException {
 
 		UKRDCIndexManager im = new UKRDCIndexManager();
