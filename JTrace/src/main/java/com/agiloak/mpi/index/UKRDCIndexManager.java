@@ -21,6 +21,73 @@ public class UKRDCIndexManager {
 	private final static Logger logger = LoggerFactory.getLogger(UKRDCIndexManager.class);
 
 	/**
+	 * Search for a UKRDC Identity for these patient details.
+	 * @param psr
+	 * @return
+	 * @throws MpiException
+	 */
+	public String search(ProgrammeSearchRequest psr) throws MpiException {
+		String ukrdcId = null;
+		
+		if (psr==null) {
+			// ST3-1
+			logger.error("SearchRequest not provided");
+			throw new MpiException("SearchRequest not provided");
+		}
+		
+		if (psr.getNationalId()==null) {
+			// ST2-1
+			logger.error("NationalId Must be provided");
+			throw new MpiException("NationalId Must be provided");
+		}
+
+		MasterRecord nationalMaster = MasterRecordDAO.findByNationalId(psr.getNationalId().getId(), psr.getNationalId().getType());
+		// If the national record is not found then we can't match to a UKRDC id
+		if (nationalMaster == null) {
+			// ST4-1
+			logger.debug("National Identity not known");
+			return null;
+		}
+
+		// Create a person from the request to use in the verify process
+		Person searchPerson = new Person();
+		searchPerson.setDateOfBirth(psr.getDateOfBirth());
+		searchPerson.setGivenName(psr.getGivenName());
+		searchPerson.setSurname(psr.getSurname());
+		
+		// Get any records linked to this national id
+		List<LinkRecord> links = LinkRecordDAO.findByMaster(nationalMaster.getId());
+		
+		for (LinkRecord link : links ){
+				
+			// Find the UKRDC Master linked to this person (if any)
+			LinkRecord ukrdcLink = LinkRecordDAO.findByPersonAndType(link.getPersonId(), MasterRecord.UKRDC_TYPE);
+			
+			if (ukrdcLink != null) {
+				
+				// If found - we have identified a Person linked to a UKRDC Number AND by National Id to the incoming Person
+				//            Does the incoming Person verify against the UKRDC Master
+				MasterRecord ukrdcMaster = MasterRecordDAO.get(ukrdcLink.getMasterId());
+				
+				boolean verified = verifyMatch(searchPerson, ukrdcMaster);
+				if (verified) {
+					// ST1-1 / ST1-3
+					ukrdcId = ukrdcMaster.getNationalId();
+				} else {
+					// ST1-2 / ST1-4 / ST1-5
+				}
+		
+			} else {
+				// ST5-1 
+				logger.debug("No UKRDC Number found for person linked by National Id");
+			}
+
+		}
+		
+		return ukrdcId;
+	}
+	
+	/**
 	 *  Created for the UKRDC this is a combined createOrUpdate. This method updates the person, the master (as appropriate) and the link records ( as appropriate)
 	 *  
 	 * @param person
