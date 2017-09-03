@@ -15,6 +15,11 @@ public class LinkRecord {
 	private int masterId;
 	private int personId;
 	
+	private int linkType;
+	private int linkCode;
+	private String linkDesc;
+	private String updatedBy;
+	
 	public int getId() {
 		return id;
 	}
@@ -41,6 +46,34 @@ public class LinkRecord {
 	}
 	public LinkRecord setPersonId(int personId) {
 		this.personId = personId;
+		return this;
+	}
+	public int getLinkType() {
+		return linkType;
+	}
+	public LinkRecord setLinkType(int linkType) {
+		this.linkType = linkType;
+		return this;
+	}
+	public int getLinkCode() {
+		return linkCode;
+	}
+	public LinkRecord setLinkCode(int linkCode) {
+		this.linkCode = linkCode;
+		return this;
+	}
+	public String getLinkDesc() {
+		return linkDesc;
+	}
+	public LinkRecord setLinkDesc(String linkDesc) {
+		this.linkDesc = linkDesc;
+		return this;
+	}
+	public String getUpdatedBy() {
+		return updatedBy;
+	}
+	public LinkRecord setUpdatedBy(String updatedBy) {
+		this.updatedBy = updatedBy;
 		return this;
 	}
 	

@@ -7,6 +7,10 @@ CREATE TABLE jtrace.linkrecord
   id serial NOT NULL,
   personid integer NOT NULL,
   masterid integer NOT NULL,
+  linktype integer NOT NULL,
+  linkcode integer NOT NULL,
+  linkdesc character varying(200) ,
+  updatedBy character varying(20) ,
   lastupdated timestamp without time zone NOT NULL
 )
 WITH (

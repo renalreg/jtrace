@@ -32,6 +32,7 @@ public class MasterRecordTest {
 		MasterRecordDAO.deleteByNationalId("NHS0000007","NHS");
 		MasterRecordDAO.deleteByNationalId("NHS0000008","NHS");
 		MasterRecordDAO.deleteByNationalId("NHS0000009","NHS");
+		MasterRecordDAO.deleteByNationalId("NHS0000010","NHS");
 	}
 	
 	@Test
@@ -39,7 +40,25 @@ public class MasterRecordTest {
 		MasterRecord mr = new MasterRecord();
 		mr.setDateOfBirth(getDate("1962-08-31")).setGender("M");
 		mr.setGivenName("Nick").setSurname("Jones");
+		mr.setNationalId("NHS0000011").setNationalIdType("NHS");
+		mr.setEffectiveDate(getDate("2017-08-22"));
+		MasterRecordDAO.create(mr);
+		MasterRecord mr2 = MasterRecordDAO.findByNationalId("NHS0000011","NHS");
+		assert(mr2!=null);
+		MasterRecordDAO.delete(mr);
+		MasterRecord mr3 = MasterRecordDAO.findByNationalId("NHS0000011","NHS");
+		assert(mr3==null);
+		MasterRecord mr4 = MasterRecordDAO.get(mr.getId());
+		assert(mr4==null);
+	}
+
+	@Test
+	public void testDeleteByNationalId() throws MpiException {
+		MasterRecord mr = new MasterRecord();
+		mr.setDateOfBirth(getDate("1962-08-31")).setGender("M");
+		mr.setGivenName("Nick").setSurname("Jones");
 		mr.setNationalId("NHS0000004").setNationalIdType("NHS");
+		mr.setEffectiveDate(getDate("2017-08-22"));
 		MasterRecordDAO.create(mr);
 		assert(true);
 		MasterRecord mr2 = MasterRecordDAO.findByNationalId("NHS0000004","NHS");
@@ -49,15 +68,15 @@ public class MasterRecordTest {
 		MasterRecord mr3 = MasterRecordDAO.findByNationalId("NHS0000004","NHS");
 		assert(mr3==null);
 	}
-
 	@Test
 	public void testCreate() throws MpiException {
 		MasterRecord mr = new MasterRecord();
 		mr.setDateOfBirth(getDate("1962-08-31")).setGender("M");
 		mr.setGivenName("Nick").setSurname("Jones");
 		mr.setNationalId("NHS0000001").setNationalIdType("NHS");
+		mr.setEffectiveDate(getDate("2017-08-22"));
 		MasterRecordDAO.create(mr);
-		assert(true);
+		assert(mr.getId()>0);
 	}
 
 	@Test
@@ -65,7 +84,8 @@ public class MasterRecordTest {
 		MasterRecord mr = new MasterRecord();
 		mr.setDateOfBirth(getDate("1962-08-31")).setGender("M");
 		mr.setGivenName("Nick").setSurname("Jones");
-		mr.setNationalId("NHS9000001").setNationalIdType("NHS");
+		mr.setNationalId("NHS0000009").setNationalIdType("NHS");
+		mr.setEffectiveDate(getDate("2017-08-22"));
 		MasterRecordDAO.create(mr);
 		assert(true);
 		
@@ -78,6 +98,9 @@ public class MasterRecordTest {
 		assert(mr2.getNationalId().equals(mr.getNationalId()));
 		assert(mr2.getNationalIdType().trim().equals(mr.getNationalIdType().trim()));
 		assert(mr2.getLastUpdated().compareTo(mr.getLastUpdated())==0);
+		assert(mr2.getEffectiveDate().compareTo(mr.getEffectiveDate())==0);
+		assert(mr2.getStatus()==mr.getStatus());
+		assert(mr2.getStatus()==MasterRecord.OK);
 		
 	}
 
@@ -87,11 +110,13 @@ public class MasterRecordTest {
 		mr.setDateOfBirth(getDate("1962-08-31")).setGender("M");
 		mr.setGivenName("Nick").setSurname("Jones");
 		mr.setNationalId("NHS0000005").setNationalIdType("NHS");
+		mr.setEffectiveDate(getDate("2017-08-22"));
 		MasterRecordDAO.create(mr);
 		assert(true);
 		
 		mr.setGender("F");
 		mr.setGivenName("Nicholas").setSurname("James");
+		mr.setEffectiveDate(getDate("2017-08-24"));
 		MasterRecordDAO.update(mr);
 		assert(true);
 		
@@ -104,7 +129,39 @@ public class MasterRecordTest {
 		assert(mr2.getNationalId().equals(mr.getNationalId()));
 		assert(mr2.getNationalIdType().trim().equals(mr.getNationalIdType().trim()));
 		assert(mr2.getLastUpdated().compareTo(mr.getLastUpdated())==0);
+		assert(mr2.getEffectiveDate().compareTo(mr.getEffectiveDate())==0);
+		assert(mr2.getStatus()==mr.getStatus());
+		assert(mr2.getStatus()==MasterRecord.OK);
+	
+	}
+
+	@Test
+	public void testUpdateInvestigate() throws MpiException {
+		MasterRecord mr = new MasterRecord();
+		mr.setDateOfBirth(getDate("1962-08-31")).setGender("M");
+		mr.setGivenName("Nick").setSurname("Jones");
+		mr.setNationalId("NHS0000010").setNationalIdType("NHS");
+		mr.setEffectiveDate(getDate("2017-08-22"));
+		MasterRecordDAO.create(mr);
+		assert(true);
 		
+		mr.setStatus(MasterRecord.INVESTIGATE);
+		MasterRecordDAO.update(mr);
+		assert(true);
+		
+		MasterRecord mr2 = MasterRecordDAO.findByNationalId("NHS0000010","NHS");
+		assert(mr2.getId()==(mr.getId()));
+		assert(mr2.getDateOfBirth().compareTo(mr.getDateOfBirth())==0);
+		assert(mr2.getGender().equals(mr.getGender()));
+		assert(mr2.getGivenName().equals(mr.getGivenName()));
+		assert(mr2.getSurname().equals(mr.getSurname()));
+		assert(mr2.getNationalId().equals(mr.getNationalId()));
+		assert(mr2.getNationalIdType().trim().equals(mr.getNationalIdType().trim()));
+		assert(mr2.getLastUpdated().compareTo(mr.getLastUpdated())==0);
+		assert(mr2.getEffectiveDate().compareTo(mr.getEffectiveDate())==0);
+		assert(mr2.getStatus()==mr.getStatus());
+		assert(mr2.getStatus()==MasterRecord.INVESTIGATE);
+	
 	}
 	
 	@Test
@@ -112,6 +169,7 @@ public class MasterRecordTest {
 		MasterRecord mr = new MasterRecord();
 		mr.setDateOfBirth(getDate("1962-08-31")).setGender("M");
 		mr.setGivenName("Nick").setSurname("Jones");
+		mr.setEffectiveDate(getDate("2017-08-22"));
 		exception.expect(MpiException.class);
 		MasterRecordDAO.create(mr);
 		assert(true);
@@ -123,6 +181,7 @@ public class MasterRecordTest {
 		mr.setDateOfBirth(getDate("1962-08-31")).setGender("M");
 		mr.setGivenName("Nick").setSurname("Jones");
 		mr.setNationalId("NHS0000002").setNationalIdType("NHS");
+		mr.setEffectiveDate(getDate("2017-08-22"));
 		MasterRecordDAO.create(mr);
 		assert(true);
 		
@@ -137,6 +196,7 @@ public class MasterRecordTest {
 		mr.setDateOfBirth(getDate("1962-08-31")).setGender("M");
 		mr.setGivenName("Nick").setSurname("Jones");
 		mr.setNationalId("NHS0000003").setNationalIdType("NHS");
+		mr.setEffectiveDate(getDate("2017-08-22"));
 		MasterRecordDAO.create(mr);
 		assert(true);
 		
@@ -149,6 +209,9 @@ public class MasterRecordTest {
 		assert(mr2.getNationalId().equals(mr.getNationalId()));
 		assert(mr2.getNationalIdType().trim().equals(mr.getNationalIdType().trim()));
 		assert(mr2.getLastUpdated().compareTo(mr.getLastUpdated())==0);
+		assert(mr2.getEffectiveDate().compareTo(mr.getEffectiveDate())==0);
+		assert(mr2.getStatus()==mr.getStatus());
+		assert(mr2.getStatus()==MasterRecord.OK);
 	}
 
 	@Test
@@ -158,6 +221,7 @@ public class MasterRecordTest {
 		mr.setDateOfBirth(getDate("1962-08-31")).setGender("M");
 		mr.setGivenName("BILL").setSurname("SMITH");
 		mr.setNationalId("NHS0000006").setNationalIdType("NHS");
+		mr.setEffectiveDate(getDate("2017-08-22"));
 		MasterRecordDAO.create(mr);
 		assert(true);
 		
@@ -171,6 +235,10 @@ public class MasterRecordTest {
 		assert(mr2.getDateOfBirth().compareTo(mr.getDateOfBirth())==0);
 		assert(mr2.getGivenName().equals(mr.getGivenName()));
 		assert(mr2.getSurname().equals(mr.getSurname()));
+		assert(mr2.getLastUpdated().compareTo(mr.getLastUpdated())==0);
+		assert(mr2.getEffectiveDate().compareTo(mr.getEffectiveDate())==0);
+		assert(mr2.getStatus()==mr.getStatus());
+		assert(mr2.getStatus()==MasterRecord.OK);
 	}
 	
 	@Test
@@ -180,11 +248,13 @@ public class MasterRecordTest {
 		mr.setDateOfBirth(getDate("1962-08-31")).setGender("M");
 		mr.setGivenName("BRIAN").setSurname("MAY");
 		mr.setNationalId("NHS0000007").setNationalIdType("NHS");
+		mr.setEffectiveDate(getDate("2017-08-22"));
 		MasterRecordDAO.create(mr);
 		assert(true);
 		mr.setDateOfBirth(getDate("1962-08-31")).setGender("M");
 		mr.setGivenName("BRIAN").setSurname("MAY");
 		mr.setNationalId("NHS0000008").setNationalIdType("NHS");
+		mr.setEffectiveDate(getDate("2017-08-22"));
 		MasterRecordDAO.create(mr);
 		assert(true);
 		
@@ -197,6 +267,10 @@ public class MasterRecordTest {
 			assert(mr2.getDateOfBirth().compareTo(mr.getDateOfBirth())==0);
 			assert(mr2.getGivenName().equals(mr.getGivenName()));
 			assert(mr2.getSurname().equals(mr.getSurname()));
+			assert(mr2.getLastUpdated().compareTo(mr.getLastUpdated())==0);
+			assert(mr2.getEffectiveDate().compareTo(mr.getEffectiveDate())==0);
+			assert(mr2.getStatus()==mr.getStatus());
+			assert(mr2.getStatus()==MasterRecord.OK);
 		}
 
 	}

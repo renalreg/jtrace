@@ -33,8 +33,8 @@ public class LinkRecordDAO {
 	public static void create(LinkRecord link) throws MpiException {
 		
 		String insertSQL = "Insert into jtrace.linkrecord "+
-				"(masterid, personid, lastupdated)"+
-				" values (?,?,?)";
+				"(masterid, personid, lastupdated, linktype, linkcode, linkdesc, updatedby)"+
+				" values (?,?,?,?,?,?,?)";
 		
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;
@@ -47,6 +47,10 @@ public class LinkRecordDAO {
 			preparedStatement.setInt(1, link.getMasterId());
 			preparedStatement.setInt(2, link.getPersonId());
 			preparedStatement.setTimestamp(3,new Timestamp(link.getLastUpdated().getTime()));
+			preparedStatement.setInt(4, link.getLinkType());
+			preparedStatement.setInt(5, link.getLinkCode());
+			preparedStatement.setString(6, link.getLinkDesc());
+			preparedStatement.setString(7, link.getUpdatedBy());
 
 			int affectedRows = preparedStatement.executeUpdate();
 			logger.debug("Affected Rows:"+affectedRows);
@@ -181,10 +185,7 @@ public class LinkRecordDAO {
 			rs = preparedStatement.executeQuery();
 			
 			if (rs.next()){
-				int mid = rs.getInt("masterid");
-				int pid = rs.getInt("personid");
-				link = new LinkRecord(mid,pid);
-				link.setId(rs.getInt("id"));
+				link = buildLinkRecord(rs);
 			}
 			
 		} catch (SQLException e) {
@@ -238,16 +239,12 @@ public class LinkRecordDAO {
 			rs = preparedStatement.executeQuery();
 			
 			if (rs.next()){
-				int pid = rs.getInt("personid");
-				int mid = rs.getInt("masterid");
-				link = new LinkRecord(mid,pid);
-				link.setLastUpdated(rs.getTimestamp("lastUpdated"));
-				link.setId(rs.getInt("id"));
+				link = buildLinkRecord(rs);
 			}
 			
 		} catch (Exception e) {
-			logger.error("Failure querying WorkItem.",e);
-			throw new MpiException("Failure querying WorkItem. "+e.getMessage());
+			logger.error("Failure querying LinkRecord.",e);
+			throw new MpiException("Failure querying LinkRecord. "+e.getMessage());
 		} finally {
 
 			if (rs != null) {
@@ -294,12 +291,7 @@ public class LinkRecordDAO {
 			rs = preparedStatement.executeQuery();
 			
 			while (rs.next()){
-				int pid = rs.getInt("personid");
-				int mid = rs.getInt("masterid");
-				LinkRecord link = new LinkRecord(mid,pid);
-				link.setLastUpdated(rs.getTimestamp("lastUpdated"));
-				link.setId(rs.getInt("id"));
-				
+				LinkRecord link = buildLinkRecord(rs);
 				linkRecords.add(link);
 			}
 			
@@ -352,12 +344,7 @@ public class LinkRecordDAO {
 			rs = preparedStatement.executeQuery();
 			
 			while (rs.next()){
-				int pid = rs.getInt("personid");
-				int mid = rs.getInt("masterid");
-				LinkRecord link = new LinkRecord(mid,pid);
-				link.setLastUpdated(rs.getTimestamp("lastUpdated"));
-				link.setId(rs.getInt("id"));
-				
+				LinkRecord link = buildLinkRecord(rs);
 				linkRecords.add(link);
 			}
 			
@@ -387,6 +374,30 @@ public class LinkRecordDAO {
 		}
 		
 		return linkRecords;
+
+	}		
+	
+	private static LinkRecord buildLinkRecord(ResultSet rs) throws MpiException {
+
+		LinkRecord linkRecord = null;
+		try {
+
+				int pid = rs.getInt("personid");
+				int mid = rs.getInt("masterid");
+				linkRecord = new LinkRecord(mid,pid);
+				linkRecord.setLastUpdated(rs.getTimestamp("lastupdated"));
+				linkRecord.setId(rs.getInt("id"));
+				linkRecord.setLinkType(rs.getInt("linktype"));
+				linkRecord.setLinkCode(rs.getInt("linkcode"));
+				linkRecord.setUpdatedBy(rs.getString("linkdesc"));
+				linkRecord.setUpdatedBy(rs.getString("updatedby"));
+
+		} catch (Exception e) {
+			logger.error("Failure querying LinkRecord.",e);
+			throw new MpiException("Failure querying LinkRecord. "+e.getMessage());
+		} 
+		
+		return linkRecord;
 
 	}		
 }

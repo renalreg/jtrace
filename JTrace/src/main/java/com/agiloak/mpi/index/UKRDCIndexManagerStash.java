@@ -129,7 +129,7 @@ public class UKRDCIndexManagerStash {
 					LinkRecordDAO.create(link);
 				} else {
 					logger.debug("Record not verified - creating work item");
-					WorkItem work = new WorkItem(WorkItem.TYPE_NOLINK_DEMOG_NOT_VERIFIED, person.getId(), "Master Record: "+master.getId());
+					WorkItem work = new WorkItem(WorkItem.TYPE_INVESTIGATE_DEMOG_NOT_VERIFIED, person.getId(), "Master Record: "+master.getId());
 					WorkItemDAO.create(work);
 				}
 
@@ -258,7 +258,7 @@ public class UKRDCIndexManagerStash {
 					LinkRecord link = new LinkRecord(master.getId(), linkedPerson.getId());
 					LinkRecordDAO.delete(link);
 					
-				    WorkItem work = new WorkItem(WorkItem.TYPE_DELINK_DUE_TO_CHANGED_DEMOG, linkedPerson.getId(), "Master Record: "+master.getId());
+				    WorkItem work = new WorkItem(WorkItem.TYPE_INVESTIGATE_DUE_TO_CHANGED_DEMOG, linkedPerson.getId(), "Master Record: "+master.getId());
 				    WorkItemDAO.create(work);
 				} else {
 					logger.debug("Link still valid. PERSONID:"+linkedPerson.getId());

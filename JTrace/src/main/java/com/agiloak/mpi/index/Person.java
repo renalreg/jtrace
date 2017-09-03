@@ -7,6 +7,8 @@ import java.util.List;
 public class Person {
 
 	private int id;
+	private Date effectiveDate;
+	
 	private String localId;
 	private String localIdType;
 	private String originator;
@@ -49,6 +51,15 @@ public class Person {
 
 	public String getLocalId() {
 		return localId;
+	}
+
+	public Date getEffectiveDate() {
+		return effectiveDate;
+	}
+
+	public Person setEffectiveDate(Date effectiveDate) {
+		this.effectiveDate = effectiveDate;
+		return this;
 	}
 
 	public Person setLocalId(String localId) {

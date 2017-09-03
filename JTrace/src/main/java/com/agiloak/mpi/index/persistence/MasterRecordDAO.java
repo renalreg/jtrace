@@ -41,15 +41,7 @@ public class MasterRecordDAO {
 			rs = preparedStatement.executeQuery();
 			
 			if (rs.next()){
-				master = new MasterRecord();
-				master.setId(rs.getInt("id"));
-				master.setNationalId(rs.getString("nationalid"));
-				master.setNationalIdType(rs.getString("nationalidtype"));
-				master.setSurname(rs.getString("surname"));
-				master.setGivenName(rs.getString("givenname"));
-				master.setGender(rs.getString("gender"));
-				master.setDateOfBirth(rs.getDate("dateofbirth"));
-				master.setLastUpdated(rs.getTimestamp("lastupdated"));
+				master = buildMasterRecord(rs);
 			}
 			
 		} catch (Exception e) {
@@ -102,15 +94,7 @@ public class MasterRecordDAO {
 			rs = preparedStatement.executeQuery();
 			
 			if (rs.next()){
-				master = new MasterRecord();
-				master.setId(rs.getInt("id"));
-				master.setNationalId(rs.getString("nationalid"));
-				master.setNationalIdType(rs.getString("nationalidtype"));
-				master.setSurname(rs.getString("surname"));
-				master.setGivenName(rs.getString("givenname"));
-				master.setGender(rs.getString("gender"));
-				master.setDateOfBirth(rs.getDate("dateofbirth"));
-				master.setLastUpdated(rs.getTimestamp("lastupdated"));
+				master = buildMasterRecord(rs);
 			}
 			
 		} catch (Exception e) {
@@ -167,16 +151,7 @@ public class MasterRecordDAO {
 			rs = preparedStatement.executeQuery();
 			
 			while (rs.next()){
-				MasterRecord master = new MasterRecord();
-				master.setId(rs.getInt("id"));
-				master.setNationalId(rs.getString("nationalid"));
-				master.setNationalIdType(rs.getString("nationalidtype"));
-				master.setSurname(rs.getString("surname"));
-				master.setGivenName(rs.getString("givenname"));
-				master.setGender(rs.getString("gender"));
-				master.setDateOfBirth(rs.getDate("dateofbirth"));
-				master.setLastUpdated(rs.getTimestamp("lastupdated"));
-				
+				MasterRecord master = buildMasterRecord(rs);
 				masterRecords.add(master);
 			}
 			
@@ -212,8 +187,8 @@ public class MasterRecordDAO {
 	public static void create(MasterRecord master) throws MpiException {
 		
 		String insertSQL = "Insert into jtrace.masterrecord "+
-				"(dateofbirth, gender, givenname, surname, lastupdated, nationalid, nationalidtype)"+
-				" values (?,?,?,?,?,?,?)";
+				"(dateofbirth, gender, givenname, surname, lastupdated, nationalid, nationalidtype, status, effectivedate)"+
+				" values (?,?,?,?,?,?,?,?,?)";
 		
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;
@@ -223,13 +198,7 @@ public class MasterRecordDAO {
 			conn = SimpleConnectionManager.getDBConnection();
 			
 			preparedStatement = conn.prepareStatement(insertSQL, Statement.RETURN_GENERATED_KEYS);
-			preparedStatement.setDate(1, new java.sql.Date(master.getDateOfBirth().getTime()));
-			preparedStatement.setString(2, master.getGender());
-			preparedStatement.setString(3, master.getGivenName());
-			preparedStatement.setString(4, master.getSurname());
-			preparedStatement.setTimestamp(5,new Timestamp(master.getLastUpdated().getTime()));
-			preparedStatement.setString(6, master.getNationalId());
-			preparedStatement.setString(7, master.getNationalIdType());
+			populateStatement(preparedStatement, master);
 
 			int affectedRows = preparedStatement.executeUpdate();
 			logger.debug("Affected Rows:"+affectedRows);
@@ -267,7 +236,8 @@ public class MasterRecordDAO {
 	public static void update(MasterRecord master) throws MpiException {
 		
 		String updateSQL = "Update jtrace.masterrecord "+
-				"set dateofbirth=?, gender=?, givenname=?, surname=?, lastupdated=? where id =? ";
+				"set dateofbirth=?, gender=?, givenname=?, surname=?, lastupdated=?, "+
+				   " nationalid=?, nationalidtype=?, status=?, effectivedate=? where id =? ";
 		
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;
@@ -277,12 +247,8 @@ public class MasterRecordDAO {
 			conn = SimpleConnectionManager.getDBConnection();
 			
 			preparedStatement = conn.prepareStatement(updateSQL);
-			preparedStatement.setDate(1, new java.sql.Date(master.getDateOfBirth().getTime()));
-			preparedStatement.setString(2, master.getGender());
-			preparedStatement.setString(3, master.getGivenName());
-			preparedStatement.setString(4, master.getSurname());
-			preparedStatement.setTimestamp(5,new Timestamp(master.getLastUpdated().getTime()));
-			preparedStatement.setInt(6, master.getId());
+			populateStatement(preparedStatement, master);
+			preparedStatement.setInt(10, master.getId());
 
 			int affectedRows = preparedStatement.executeUpdate();
 			logger.debug("Affected Rows:"+affectedRows);
@@ -306,6 +272,41 @@ public class MasterRecordDAO {
 
 	}
 
+	public static void delete(MasterRecord master) throws MpiException {
+		
+		String deleteSQL = "delete from jtrace.masterrecord where id = ? ";
+		
+		PreparedStatement preparedStatement = null;
+		Connection conn = null;
+		
+		try {
+
+			conn = SimpleConnectionManager.getDBConnection();
+			
+			preparedStatement = conn.prepareStatement(deleteSQL);
+			conn = SimpleConnectionManager.getDBConnection();
+			preparedStatement.setInt(1, master.getId());
+			int affectedRows = preparedStatement.executeUpdate();
+			logger.debug("Affected Rows:"+affectedRows);
+			
+		} catch (Exception e) {
+			logger.error("Failure deleting MasterRecord:",e);
+			throw new MpiException("MasterRecord delete failed");
+		} finally {
+
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing Prepared Statement:",e);
+					throw new MpiException("MasterRecord delete failed");
+				}
+			}
+
+		}
+
+	}
+	
 	public static void deleteByNationalId(String nationalId, String nationalIdType) throws MpiException {
 		
 		String deleteSQL = "delete from jtrace.masterrecord where nationalid = ? and nationalidtype = ? ";
@@ -342,4 +343,41 @@ public class MasterRecordDAO {
 
 	}
 	
+	private static MasterRecord buildMasterRecord(ResultSet rs) throws MpiException {
+
+		MasterRecord master = null;
+		try {
+
+			master = new MasterRecord();
+			master.setId(rs.getInt("id"));
+			master.setNationalId(rs.getString("nationalid"));
+			master.setNationalIdType(rs.getString("nationalidtype"));
+			master.setSurname(rs.getString("surname"));
+			master.setGivenName(rs.getString("givenname"));
+			master.setGender(rs.getString("gender"));
+			master.setDateOfBirth(rs.getDate("dateofbirth"));
+			master.setLastUpdated(rs.getTimestamp("lastupdated"));
+			master.setStatus(rs.getInt("status"));
+			master.setEffectiveDate(rs.getTimestamp("effectivedate"));
+
+		} catch (Exception e) {
+			logger.error("Failure querying MasterRecord.",e);
+			throw new MpiException("Failure querying MasterRecord. "+e.getMessage());
+		} 
+		
+		return master;
+
+	}
+	
+	private static void populateStatement(PreparedStatement ps, MasterRecord master) throws SQLException {
+		ps.setDate(1, new java.sql.Date(master.getDateOfBirth().getTime()));
+		ps.setString(2, master.getGender());
+		ps.setString(3, master.getGivenName());
+		ps.setString(4, master.getSurname());
+		ps.setTimestamp(5,new Timestamp(master.getLastUpdated().getTime()));
+		ps.setString(6, master.getNationalId());
+		ps.setString(7, master.getNationalIdType());
+		ps.setInt(8, master.getStatus());
+		ps.setTimestamp(9,new Timestamp(master.getEffectiveDate().getTime()));
+	}
 }

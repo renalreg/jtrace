@@ -99,7 +99,7 @@ public class UKRDCIndexManagerNewRecordSystemTestStash {
 		assert(links.size()==0);
 		items = WorkItemDAO.findByPerson(person.getId());
 		assert(items.size()==1);
-		assert(items.get(0).getType()==WorkItem.TYPE_NOLINK_DEMOG_NOT_VERIFIED);
+		assert(items.get(0).getType()==WorkItem.TYPE_INVESTIGATE_DEMOG_NOT_VERIFIED);
 
 		// TEST3 - New + NationalId + NationalId exists + No match (DOB 2 part and given name mismatch). New Person & work item about mismatched Master and near algorithmic match
 		Person p4 = new Person().setDateOfBirth(d2).setSurname("JONES").setGivenName("MICHOLAS").setPrimaryIdType("NHS").setPrimaryId("NHS0000001").setGender("1");
@@ -115,7 +115,7 @@ public class UKRDCIndexManagerNewRecordSystemTestStash {
 		assert(links.size()==0);
 		items = WorkItemDAO.findByPerson(person.getId());
 		assert(items.size()==2);
-		assert(items.get(0).getType()==WorkItem.TYPE_NOLINK_DEMOG_NOT_VERIFIED);
+		assert(items.get(0).getType()==WorkItem.TYPE_INVESTIGATE_DEMOG_NOT_VERIFIED);
 		assert(items.get(1).getType()==WorkItem.TYPE_DEMOGS_NEAR_MATCH);
 		
 	}

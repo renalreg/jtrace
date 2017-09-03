@@ -8,8 +8,8 @@ public class WorkItem {
 	public final static int STATUS_WIP = 2;
 	public final static int STATUS_CLOSED = 3;
 
-	public final static int TYPE_DELINK_DUE_TO_CHANGED_DEMOG = 1;
-	public final static int TYPE_NOLINK_DEMOG_NOT_VERIFIED = 2;
+	public final static int TYPE_INVESTIGATE_DUE_TO_CHANGED_DEMOG = 1;
+	public final static int TYPE_INVESTIGATE_DEMOG_NOT_VERIFIED = 2;
 	public final static int TYPE_DEMOGS_MATCH_OTHER_NATIONAL_ID = 3;
 	public final static int TYPE_DEMOGS_NEAR_MATCH = 4;
 

@@ -25,7 +25,7 @@ public class WorkItemTest {
 	@Test
 	public void testCreate() throws MpiException {
 		WorkItemManager wim = new WorkItemManager();
-		WorkItem wi1 = wim.create(WorkItem.TYPE_DELINK_DUE_TO_CHANGED_DEMOG, 1, "test");
+		WorkItem wi1 = wim.create(WorkItem.TYPE_INVESTIGATE_DUE_TO_CHANGED_DEMOG, 1, "test");
 		assert(true);
 
 		List<WorkItem> workItems = wim.findByPerson(1);
@@ -43,8 +43,8 @@ public class WorkItemTest {
 	@Test
 	public void testDelete() throws MpiException {
 		WorkItemManager wim = new WorkItemManager();
-		wim.create(WorkItem.TYPE_DELINK_DUE_TO_CHANGED_DEMOG, 2, "test");
-		wim.create(WorkItem.TYPE_DELINK_DUE_TO_CHANGED_DEMOG, 2, "test2");
+		wim.create(WorkItem.TYPE_INVESTIGATE_DUE_TO_CHANGED_DEMOG, 2, "test");
+		wim.create(WorkItem.TYPE_INVESTIGATE_DUE_TO_CHANGED_DEMOG, 2, "test2");
 		assert(true);
 		List<WorkItem> workItems = wim.findByPerson(2);
 		assert(workItems.size()==2);
