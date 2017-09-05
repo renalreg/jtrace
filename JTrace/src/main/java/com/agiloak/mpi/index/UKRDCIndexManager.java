@@ -87,6 +87,42 @@ public class UKRDCIndexManager {
 		return ukrdcId;
 	}
 
+	private void validate(Person person) throws MpiException {
+		
+		if (person.getPrimaryIdType()!=null && person.getPrimaryIdType() != NationalIdentity.UKRR_TYPE) {
+			logger.error("If provided, the primaryIdType must be UKRR");
+			throw new MpiException("Invalid primary id type");
+		}
+		if (person.getSurname()==null || person.getSurname().length() < 2) {
+			logger.error("Surname must be at least 2 characters");
+			throw new MpiException("Surname must be at least 2 characters");
+		}
+		if (person.getGivenName()==null || person.getGivenName().length() < 1) {
+			logger.error("Given Name must be at least 1 charactera");
+			throw new MpiException("Given Name must be at least 1 character");
+		}
+		if (person.getGender()==null || person.getGender().length() < 1) {
+			logger.error("Gender must be at least 1 character");
+			throw new MpiException("Gender must be at least 1 character");
+		}
+		if (person.getDateOfBirth()==null) {
+			logger.error("Date Of Birth is mandatory");
+			throw new MpiException("Date Of Birth is mandatory");
+		}
+		if (person.getLocalId()==null || person.getLocalId().length() < 5) {
+			logger.error("LocalId must be at least 5 characters");
+			throw new MpiException("LocalId must be at least 5 characters");
+		}
+		if (person.getLocalIdType()==null || person.getLocalIdType().length() < 1) {
+			logger.error("Local Id must be present");
+			throw new MpiException("LocalId must be present");
+		}
+		if (person.getOriginator()==null || person.getOriginator().length() < 1) {
+			logger.error("Originator must be present");
+			throw new MpiException("Originator must be present");
+		}
+	}
+	
 	/**
 	 *  Created for the UKRDC this is a combined createOrUpdate. This method updates the person, the master (as appropriate) and the link records ( as appropriate)
 	 *  
@@ -100,10 +136,7 @@ public class UKRDCIndexManager {
 			person.setEffectiveDate(new Date());
 		}
 		
-		if (person.getPrimaryIdType()!=null && person.getPrimaryIdType() != NationalIdentity.UKRR_TYPE) {
-			logger.error("If provided, the primaryIdType must be UKRR");
-			throw new MpiException("Invalid primary id type");
-		}
+		validate(person);
 		
 		Person storedPerson = PersonDAO.findByLocalId(person.getLocalIdType(), person.getLocalId(), person.getOriginator());
 		if (storedPerson != null) {

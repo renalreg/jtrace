@@ -58,7 +58,7 @@ public class PatientRecordToPersonHelperUnitTest {
 
 		PatientRecord pr = getTestPatientRecord(originator, idBase);
 		
-		Person person = PatientRecordToPersonHelper.convertPatientRecordtoPerson(pr);
+		Person person = PatientRecordToPersonHelper.convertPatientRecordToPerson(pr);
 		
 		UKRDCIndexManager im = new UKRDCIndexManager();
 		im.createOrUpdate(person);

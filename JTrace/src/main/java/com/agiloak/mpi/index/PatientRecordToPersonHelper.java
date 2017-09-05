@@ -12,7 +12,7 @@ import com.agiloak.mpi.MpiException;
 
 public class PatientRecordToPersonHelper {
 
-	public static Person convertPatientRecordtoPerson(PatientRecord pr) throws MpiException {
+	public static Person convertPatientRecordToPerson(PatientRecord pr) throws MpiException {
 		Person person = new Person();
 		Patient patient = pr.getPatient();
 		person.setDateOfBirth(patient.getBirthTime());
