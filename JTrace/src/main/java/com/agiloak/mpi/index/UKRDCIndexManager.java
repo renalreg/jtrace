@@ -61,7 +61,7 @@ public class UKRDCIndexManager {
 		for (LinkRecord link : links ){
 				
 			// Find the UKRDC Master linked to this person (if any)
-			LinkRecord ukrdcLink = LinkRecordDAO.findByPersonAndType(link.getPersonId(), MasterRecord.UKRDC_TYPE);
+			LinkRecord ukrdcLink = LinkRecordDAO.findByPersonAndType(link.getPersonId(), NationalIdentity.UKRR_TYPE);
 			
 			if (ukrdcLink != null) {
 				
@@ -86,7 +86,7 @@ public class UKRDCIndexManager {
 		
 		return ukrdcId;
 	}
-	
+
 	/**
 	 *  Created for the UKRDC this is a combined createOrUpdate. This method updates the person, the master (as appropriate) and the link records ( as appropriate)
 	 *  
@@ -100,8 +100,8 @@ public class UKRDCIndexManager {
 			person.setEffectiveDate(new Date());
 		}
 		
-		if (person.getPrimaryIdType()!=null && person.getPrimaryIdType() != MasterRecord.UKRDC_TYPE) {
-			logger.error("If provided, the primaryIdType must be UKRDC");
+		if (person.getPrimaryIdType()!=null && person.getPrimaryIdType() != NationalIdentity.UKRR_TYPE) {
+			logger.error("If provided, the primaryIdType must be UKRR");
 			throw new MpiException("Invalid primary id type");
 		}
 		
@@ -132,7 +132,7 @@ public class UKRDCIndexManager {
 				MasterRecord master = MasterRecordDAO.get(link.getMasterId());
 				
 				// Don't process UKRDC links here - these will be updated later
-				if (!master.getNationalIdType().equals(MasterRecord.UKRDC_TYPE) ){
+				if (!master.getNationalIdType().equals(NationalIdentity.UKRR_TYPE) ){
 					// TEST:UT4-2
 
 					boolean found = false;
@@ -216,7 +216,7 @@ public class UKRDCIndexManager {
 		logger.debug("updateUKRDCLink");
 		
 		// Find current link to a UKRDC Master, if it exists
-		LinkRecord masterLink = LinkRecordDAO.findByPersonAndType(person.getId(), MasterRecord.UKRDC_TYPE);
+		LinkRecord masterLink = LinkRecordDAO.findByPersonAndType(person.getId(), NationalIdentity.UKRR_TYPE);
 		if (masterLink == null) {
 			// No current link - process as for new record
 			// TEST:UT1-1
@@ -360,7 +360,7 @@ public class UKRDCIndexManager {
 						if (link.getPersonId()!= person.getId()) {
 							
 							// Find the UKRDC Master linked to this person (if any)
-							LinkRecord ukrdcLink = LinkRecordDAO.findByPersonAndType(link.getPersonId(), "UKRDC");
+							LinkRecord ukrdcLink = LinkRecordDAO.findByPersonAndType(link.getPersonId(), NationalIdentity.UKRR_TYPE);
 							
 							if (ukrdcLink != null) {
 								

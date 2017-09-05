@@ -28,7 +28,7 @@ public class UKRDCIndexManagerTraceSystemTest {
 
 	}
 	
-	@Test
+	// @Test - Trace function currently switched off
 	public void testSimpleMatching() throws MpiException {
 
 		UKRDCIndexManager im = new UKRDCIndexManager();

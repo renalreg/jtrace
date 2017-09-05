@@ -1,6 +1,16 @@
 package com.agiloak.mpi.index;
 
 public class NationalIdentity {
+	 
+	public static final String NHS_TYPE = "NHS";
+	public static final String CHI_TYPE = "CHI";
+	public static final String HSC_TYPE = "HSC";
+	public static final String UKRR_TYPE = "UKRR";
+	public static final String SRR_TYPE = "SRR";
+	public static final String NHSBT_TYPE = "NHSBT";
+	public static final String RADAR_TYPE = "RADAR";
+	public static final String BAPN_TYPE = "BAPN";
+	public static final String LOCALHOSP = "LOCALHOSP";
 
 	public NationalIdentity() {
 	}
