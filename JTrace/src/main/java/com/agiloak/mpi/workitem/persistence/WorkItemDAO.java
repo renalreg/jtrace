@@ -24,8 +24,8 @@ public class WorkItemDAO {
 
 		
 		String insertSQL = "Insert into jtrace.workitem "+
-				"(personid, masterid, type, description, status, lastupdated)"+ 
-				" values (?,?,?,?,?,?)";
+				"(personid, masterid, type, description, status, lastupdated, updatedby, updatedesc)"+ 
+				" values (?,?,?,?,?,?,?,?)";
 		
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;
@@ -41,6 +41,8 @@ public class WorkItemDAO {
 			preparedStatement.setString(4, workItem.getDescription());
 			preparedStatement.setInt(5, workItem.getStatus());
 			preparedStatement.setTimestamp(6,new Timestamp(workItem.getLastUpdated().getTime()));
+			preparedStatement.setString(7, workItem.getUpdatedBy());
+			preparedStatement.setString(8, workItem.getUpdateDesc());
 
 			int affectedRows = preparedStatement.executeUpdate();
 			logger.debug("Affected Rows:"+affectedRows);
@@ -56,6 +58,50 @@ public class WorkItemDAO {
 	            }
 		    }
 		 
+		} catch (SQLException e) {
+			logger.error("Failure inserting WorkItem:",e);
+			throw new MpiException("WorkItem insert failed");
+
+		} finally {
+
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing Prepared Statement:",e);
+					throw new MpiException("WorkItem insert failed");
+				}
+			}
+
+		}
+
+	}
+	
+	public static void update(WorkItem workItem) throws MpiException {
+
+		
+		String updateSQL = "update jtrace.workitem "
+				+"set status =?, lastupdated=?, updatedby=?, updatedesc=? "
+				+"where personid=? and masterid=?"; 
+		
+		PreparedStatement preparedStatement = null;
+		Connection conn = null;
+		
+		try {
+
+			conn = SimpleConnectionManager.getDBConnection();
+			
+			preparedStatement = conn.prepareStatement(updateSQL);
+			preparedStatement.setInt(1, workItem.getStatus());
+			preparedStatement.setTimestamp(2,new Timestamp(workItem.getLastUpdated().getTime()));
+			preparedStatement.setString(3, workItem.getUpdatedBy());
+			preparedStatement.setString(4, workItem.getUpdateDesc());
+			preparedStatement.setInt(5, workItem.getPersonId());
+			preparedStatement.setInt(6, workItem.getMasterId());
+
+			int affectedRows = preparedStatement.executeUpdate();
+			logger.debug("Affected Rows:"+affectedRows);
+					 
 		} catch (SQLException e) {
 			logger.error("Failure inserting WorkItem:",e);
 			throw new MpiException("WorkItem insert failed");
@@ -139,6 +185,8 @@ public class WorkItemDAO {
 				item.setStatus(rs.getInt("status"));
 				item.setId(rs.getInt("id"));
 				item.setLastUpdated(rs.getTimestamp("lastUpdated"));
+				item.setUpdatedBy(rs.getString("updatedby"));
+				item.setUpdateDesc(rs.getString("updatedesc"));
 				
 				workItems.add(item);
 			}
@@ -200,6 +248,8 @@ public class WorkItemDAO {
 				workItem.setStatus(rs.getInt("status"));
 				workItem.setId(rs.getInt("id"));
 				workItem.setLastUpdated(rs.getTimestamp("lastUpdated"));
+				workItem.setUpdatedBy(rs.getString("updatedby"));
+				workItem.setUpdateDesc(rs.getString("updatedesc"));
 			}
 			
 		} catch (Exception e) {

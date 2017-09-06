@@ -21,6 +21,40 @@ public class UKRDCIndexManager {
 	private final static Logger logger = LoggerFactory.getLogger(UKRDCIndexManager.class);
 
 	/**
+	 * Allow manual linking of records
+	 * @param patientId
+	 * @param masterId
+	 * @param user
+	 * @param linkCode
+	 * @param linkDesc
+	 */
+	public void link(int personId, int masterId, String user, int linkCode, String linkDesc) throws MpiException {
+
+		if (personId==0 || masterId==0 || linkCode==0 || user==null || user.length()==0 || 
+			linkDesc==null || linkDesc.length()==0) {
+			// LT1-2
+			logger.error("Incomplete parameters for link");
+			throw new MpiException("Incomplete parameters for link");
+		}
+		
+		LinkRecord link = LinkRecordDAO.find(masterId, personId);
+		
+		if (link!=null) {
+			// LT1-3
+			// TODO - Consider if this error is appropriate or if this should be idempotent
+			logger.error("Link already exists");
+			throw new MpiException("Link already exists");
+		}
+		
+		// LT1-1
+		link = new LinkRecord(masterId, personId);
+		link.setUpdatedBy(user).setLinkCode(linkCode).setLinkDesc(linkDesc);
+		link.setLinkType(LinkRecord.MANUAL_TYPE);
+		LinkRecordDAO.create(link);
+		
+	}
+	
+	/**
 	 * Search for a UKRDC Identity for these patient details.
 	 * @param psr
 	 * @return

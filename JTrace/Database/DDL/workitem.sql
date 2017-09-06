@@ -8,9 +8,11 @@ CREATE TABLE jtrace.workitem
     personid integer NOT NULL,
     masterid integer NOT NULL,
     type integer NOT NULL,
-    description character varying(100) COLLATE pg_catalog."default" NOT NULL,
+    description character varying(100) NOT NULL,
     status integer NOT NULL,
     lastupdated timestamp NOT NULL,
+    updatedBy character varying(20) ,
+    updatedesc character varying(100),
     CONSTRAINT workitem_pkey PRIMARY KEY (id)
 )
 WITH (

@@ -32,6 +32,8 @@ public class WorkItem {
 	private int personId;
 	private int masterId;
 	private int type;
+	private String updatedBy;
+	private String updateDesc;
 	
 	public int getId() {
 		return id;
@@ -82,5 +84,18 @@ public class WorkItem {
 		this.status = status;
 		return this;
 	}
+	public String getUpdatedBy() {
+		return updatedBy;
+	}
+	public void setUpdatedBy(String updatedBy) {
+		this.updatedBy = updatedBy;
+	}
+	public String getUpdateDesc() {
+		return updateDesc;
+	}
+	public void setUpdateDesc(String updateDesc) {
+		this.updateDesc = updateDesc;
+	}
+
 	
 }

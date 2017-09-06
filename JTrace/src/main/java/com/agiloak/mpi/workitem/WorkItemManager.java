@@ -28,7 +28,7 @@ public class WorkItemManager {
 		if ( (desc==null) || (desc.length()==0) ) {
 			throw new MpiException("Description must be provided");
 		}
-		logger.debug("New Work Item:"+desc);
+		logger.debug("New Work Item");
 		
 		WorkItem workItem = WorkItemDAO.findByPersonAndMaster(personId, masterId);
 		if (workItem == null) {
@@ -40,6 +40,42 @@ public class WorkItemManager {
 		
 	}
 
+	public WorkItem update(WorkItem item) throws MpiException {
+
+		logger.debug("Updating Work Item");
+
+		if ( item.getPersonId()==0 ) {
+			throw new MpiException("Person Id must be provided");
+		}
+		if ( item.getMasterId()==0 ) {
+			throw new MpiException("Master Id must be provided");
+		}
+		if ( (item.getDescription()==null) || (item.getDescription().length()==0) ) {
+			throw new MpiException("Description must be provided");
+		}
+		if ( item.getUpdatedBy()==null || (item.getUpdatedBy().length()==0)) {
+			throw new MpiException("Updated By user must be provided");
+		}
+		if ( item.getUpdateDesc()==null || (item.getUpdateDesc().length()==0)) {
+			throw new MpiException("Update Description must be provided");
+		}
+		
+		WorkItem workItem = WorkItemDAO.findByPersonAndMaster(item.getPersonId(), item.getMasterId());
+		if (workItem == null) {
+			logger.error("Cannot update - work item does not exist");
+			throw new MpiException("Cannot update - work item does not exist");
+		} else {
+			//only update the allowable fields
+			workItem.setLastUpdated(item.getLastUpdated());
+			workItem.setStatus(item.getStatus());
+			workItem.setUpdatedBy(item.getUpdatedBy());
+			workItem.setUpdateDesc(item.getUpdateDesc());
+			
+			WorkItemDAO.update(workItem);
+		}
+		
+		return item;
+	}
 
 	public List<WorkItem> findByPerson(int personId) throws MpiException {
 
