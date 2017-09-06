@@ -9,27 +9,34 @@ import com.agiloak.mpi.MpiException;
 import com.agiloak.mpi.workitem.persistence.WorkItemDAO;
 
 /*
- * Simple manager to enforce business rules before saving the entity
+ * Simple manager to enforce business rules before saving the entity. 
+ * This is exposed to the UI and UKRDCIndexManager instead of the WorkItemDAO. 
  */
+
 public class WorkItemManager {
 	
 	private final static Logger logger = LoggerFactory.getLogger(WorkItemManager.class);
 	
-	public WorkItem create(int type, int personId, String desc) throws MpiException {
+	public WorkItem create(int type, int personId, int masterId, String desc) throws MpiException {
 
 		if ( personId==0 ) {
 			throw new MpiException("Person Id must be provided");
+		}
+		if ( masterId==0 ) {
+			throw new MpiException("Master Id must be provided");
 		}
 		if ( (desc==null) || (desc.length()==0) ) {
 			throw new MpiException("Description must be provided");
 		}
 		logger.debug("New Work Item:"+desc);
-
-		WorkItem wi = new WorkItem(type, personId, desc);
 		
-		WorkItemDAO.create(wi);
-		
-		return wi;
+		WorkItem workItem = WorkItemDAO.findByPersonAndMaster(personId, masterId);
+		if (workItem == null) {
+			workItem = new WorkItem(type, personId, masterId, desc);
+			WorkItemDAO.create(workItem);
+		}
+			
+		return workItem;
 		
 	}
 

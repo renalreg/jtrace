@@ -14,7 +14,7 @@ import com.agiloak.mpi.index.persistence.MasterRecordDAO;
 import com.agiloak.mpi.index.persistence.PersonDAO;
 import com.agiloak.mpi.normalization.NormalizationManager;
 import com.agiloak.mpi.workitem.WorkItem;
-import com.agiloak.mpi.workitem.persistence.WorkItemDAO;
+import com.agiloak.mpi.workitem.WorkItemManager;
 
 public class UKRDCIndexManager {
 	
@@ -279,8 +279,9 @@ public class UKRDCIndexManager {
 						if (!verifyMatch(person,ukrdcMaster)) {
 							// TEST:UT2-5
 							logger.debug("Record no longer verifies with master");
-							WorkItem work = new WorkItem(WorkItem.TYPE_INVESTIGATE_DEMOG_NOT_VERIFIED, person.getId(), "Master Record: "+ukrdcMaster.getId());
-							WorkItemDAO.create(work);
+							WorkItemManager wim = new WorkItemManager();
+							wim.create(WorkItem.TYPE_STALE_DEMOGS_NOT_VERIFIED_PRIMARY, person.getId(), ukrdcMaster.getId(), "Stale Demographics Not Verified Against PrimaryId");
+
 							ukrdcMaster.setStatus(MasterRecord.INVESTIGATE);
 							MasterRecordDAO.update(ukrdcMaster);
 						}
@@ -343,8 +344,9 @@ public class UKRDCIndexManager {
 					}
 				} else {
 					logger.debug("Record not verified - creating work item, link and mark master for investigation");
-					WorkItem work = new WorkItem(WorkItem.TYPE_INVESTIGATE_DEMOG_NOT_VERIFIED, person.getId(), "Master Record: "+master.getId());
-					WorkItemDAO.create(work);
+					WorkItemManager wim = new WorkItemManager();
+					wim.create(WorkItem.TYPE_CLAIMED_LINK_NOT_VERIFIED_PRIMARY, person.getId(), master.getId(), "Claimed Link to Primary Id Not Verified");
+
 					LinkRecord link = new LinkRecord(master.getId(), person.getId());
 					LinkRecordDAO.create(link);
 					master.setStatus(MasterRecord.INVESTIGATE);
@@ -407,8 +409,8 @@ public class UKRDCIndexManager {
 									LinkRecordDAO.create(newLink);
 								} else {
 									logger.debug("Link to potential UKRDC Match not verified");
-									WorkItem work = new WorkItem(WorkItem.TYPE_INVESTIGATE_DEMOG_NOT_VERIFIED, person.getId(), "Link to potential UKRDC Match not verified: "+master.getId());
-									WorkItemDAO.create(work);
+									WorkItemManager wim = new WorkItemManager();
+									wim.create(WorkItem.TYPE_INFERRED_LINK_NOT_VERIFIED_PRIMARY, person.getId(), ukrdcMaster.getId(), "Link to Inferred PrimaryId not verified");
 								}
 							}
 						}
@@ -444,8 +446,8 @@ public class UKRDCIndexManager {
 			// Verify that the details match
 			if (!verifyMatch(person, master)) {
 				logger.debug("Record not verified - creating a work item and mark the master for invesigation");
-				WorkItem work = new WorkItem(WorkItem.TYPE_INVESTIGATE_DEMOG_NOT_VERIFIED, person.getId(), "Master Record: "+master.getId());
-				WorkItemDAO.create(work);
+				WorkItemManager wim = new WorkItemManager();
+				wim.create(WorkItem.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, person.getId(), master.getId(), "Claimed Link to NationalId Not Verified");
 				master.setStatus(MasterRecord.INVESTIGATE);
 				MasterRecordDAO.update(master);
 			}
@@ -504,8 +506,9 @@ public class UKRDCIndexManager {
 				logger.debug("Demographics have changed but this record is stale so master is not updated. Reverify against master.");
 				// If the effective date is not later then just reverify this person against the master and raise a work item if required
 				if (!verifyMatch(person,master)) {
-					WorkItem work = new WorkItem(WorkItem.TYPE_INVESTIGATE_DEMOG_NOT_VERIFIED, person.getId(), "Master Record: "+master.getId());
-					WorkItemDAO.create(work);
+					WorkItemManager wim = new WorkItemManager();
+					wim.create(WorkItem.TYPE_STALE_DEMOGS_NOT_VERIFIED_NATIONAL, person.getId(), master.getId(), "Stale Demographics Not Verified Against NationalId");
+					
 					master.setStatus(MasterRecord.INVESTIGATE);
 					MasterRecordDAO.update(master);
 				}
@@ -535,8 +538,17 @@ public class UKRDCIndexManager {
 					logger.debug("Link record no longer verifies - Mark master for INVESTIGATION and raise WORK. PERSONID:"+linkedPerson.getId());
 					master.setStatus(MasterRecord.INVESTIGATE);
 					MasterRecordDAO.update(master);
-				    WorkItem work = new WorkItem(WorkItem.TYPE_INVESTIGATE_DUE_TO_CHANGED_DEMOG, linkedPerson.getId(), "Master Record: "+master.getId());
-				    WorkItemDAO.create(work);
+					int type;
+					String desc=null;
+					if (master.getNationalIdType().equals(NationalIdentity.UKRR_TYPE)) {
+						type = WorkItem.TYPE_DEMOGS_NOT_VERIFIED_AFTER_PRIMARY_UPDATE;
+						desc = "Demographics Not Verified Following Update of Primary Id";
+					} else {
+						type = WorkItem.TYPE_DEMOGS_NOT_VERIFIED_AFTER_NATIONAL_UPDATE;
+						desc = "Demographics Not Verified Following Update of National Id";
+					}
+					WorkItemManager wim = new WorkItemManager();
+					wim.create(type, linkedPerson.getId(), master.getId(), desc);
 				} else {
 					logger.debug("Link still valid. PERSONID:"+linkedPerson.getId());
 				}
@@ -544,7 +556,7 @@ public class UKRDCIndexManager {
 		}
 		
 	}
-
+	
 	/**
 	 * UKRDC specific rules, currently mirroring the National Verify NHS Number rules
 	 * @param person

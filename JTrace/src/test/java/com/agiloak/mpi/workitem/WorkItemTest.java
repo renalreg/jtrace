@@ -25,7 +25,7 @@ public class WorkItemTest {
 	@Test
 	public void testCreate() throws MpiException {
 		WorkItemManager wim = new WorkItemManager();
-		WorkItem wi1 = wim.create(WorkItem.TYPE_INVESTIGATE_DUE_TO_CHANGED_DEMOG, 1, "test");
+		WorkItem wi1 = wim.create(WorkItem.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 1, 1, "test");
 		assert(true);
 
 		List<WorkItem> workItems = wim.findByPerson(1);
@@ -43,8 +43,8 @@ public class WorkItemTest {
 	@Test
 	public void testDelete() throws MpiException {
 		WorkItemManager wim = new WorkItemManager();
-		wim.create(WorkItem.TYPE_INVESTIGATE_DUE_TO_CHANGED_DEMOG, 2, "test");
-		wim.create(WorkItem.TYPE_INVESTIGATE_DUE_TO_CHANGED_DEMOG, 2, "test2");
+		wim.create(WorkItem.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 2, 2, "test");
+		wim.create(WorkItem.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 2, 3, "test2");
 		assert(true);
 		List<WorkItem> workItems = wim.findByPerson(2);
 		assert(workItems.size()==2);
@@ -67,20 +67,26 @@ public class WorkItemTest {
 	public void testCreateNoPerson() throws MpiException {
 		WorkItemManager wim = new WorkItemManager();
 		exception.expect(MpiException.class);
-		wim.create(WorkItem.TYPE_DEMOGS_NEAR_MATCH,0,"test");
+		wim.create(WorkItem.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL,0,1,"test");
 	}
 
+	@Test
+	public void testCreateNoMaster() throws MpiException {
+		WorkItemManager wim = new WorkItemManager();
+		exception.expect(MpiException.class);
+		wim.create(WorkItem.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL,0,0,"test");
+	}
 	@Test
 	public void testCreateNullDesc() throws MpiException {
 		WorkItemManager wim = new WorkItemManager();
 		exception.expect(MpiException.class);
-		wim.create(WorkItem.TYPE_DEMOGS_NEAR_MATCH,1,null);
+		wim.create(WorkItem.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL,1,2,null);
 	}
 
 	@Test
 	public void testCreateEmptyDesc() throws MpiException {
 		WorkItemManager wim = new WorkItemManager();
 		exception.expect(MpiException.class);
-		wim.create(WorkItem.TYPE_DEMOGS_MATCH_OTHER_NATIONAL_ID,1,"");
+		wim.create(WorkItem.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL,1,3,"");
 	}
 }

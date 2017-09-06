@@ -109,7 +109,7 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		assert(links.get(0).getMasterId()==master.getId());
 		items = WorkItemDAO.findByPerson(person.getId());
 		assert(items.size()==1);
-		assert(items.get(0).getType()==WorkItem.TYPE_INVESTIGATE_DEMOG_NOT_VERIFIED);
+		assert(items.get(0).getType()==WorkItem.TYPE_CLAIMED_LINK_NOT_VERIFIED_PRIMARY);
 
 	}
 

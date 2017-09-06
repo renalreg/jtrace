@@ -6,6 +6,7 @@ CREATE TABLE jtrace.workitem
 (
     id SERIAL UNIQUE,
     personid integer NOT NULL,
+    masterid integer NOT NULL,
     type integer NOT NULL,
     description character varying(100) COLLATE pg_catalog."default" NOT NULL,
     status integer NOT NULL,

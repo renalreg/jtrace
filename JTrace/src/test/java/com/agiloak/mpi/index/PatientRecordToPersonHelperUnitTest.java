@@ -51,7 +51,7 @@ public class PatientRecordToPersonHelperUnitTest {
 	}
 
 	@Test
-	public void testSimple() throws MpiException, IOException {
+	public void testSimple() throws MpiException {
 
 		String originator = "HLP1";
 		String idBase = originator+"0000";
@@ -62,7 +62,7 @@ public class PatientRecordToPersonHelperUnitTest {
 		
 		UKRDCIndexManager im = new UKRDCIndexManager();
 		im.createOrUpdate(person);
-		person = PersonDAO.findByLocalId("MRN", idBase+"1", originator);
+		person = PersonDAO.findByLocalId("MRN", idBase+"L1", originator);
 		assert(person!=null);
 		MasterRecord master = MasterRecordDAO.findByNationalId(idBase+"R1", NationalIdentity.UKRR_TYPE);
 		assert(master.getSurname().equals("JONES"));
