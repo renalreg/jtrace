@@ -14,12 +14,149 @@ import com.agiloak.mpi.index.persistence.MasterRecordDAO;
 import com.agiloak.mpi.index.persistence.PersonDAO;
 import com.agiloak.mpi.normalization.NormalizationManager;
 import com.agiloak.mpi.workitem.WorkItem;
-import com.agiloak.mpi.workitem.persistence.WorkItemDAO;
+import com.agiloak.mpi.workitem.WorkItemManager;
 
 public class UKRDCIndexManager {
 	
 	private final static Logger logger = LoggerFactory.getLogger(UKRDCIndexManager.class);
 
+	/**
+	 * Allow manual linking of records
+	 * @param patientId
+	 * @param masterId
+	 * @param user
+	 * @param linkCode
+	 * @param linkDesc
+	 */
+	public void link(int personId, int masterId, String user, int linkCode, String linkDesc) throws MpiException {
+
+		if (personId==0 || masterId==0 || linkCode==0 || user==null || user.length()==0 || 
+			linkDesc==null || linkDesc.length()==0) {
+			// LT1-2
+			logger.error("Incomplete parameters for link");
+			throw new MpiException("Incomplete parameters for link");
+		}
+		
+		LinkRecord link = LinkRecordDAO.find(masterId, personId);
+		
+		if (link!=null) {
+			// LT1-3
+			// TODO - Consider if this error is appropriate or if this should be idempotent
+			logger.error("Link already exists");
+			throw new MpiException("Link already exists");
+		}
+		
+		// LT1-1
+		link = new LinkRecord(masterId, personId);
+		link.setUpdatedBy(user).setLinkCode(linkCode).setLinkDesc(linkDesc);
+		link.setLinkType(LinkRecord.MANUAL_TYPE);
+		LinkRecordDAO.create(link);
+		
+	}
+	
+	/**
+	 * Search for a UKRDC Identity for these patient details.
+	 * @param psr
+	 * @return
+	 * @throws MpiException
+	 */
+	public String search(ProgrammeSearchRequest psr) throws MpiException {
+		String ukrdcId = null;
+		
+		if (psr==null) {
+			// ST3-1
+			logger.error("SearchRequest not provided");
+			throw new MpiException("SearchRequest not provided");
+		}
+		
+		if (psr.getNationalId()==null) {
+			// ST2-1
+			logger.error("NationalId Must be provided");
+			throw new MpiException("NationalId Must be provided");
+		}
+
+		MasterRecord nationalMaster = MasterRecordDAO.findByNationalId(psr.getNationalId().getId(), psr.getNationalId().getType());
+		// If the national record is not found then we can't match to a UKRDC id
+		if (nationalMaster == null) {
+			// ST4-1
+			logger.debug("National Identity not known");
+			return null;
+		}
+
+		// Create a person from the request to use in the verify process
+		Person searchPerson = new Person();
+		searchPerson.setDateOfBirth(psr.getDateOfBirth());
+		searchPerson.setGivenName(psr.getGivenName());
+		searchPerson.setSurname(psr.getSurname());
+		
+		// Get any records linked to this national id
+		List<LinkRecord> links = LinkRecordDAO.findByMaster(nationalMaster.getId());
+		
+		for (LinkRecord link : links ){
+				
+			// Find the UKRDC Master linked to this person (if any)
+			LinkRecord ukrdcLink = LinkRecordDAO.findByPersonAndType(link.getPersonId(), NationalIdentity.UKRR_TYPE);
+			
+			if (ukrdcLink != null) {
+				
+				// If found - we have identified a Person linked to a UKRDC Number AND by National Id to the incoming Person
+				//            Does the incoming Person verify against the UKRDC Master
+				MasterRecord ukrdcMaster = MasterRecordDAO.get(ukrdcLink.getMasterId());
+				
+				boolean verified = verifyMatch(searchPerson, ukrdcMaster);
+				if (verified) {
+					// ST1-1 / ST1-3
+					ukrdcId = ukrdcMaster.getNationalId();
+				} else {
+					// ST1-2 / ST1-4 / ST1-5
+				}
+		
+			} else {
+				// ST5-1 
+				logger.debug("No UKRDC Number found for person linked by National Id");
+			}
+
+		}
+		
+		return ukrdcId;
+	}
+
+	private void validate(Person person) throws MpiException {
+		
+		if (person.getPrimaryIdType()!=null && person.getPrimaryIdType() != NationalIdentity.UKRR_TYPE) {
+			logger.error("If provided, the primaryIdType must be UKRR");
+			throw new MpiException("Invalid primary id type");
+		}
+		if (person.getSurname()==null || person.getSurname().length() < 2) {
+			logger.error("Surname must be at least 2 characters");
+			throw new MpiException("Surname must be at least 2 characters");
+		}
+		if (person.getGivenName()==null || person.getGivenName().length() < 1) {
+			logger.error("Given Name must be at least 1 charactera");
+			throw new MpiException("Given Name must be at least 1 character");
+		}
+		if (person.getGender()==null || person.getGender().length() < 1) {
+			logger.error("Gender must be at least 1 character");
+			throw new MpiException("Gender must be at least 1 character");
+		}
+		if (person.getDateOfBirth()==null) {
+			logger.error("Date Of Birth is mandatory");
+			throw new MpiException("Date Of Birth is mandatory");
+		}
+		if (person.getLocalId()==null || person.getLocalId().length() < 5) {
+			logger.error("LocalId must be at least 5 characters");
+			throw new MpiException("LocalId must be at least 5 characters");
+		}
+		if (person.getLocalIdType()==null || person.getLocalIdType().length() < 1) {
+			logger.error("Local Id must be present");
+			throw new MpiException("LocalId must be present");
+		}
+		if (person.getOriginator()==null || person.getOriginator().length() < 1) {
+			logger.error("Originator must be present");
+			throw new MpiException("Originator must be present");
+		}
+	}
+	
 	/**
 	 *  Created for the UKRDC this is a combined createOrUpdate. This method updates the person, the master (as appropriate) and the link records ( as appropriate)
 	 *  
@@ -33,10 +170,7 @@ public class UKRDCIndexManager {
 			person.setEffectiveDate(new Date());
 		}
 		
-		if (person.getPrimaryIdType()!=null && person.getPrimaryIdType() != MasterRecord.UKRDC_TYPE) {
-			logger.error("If provided, the primaryIdType must be UKRDC");
-			throw new MpiException("Invalid primary id type");
-		}
+		validate(person);
 		
 		Person storedPerson = PersonDAO.findByLocalId(person.getLocalIdType(), person.getLocalId(), person.getOriginator());
 		if (storedPerson != null) {
@@ -65,7 +199,7 @@ public class UKRDCIndexManager {
 				MasterRecord master = MasterRecordDAO.get(link.getMasterId());
 				
 				// Don't process UKRDC links here - these will be updated later
-				if (!master.getNationalIdType().equals(MasterRecord.UKRDC_TYPE) ){
+				if (!master.getNationalIdType().equals(NationalIdentity.UKRR_TYPE) ){
 					// TEST:UT4-2
 
 					boolean found = false;
@@ -149,7 +283,7 @@ public class UKRDCIndexManager {
 		logger.debug("updateUKRDCLink");
 		
 		// Find current link to a UKRDC Master, if it exists
-		LinkRecord masterLink = LinkRecordDAO.findByPersonAndType(person.getId(), MasterRecord.UKRDC_TYPE);
+		LinkRecord masterLink = LinkRecordDAO.findByPersonAndType(person.getId(), NationalIdentity.UKRR_TYPE);
 		if (masterLink == null) {
 			// No current link - process as for new record
 			// TEST:UT1-1
@@ -179,8 +313,9 @@ public class UKRDCIndexManager {
 						if (!verifyMatch(person,ukrdcMaster)) {
 							// TEST:UT2-5
 							logger.debug("Record no longer verifies with master");
-							WorkItem work = new WorkItem(WorkItem.TYPE_INVESTIGATE_DEMOG_NOT_VERIFIED, person.getId(), "Master Record: "+ukrdcMaster.getId());
-							WorkItemDAO.create(work);
+							WorkItemManager wim = new WorkItemManager();
+							wim.create(WorkItem.TYPE_STALE_DEMOGS_NOT_VERIFIED_PRIMARY, person.getId(), ukrdcMaster.getId(), "Stale Demographics Not Verified Against PrimaryId");
+
 							ukrdcMaster.setStatus(MasterRecord.INVESTIGATE);
 							MasterRecordDAO.update(ukrdcMaster);
 						}
@@ -243,8 +378,9 @@ public class UKRDCIndexManager {
 					}
 				} else {
 					logger.debug("Record not verified - creating work item, link and mark master for investigation");
-					WorkItem work = new WorkItem(WorkItem.TYPE_INVESTIGATE_DEMOG_NOT_VERIFIED, person.getId(), "Master Record: "+master.getId());
-					WorkItemDAO.create(work);
+					WorkItemManager wim = new WorkItemManager();
+					wim.create(WorkItem.TYPE_CLAIMED_LINK_NOT_VERIFIED_PRIMARY, person.getId(), master.getId(), "Claimed Link to Primary Id Not Verified");
+
 					LinkRecord link = new LinkRecord(master.getId(), person.getId());
 					LinkRecordDAO.create(link);
 					master.setStatus(MasterRecord.INVESTIGATE);
@@ -293,7 +429,7 @@ public class UKRDCIndexManager {
 						if (link.getPersonId()!= person.getId()) {
 							
 							// Find the UKRDC Master linked to this person (if any)
-							LinkRecord ukrdcLink = LinkRecordDAO.findByPersonAndType(link.getPersonId(), "UKRDC");
+							LinkRecord ukrdcLink = LinkRecordDAO.findByPersonAndType(link.getPersonId(), NationalIdentity.UKRR_TYPE);
 							
 							if (ukrdcLink != null) {
 								
@@ -307,8 +443,8 @@ public class UKRDCIndexManager {
 									LinkRecordDAO.create(newLink);
 								} else {
 									logger.debug("Link to potential UKRDC Match not verified");
-									WorkItem work = new WorkItem(WorkItem.TYPE_INVESTIGATE_DEMOG_NOT_VERIFIED, person.getId(), "Link to potential UKRDC Match not verified: "+master.getId());
-									WorkItemDAO.create(work);
+									WorkItemManager wim = new WorkItemManager();
+									wim.create(WorkItem.TYPE_INFERRED_LINK_NOT_VERIFIED_PRIMARY, person.getId(), ukrdcMaster.getId(), "Link to Inferred PrimaryId not verified");
 								}
 							}
 						}
@@ -344,8 +480,8 @@ public class UKRDCIndexManager {
 			// Verify that the details match
 			if (!verifyMatch(person, master)) {
 				logger.debug("Record not verified - creating a work item and mark the master for invesigation");
-				WorkItem work = new WorkItem(WorkItem.TYPE_INVESTIGATE_DEMOG_NOT_VERIFIED, person.getId(), "Master Record: "+master.getId());
-				WorkItemDAO.create(work);
+				WorkItemManager wim = new WorkItemManager();
+				wim.create(WorkItem.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, person.getId(), master.getId(), "Claimed Link to NationalId Not Verified");
 				master.setStatus(MasterRecord.INVESTIGATE);
 				MasterRecordDAO.update(master);
 			}
@@ -404,8 +540,9 @@ public class UKRDCIndexManager {
 				logger.debug("Demographics have changed but this record is stale so master is not updated. Reverify against master.");
 				// If the effective date is not later then just reverify this person against the master and raise a work item if required
 				if (!verifyMatch(person,master)) {
-					WorkItem work = new WorkItem(WorkItem.TYPE_INVESTIGATE_DEMOG_NOT_VERIFIED, person.getId(), "Master Record: "+master.getId());
-					WorkItemDAO.create(work);
+					WorkItemManager wim = new WorkItemManager();
+					wim.create(WorkItem.TYPE_STALE_DEMOGS_NOT_VERIFIED_NATIONAL, person.getId(), master.getId(), "Stale Demographics Not Verified Against NationalId");
+					
 					master.setStatus(MasterRecord.INVESTIGATE);
 					MasterRecordDAO.update(master);
 				}
@@ -435,8 +572,17 @@ public class UKRDCIndexManager {
 					logger.debug("Link record no longer verifies - Mark master for INVESTIGATION and raise WORK. PERSONID:"+linkedPerson.getId());
 					master.setStatus(MasterRecord.INVESTIGATE);
 					MasterRecordDAO.update(master);
-				    WorkItem work = new WorkItem(WorkItem.TYPE_INVESTIGATE_DUE_TO_CHANGED_DEMOG, linkedPerson.getId(), "Master Record: "+master.getId());
-				    WorkItemDAO.create(work);
+					int type;
+					String desc=null;
+					if (master.getNationalIdType().equals(NationalIdentity.UKRR_TYPE)) {
+						type = WorkItem.TYPE_DEMOGS_NOT_VERIFIED_AFTER_PRIMARY_UPDATE;
+						desc = "Demographics Not Verified Following Update of Primary Id";
+					} else {
+						type = WorkItem.TYPE_DEMOGS_NOT_VERIFIED_AFTER_NATIONAL_UPDATE;
+						desc = "Demographics Not Verified Following Update of National Id";
+					}
+					WorkItemManager wim = new WorkItemManager();
+					wim.create(type, linkedPerson.getId(), master.getId(), desc);
 				} else {
 					logger.debug("Link still valid. PERSONID:"+linkedPerson.getId());
 				}
@@ -444,7 +590,7 @@ public class UKRDCIndexManager {
 		}
 		
 	}
-
+	
 	/**
 	 * UKRDC specific rules, currently mirroring the National Verify NHS Number rules
 	 * @param person

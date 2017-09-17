@@ -3,6 +3,9 @@ package com.agiloak.mpi.index;
 import java.util.Date;
 
 public class LinkRecord {
+	
+	public static final int AUTOMATIC_TYPE = 0;
+	public static final int MANUAL_TYPE = 1;
 
 	public LinkRecord(int masterId, int personId) {
 		this.masterId = masterId;

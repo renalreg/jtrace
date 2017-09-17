@@ -24,8 +24,8 @@ public class WorkItemDAO {
 
 		
 		String insertSQL = "Insert into jtrace.workitem "+
-				"(personid, type, description, status, lastupdated)"+ 
-				" values (?,?,?,?,?)";
+				"(personid, masterid, type, description, status, lastupdated, updatedby, updatedesc)"+ 
+				" values (?,?,?,?,?,?,?,?)";
 		
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;
@@ -36,10 +36,13 @@ public class WorkItemDAO {
 			
 			preparedStatement = conn.prepareStatement(insertSQL, Statement.RETURN_GENERATED_KEYS);
 			preparedStatement.setInt(1, workItem.getPersonId());
-			preparedStatement.setInt(2, workItem.getType());
-			preparedStatement.setString(3, workItem.getDescription());
-			preparedStatement.setInt(4, workItem.getStatus());
-			preparedStatement.setTimestamp(5,new Timestamp(workItem.getLastUpdated().getTime()));
+			preparedStatement.setInt(2, workItem.getMasterId());
+			preparedStatement.setInt(3, workItem.getType());
+			preparedStatement.setString(4, workItem.getDescription());
+			preparedStatement.setInt(5, workItem.getStatus());
+			preparedStatement.setTimestamp(6,new Timestamp(workItem.getLastUpdated().getTime()));
+			preparedStatement.setString(7, workItem.getUpdatedBy());
+			preparedStatement.setString(8, workItem.getUpdateDesc());
 
 			int affectedRows = preparedStatement.executeUpdate();
 			logger.debug("Affected Rows:"+affectedRows);
@@ -55,6 +58,50 @@ public class WorkItemDAO {
 	            }
 		    }
 		 
+		} catch (SQLException e) {
+			logger.error("Failure inserting WorkItem:",e);
+			throw new MpiException("WorkItem insert failed");
+
+		} finally {
+
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing Prepared Statement:",e);
+					throw new MpiException("WorkItem insert failed");
+				}
+			}
+
+		}
+
+	}
+	
+	public static void update(WorkItem workItem) throws MpiException {
+
+		
+		String updateSQL = "update jtrace.workitem "
+				+"set status =?, lastupdated=?, updatedby=?, updatedesc=? "
+				+"where personid=? and masterid=?"; 
+		
+		PreparedStatement preparedStatement = null;
+		Connection conn = null;
+		
+		try {
+
+			conn = SimpleConnectionManager.getDBConnection();
+			
+			preparedStatement = conn.prepareStatement(updateSQL);
+			preparedStatement.setInt(1, workItem.getStatus());
+			preparedStatement.setTimestamp(2,new Timestamp(workItem.getLastUpdated().getTime()));
+			preparedStatement.setString(3, workItem.getUpdatedBy());
+			preparedStatement.setString(4, workItem.getUpdateDesc());
+			preparedStatement.setInt(5, workItem.getPersonId());
+			preparedStatement.setInt(6, workItem.getMasterId());
+
+			int affectedRows = preparedStatement.executeUpdate();
+			logger.debug("Affected Rows:"+affectedRows);
+					 
 		} catch (SQLException e) {
 			logger.error("Failure inserting WorkItem:",e);
 			throw new MpiException("WorkItem insert failed");
@@ -131,12 +178,15 @@ public class WorkItemDAO {
 			
 			while (rs.next()){
 				int pid = rs.getInt("personid");
+				int mid = rs.getInt("masterid");
 				int type = rs.getInt("type");
 				String desc = rs.getString("description");
-				WorkItem item = new WorkItem(type, pid, desc);
+				WorkItem item = new WorkItem(type, pid, mid, desc);
 				item.setStatus(rs.getInt("status"));
 				item.setId(rs.getInt("id"));
 				item.setLastUpdated(rs.getTimestamp("lastUpdated"));
+				item.setUpdatedBy(rs.getString("updatedby"));
+				item.setUpdateDesc(rs.getString("updatedesc"));
 				
 				workItems.add(item);
 			}
@@ -169,4 +219,65 @@ public class WorkItemDAO {
 		return workItems;
 
 	}	
+	public static WorkItem findByPersonAndMaster(int personId, int masterId) throws MpiException {
+
+		String findSQL = "select * from jtrace.workitem where personid = ? and masterid = ?";
+		
+		PreparedStatement preparedStatement = null;
+		Connection conn = null;
+		ResultSet rs = null;
+		
+		WorkItem workItem = null;
+	
+		try {
+
+			conn = SimpleConnectionManager.getDBConnection();
+			
+			preparedStatement = conn.prepareStatement(findSQL);
+			preparedStatement.setInt(1, personId);
+			preparedStatement.setInt(2, masterId);
+
+			rs = preparedStatement.executeQuery();
+			
+			if (rs.next()){
+				int pid = rs.getInt("personid");
+				int mid = rs.getInt("masterid");
+				int type = rs.getInt("type");
+				String desc = rs.getString("description");
+				workItem = new WorkItem(type, pid, mid, desc);
+				workItem.setStatus(rs.getInt("status"));
+				workItem.setId(rs.getInt("id"));
+				workItem.setLastUpdated(rs.getTimestamp("lastUpdated"));
+				workItem.setUpdatedBy(rs.getString("updatedby"));
+				workItem.setUpdateDesc(rs.getString("updatedesc"));
+			}
+			
+		} catch (Exception e) {
+			logger.error("Failure querying WorkItem.",e);
+			throw new MpiException("Failure querying WorkItem. "+e.getMessage());
+		} finally {
+
+			if (rs != null) {
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing resultset.",e);
+					throw new MpiException("Failure closing resultset. "+e.getMessage());
+				}
+			}
+			
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing prepared statement.",e);
+					throw new MpiException("Failure closing prepared statement. "+e.getMessage());
+				}
+			}
+
+		}
+		
+		return workItem;
+
+	}		
 }

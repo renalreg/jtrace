@@ -79,6 +79,7 @@ public class PersonTest {
 		assert(true);
 
 		MasterRecord master = new MasterRecord(person);
+		master.setEffectiveDate(new Date());
 		MasterRecordDAO.create(master);
 		LinkRecord l1 = new LinkRecord(master.getId(), person.getId());
 		LinkRecord l2 = new LinkRecord(master.getId(), person2.getId());

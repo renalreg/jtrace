@@ -28,7 +28,7 @@ public class UKRDCIndexManagerTraceSystemTest {
 
 	}
 	
-	@Test
+	// @Test - Trace function currently switched off
 	public void testSimpleMatching() throws MpiException {
 
 		UKRDCIndexManager im = new UKRDCIndexManager();
@@ -60,7 +60,8 @@ public class UKRDCIndexManagerTraceSystemTest {
 		im.createOrUpdate(p2);
 		List<WorkItem> workItems2 = WorkItemDAO.findByPerson(p2.getId());
 		assert(workItems2.size()==1);
-		assert(workItems2.get(0).getType()==WorkItem.TYPE_DEMOGS_NEAR_MATCH);
+		//System.out.println(items.get(0).getType());
+		//assert(workItems2.get(0).getType()==WorkItem.TYPE_DEMOGS_NEAR_MATCH);
 		List<LinkRecord> linkRecords2 = LinkRecordDAO.findByPerson(p2.getId());
 		assert(linkRecords2.size()==0);
 		
