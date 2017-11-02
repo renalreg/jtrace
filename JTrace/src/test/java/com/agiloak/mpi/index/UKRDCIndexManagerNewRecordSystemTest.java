@@ -27,29 +27,22 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 	@BeforeClass
 	public static void setup()  throws MpiException {
 
-		MasterRecordDAO.deleteByNationalId("RR1000001",NationalIdentity.UKRDC_TYPE);
 		clear("NSYS100001", "NSYS1");
 		clear("NSYS100002", "NSYS1");
 		clear("NSYS100003", "NSYS1");
 		
-		MasterRecordDAO.deleteByNationalId("RR2000001",NationalIdentity.UKRDC_TYPE);
-		MasterRecordDAO.deleteByNationalId("NHS0200001",NationalIdentity.NHS_TYPE);
 		clear("NSYS200001", "NSYS2");
 		clear("NSYS200002", "NSYS2");
 		clear("NSYS200003", "NSYS2");
 		
-		MasterRecordDAO.deleteByNationalId("RR3000001",NationalIdentity.UKRDC_TYPE);
-		MasterRecordDAO.deleteByNationalId("NHS0300001",NationalIdentity.NHS_TYPE);
 		clear("NSYS300001", "NSYS3");
 		clear("NSYS300002", "NSYS3");
 		clear("NSYS300003", "NSYS3");
 		
-		MasterRecordDAO.deleteByNationalId("RR4000001",NationalIdentity.UKRDC_TYPE);
 		clear("NSYS400001", "NSYS4");
 		clear("NSYS400002", "NSYS4");
 		clear("NSYS400003", "NSYS4");
 
-		MasterRecordDAO.deleteByNationalId("RR5000001",NationalIdentity.UKRDC_TYPE);
 		clear("NSYS500001", "NSYS5");
 		clear("NSYS500002", "NSYS5");
 		clear("NSYS500003", "NSYS5");
@@ -334,9 +327,7 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		// VERIFY 
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
-		assert(!natId.getId().equals(ukrdcId));
-		assert(natId.getId().startsWith("10")); // Allocated numbers will start with 10 whereas numbers sent in from test stub begin RR 
-		assert(natId.getId().length()==9);      // Allocated numbers are 9 characters long 
+		assert(natId.getId().equals(ukrdcId));
 		person = PersonDAO.findByLocalId(p3.getLocalIdType(), p3.getLocalId(), p3.getOriginator());
 		assert(person!=null);
 		links = LinkRecordDAO.findByPerson(person.getId());
@@ -363,6 +354,9 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		p1.setEffectiveDate(getDate("2017-08-02"));
 		NationalIdentity natId = im.createOrUpdate(p1);
 		// VERIFY SETUP
+		assert(natId!=null);
+		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
+		assert(natId.getId().equals(ukrdcId));
 		Person person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
 		MasterRecord masterRR = MasterRecordDAO.findByNationalId(ukrdcId, NationalIdentity.UKRDC_TYPE);
@@ -382,6 +376,9 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		p2.setEffectiveDate(getDate("2017-08-01"));
 		natId = im.createOrUpdate(p2);
 		// VERIFY 
+		assert(natId!=null);
+		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
+		assert(natId.getId().equals(ukrdcId));
 		person = PersonDAO.findByLocalId(p2.getLocalIdType(), p2.getLocalId(), p2.getOriginator());
 		assert(person!=null);
 		MasterRecord masterNHS = MasterRecordDAO.findByNationalId("NHS0300001", NationalIdentity.NHS_TYPE);
@@ -393,13 +390,18 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		items = WorkItemDAO.findByPerson(person.getId());
 		assert(items.size()==0);
 		
-		// T3-1 - New + No UKRDC Number but an NHS Number which matches to an existing NHS Number which could corroborate the UKRDC - but UKRDC:Person don't match (1 part DOB only)
+		// T3-1 - New + No UKRDC Number but an NHS Number which matches to an existing NHS Number which could corroborate the UKRDC - but UKRDC:Person don't match (1 part DOB only). Will Allocate
 		Person p3 = new Person().setDateOfBirth(d3).setSurname("WILLIAMS").setGivenName("JIM").setGender("1");
 		p3.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p3.setLocalId("NSYS300003").setLocalIdType("MR").setOriginator(orig);
 		p3.addNationalId(new NationalIdentity(NationalIdentity.NHS_TYPE,"NHS0300001"));
 		natId = im.createOrUpdate(p3);
 		// VERIFY 
+		assert(natId!=null);
+		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
+		assert(!natId.getId().equals(ukrdcId));
+		assert(natId.getId().startsWith("10")); // Allocated numbers will start with 10 whereas numbers sent in from test stub begin RR 
+		assert(natId.getId().length()==9);      // Allocated numbers are 9 characters long 
 		person = PersonDAO.findByLocalId(p3.getLocalIdType(), p3.getLocalId(), p3.getOriginator());
 		assert(person!=null);
 		links = LinkRecordDAO.findByPerson(person.getId());
@@ -429,6 +431,10 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		
 		Person person = PersonDAO.findByLocalId("MR", localId, originator);
 		if (person != null) {
+			List<LinkRecord> links = LinkRecordDAO.findByPerson(person.getId());
+			for (LinkRecord link : links) {
+				MasterRecordDAO.delete(link.getMasterId());
+			}
 			LinkRecordDAO.deleteByPerson(person.getId());
 			WorkItemDAO.deleteByPerson(person.getId());
 			PersonDAO.delete(person);

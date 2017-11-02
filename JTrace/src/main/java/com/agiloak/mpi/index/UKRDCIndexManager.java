@@ -443,6 +443,7 @@ public class UKRDCIndexManager {
 			
 			// For each national id on this record
 			MasterRecord master = null;
+			MasterRecord ukrdcMaster = null;
 			boolean linked = false;
 			for (NationalIdentity natId : person.getNationalIds()) {
 				
@@ -464,7 +465,7 @@ public class UKRDCIndexManager {
 								
 								// If found - we have identified a Person linked to a UKRDC Number AND by National Id to the incoming Person
 								//            Does the incoming Person verify against the UKRDC Master
-								MasterRecord ukrdcMaster = MasterRecordDAO.get(ukrdcLink.getMasterId());
+								ukrdcMaster = MasterRecordDAO.get(ukrdcLink.getMasterId());
 								boolean verified = verifyMatch(person, ukrdcMaster);
 								if (verified) {
 									logger.debug("Linking to the found and verified master record");
@@ -489,18 +490,18 @@ public class UKRDCIndexManager {
 				String ukrdcId = MasterRecordDAO.allocate();
 				
 				// a master record does not exist for this Primary id so create one
-				master = new MasterRecord(person);
-				master.setNationalId(ukrdcId);
-				master.setNationalIdType(NationalIdentity.UKRDC_TYPE);
-				MasterRecordDAO.create(master);
+				ukrdcMaster = new MasterRecord(person);
+				ukrdcMaster.setNationalId(ukrdcId);
+				ukrdcMaster.setNationalIdType(NationalIdentity.UKRDC_TYPE);
+				MasterRecordDAO.create(ukrdcMaster);
 
 				logger.debug("Linking to the new master record");
 				// and link this record to it
-				LinkRecord link = new LinkRecord(master.getId(), person.getId());
+				LinkRecord link = new LinkRecord(ukrdcMaster.getId(), person.getId());
 				LinkRecordDAO.create(link);
 			}
 			
-			ukrdcIdentity = new NationalIdentity(master.getNationalId());
+			ukrdcIdentity = new NationalIdentity(ukrdcMaster.getNationalId());
 		}
 		
 		return ukrdcIdentity;
