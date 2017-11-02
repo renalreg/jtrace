@@ -36,14 +36,14 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		
 		//  Revised
 		clear( "UPDT10001", "UPDT1");
-		MasterRecordDAO.deleteByNationalId("UPDT2000R1",NationalIdentity.UKRR_TYPE);
+		MasterRecordDAO.deleteByNationalId("UPDT2000R1",NationalIdentity.UKRDC_TYPE);
 		clear( "UPDT20001", "UPDT2");
-		MasterRecordDAO.deleteByNationalId("UPDT3000R1",NationalIdentity.UKRR_TYPE);
-		MasterRecordDAO.deleteByNationalId("UPDT3000R2",NationalIdentity.UKRR_TYPE);
-		MasterRecordDAO.deleteByNationalId("UPDT3000R3",NationalIdentity.UKRR_TYPE);
+		MasterRecordDAO.deleteByNationalId("UPDT3000R1",NationalIdentity.UKRDC_TYPE);
+		MasterRecordDAO.deleteByNationalId("UPDT3000R2",NationalIdentity.UKRDC_TYPE);
+		MasterRecordDAO.deleteByNationalId("UPDT3000R3",NationalIdentity.UKRDC_TYPE);
 		clear( "UPDT30001", "UPDT3");
 		clear( "UPDT3A001", "UPDT3A");
-		MasterRecordDAO.deleteByNationalId("UPDT4000R1",NationalIdentity.UKRR_TYPE);
+		MasterRecordDAO.deleteByNationalId("UPDT4000R1",NationalIdentity.UKRDC_TYPE);
 		MasterRecordDAO.deleteByNationalId("UPDT4000N1",NationalIdentity.NHS_TYPE);
 		MasterRecordDAO.deleteByNationalId("UPDT4000C1",NationalIdentity.CHI_TYPE);
 		clear( "UPDT40001", "UPDT4");
@@ -59,7 +59,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		String idBase = originator+"000";
 		UKRDCIndexManager im = new UKRDCIndexManager();
 		
-		// P1 - Setup a person with no national ids
+		// P1 - Setup a person with no national ids - UKRDC will be generated
 		Person p1 = new Person().setDateOfBirth(d1).setSurname("ANT").setGivenName("ADAM").setGender("1");
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId(idBase+"1").setLocalIdType("MR").setOriginator(originator);
@@ -68,7 +68,9 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		Person person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
 		List<LinkRecord> links = LinkRecordDAO.findByPerson(person.getId());
-		assert(links.size()==0);
+		assert(links.size()==1);
+		MasterRecord allocatedMr = MasterRecordDAO.get(links.get(0).getMasterId());
+		assert(allocatedMr.getNationalIdType().equals(NationalIdentity.UKRDC_TYPE));
 
 		logger.debug("************* test1SimpleUpdateNoNationalIds ********UT1-1********");
 		// UT1-1 - Simple Update - change surname - still no national ids
@@ -78,7 +80,9 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
 		links = LinkRecordDAO.findByPerson(person.getId());
-		assert(links.size()==0);
+		assert(links.size()==1);
+		allocatedMr = MasterRecordDAO.get(links.get(0).getMasterId());
+		assert(allocatedMr.getNationalIdType().equals(NationalIdentity.UKRDC_TYPE));
 		assert(person.getSurname().equals("ANT2"));
 		assert(person.getPrevSurname().equals("ANT"));
 
@@ -101,12 +105,12 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		logger.debug("************* test2UpdateAddingUKRDCId ********UT2-1********");
 		// UT2-1 - Add a UKRDC id
 		p1.setId(0); // reset the id - incoming record won't have this.
-		p1.setPrimaryIdType(NationalIdentity.UKRR_TYPE).setPrimaryId(idBase+"R1");
+		p1.setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(idBase+"R1");
 		im.createOrUpdate(p1);
 		// VERIFY
 		Person person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		MasterRecord master = MasterRecordDAO.findByNationalId(idBase+"R1",NationalIdentity.UKRR_TYPE);
+		MasterRecord master = MasterRecordDAO.findByNationalId(idBase+"R1",NationalIdentity.UKRDC_TYPE);
 		assert(master!=null);
 		List<LinkRecord> links = LinkRecordDAO.findByPerson(person.getId());
 		assert(links.size()==1);
@@ -122,7 +126,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		// VERIFY
 		person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		master = MasterRecordDAO.findByNationalId(idBase+"R1",NationalIdentity.UKRR_TYPE);
+		master = MasterRecordDAO.findByNationalId(idBase+"R1",NationalIdentity.UKRDC_TYPE);
 		assert(master!=null);
 		links = LinkRecordDAO.findByPerson(person.getId());
 		assert(links.size()==1);
@@ -133,12 +137,12 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		logger.debug("************* test2UpdateAddingUKRDCId ********UT2-2A********");
 		// UT2-2 - UKRDC on inbound matching that on on record 
 		p1.setId(0); // reset the id - incoming record won't have this.
-		p1.setPrimaryIdType(NationalIdentity.UKRR_TYPE).setPrimaryId(idBase+"R1");
+		p1.setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(idBase+"R1");
 		im.createOrUpdate(p1);
 		// VERIFY
 		person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		master = MasterRecordDAO.findByNationalId(idBase+"R1",NationalIdentity.UKRR_TYPE);
+		master = MasterRecordDAO.findByNationalId(idBase+"R1",NationalIdentity.UKRDC_TYPE);
 		assert(master!=null);
 		links = LinkRecordDAO.findByPerson(person.getId());
 		assert(links.size()==1);
@@ -155,7 +159,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		// VERIFY
 		person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		master = MasterRecordDAO.findByNationalId(idBase+"R1",NationalIdentity.UKRR_TYPE);
+		master = MasterRecordDAO.findByNationalId(idBase+"R1",NationalIdentity.UKRDC_TYPE);
 		assert(master!=null);
 		assert(master.getGivenName().equals("BELINDA"));
 		assert(master.getEffectiveDate().compareTo(p1.getEffectiveDate())==0);
@@ -175,7 +179,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		// VERIFY
 		person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		master = MasterRecordDAO.findByNationalId(idBase+"R1",NationalIdentity.UKRR_TYPE);
+		master = MasterRecordDAO.findByNationalId(idBase+"R1",NationalIdentity.UKRDC_TYPE);
 		assert(master!=null);
 		//Chcek that the master has not been updated
 		assert(master.getGivenName().equals("BELINDA"));
@@ -197,7 +201,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		// VERIFY
 		person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		master = MasterRecordDAO.findByNationalId(idBase+"R1",NationalIdentity.UKRR_TYPE);
+		master = MasterRecordDAO.findByNationalId(idBase+"R1",NationalIdentity.UKRDC_TYPE);
 		assert(master!=null);
 		//Chcek that the master has not been updated
 		assert(master.getGivenName().equals("BELINDA"));
@@ -226,20 +230,20 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		Person p1 = new Person().setDateOfBirth(d1).setSurname("COLLINS").setGivenName("CHRIS").setGender("1");
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId(idBase+"1").setLocalIdType("MR").setOriginator(originator);
-		p1.setPrimaryIdType(NationalIdentity.UKRR_TYPE).setPrimaryId(idBase+"R1");
+		p1.setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(idBase+"R1");
 		im.createOrUpdate(p1);
 		
 		logger.debug("************* test3UpdateChangingUKRDCId ********UT3-1********");
 		// UT3-1 - Change the UKRDC ID. Should delete the link to the previous and the original master whilst creating new links
 		p1.setId(0); // reset the id - incoming record won't have this.
-		p1.setPrimaryIdType(NationalIdentity.UKRR_TYPE).setPrimaryId(idBase+"R2");
+		p1.setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(idBase+"R2");
 		im.createOrUpdate(p1);
 		// VERIFY
 		Person person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		MasterRecord master = MasterRecordDAO.findByNationalId(idBase+"R1",NationalIdentity.UKRR_TYPE);
+		MasterRecord master = MasterRecordDAO.findByNationalId(idBase+"R1",NationalIdentity.UKRDC_TYPE);
 		assert(master==null);
-		MasterRecord master2 = MasterRecordDAO.findByNationalId(idBase+"R2",NationalIdentity.UKRR_TYPE);
+		MasterRecord master2 = MasterRecordDAO.findByNationalId(idBase+"R2",NationalIdentity.UKRDC_TYPE);
 		assert(master2!=null);
 		List<LinkRecord> links = LinkRecordDAO.findByPerson(person.getId());
 		assert(links.size()==1);
@@ -252,20 +256,20 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		Person p2 = new Person().setDateOfBirth(d1).setSurname("COLLINS").setGivenName("CHRIS").setGender("1");
 		p2.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p2.setLocalId(idBase2+"1").setLocalIdType("MR").setOriginator(originator2);
-		p2.setPrimaryIdType(NationalIdentity.UKRR_TYPE).setPrimaryId(idBase+"R2");
+		p2.setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(idBase+"R2");
 		im.createOrUpdate(p2);
 
 		logger.debug("************* test3UpdateChangingUKRDCId ********UT3-2********");
 		// UT3-2 - Change the UKRDC ID. Should delete the link to the previous. Original master stays in place though because p2 is linked to it
 		p1.setId(0); // reset the id - incoming record won't have this.
-		p1.setPrimaryIdType(NationalIdentity.UKRR_TYPE).setPrimaryId(idBase+"R3");
+		p1.setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(idBase+"R3");
 		im.createOrUpdate(p1);
 		// VERIFY
 		person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		master = MasterRecordDAO.findByNationalId(idBase+"R2",NationalIdentity.UKRR_TYPE);
+		master = MasterRecordDAO.findByNationalId(idBase+"R2",NationalIdentity.UKRDC_TYPE);
 		assert(master!=null);
-		master2 = MasterRecordDAO.findByNationalId(idBase+"R3",NationalIdentity.UKRR_TYPE);
+		master2 = MasterRecordDAO.findByNationalId(idBase+"R3",NationalIdentity.UKRDC_TYPE);
 		assert(master2!=null);
 		links = LinkRecordDAO.findByPerson(person.getId());
 		assert(links.size()==1);
@@ -288,7 +292,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		Person p1 = new Person().setDateOfBirth(d1).setSurname("DERBY").setGivenName("DORIS").setGender("2");
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId(idBase+"1").setLocalIdType("MR").setOriginator(originator);
-		p1.setPrimaryIdType(NationalIdentity.UKRR_TYPE).setPrimaryId(idBase+"R1");
+		p1.setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(idBase+"R1");
 		im.createOrUpdate(p1);
 		
 		logger.debug("************* test4AddingOtherNationalId ********UT4-1********");
@@ -300,7 +304,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		// VERIFY
 		Person person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		MasterRecord masterUkrdc = MasterRecordDAO.findByNationalId(idBase+"R1",NationalIdentity.UKRR_TYPE);
+		MasterRecord masterUkrdc = MasterRecordDAO.findByNationalId(idBase+"R1",NationalIdentity.UKRDC_TYPE);
 		assert(masterUkrdc!=null);
 		MasterRecord masterNhs = MasterRecordDAO.findByNationalId(idBase+"N1",NationalIdentity.NHS_TYPE);
 		assert(masterNhs!=null);
@@ -325,7 +329,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		// VERIFY
 		person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		masterUkrdc = MasterRecordDAO.findByNationalId(idBase+"R1",NationalIdentity.UKRR_TYPE);
+		masterUkrdc = MasterRecordDAO.findByNationalId(idBase+"R1",NationalIdentity.UKRDC_TYPE);
 		assert(masterUkrdc!=null);
 		masterNhs = MasterRecordDAO.findByNationalId(idBase+"N1",NationalIdentity.NHS_TYPE);
 		assert(masterNhs!=null);
@@ -351,7 +355,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
 		assert(person.getSurname().equals("DARBY"));
-		masterUkrdc = MasterRecordDAO.findByNationalId(idBase+"R1",NationalIdentity.UKRR_TYPE);
+		masterUkrdc = MasterRecordDAO.findByNationalId(idBase+"R1",NationalIdentity.UKRDC_TYPE);
 		assert(masterUkrdc!=null);
 		assert(masterUkrdc.getSurname().equals("DARBY"));
 		masterNhs = MasterRecordDAO.findByNationalId(idBase+"N1",NationalIdentity.NHS_TYPE);
@@ -381,7 +385,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
 		assert(person.getSurname().equals("DARBEY"));
-		masterUkrdc = MasterRecordDAO.findByNationalId(idBase+"R1",NationalIdentity.UKRR_TYPE);
+		masterUkrdc = MasterRecordDAO.findByNationalId(idBase+"R1",NationalIdentity.UKRDC_TYPE);
 		assert(masterUkrdc!=null);
 		assert(masterUkrdc.getSurname().equals("DARBY"));
 		masterNhs = MasterRecordDAO.findByNationalId(idBase+"N1",NationalIdentity.NHS_TYPE);
