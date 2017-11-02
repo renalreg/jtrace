@@ -12,10 +12,21 @@ public class NationalIdentity {
 	public static final String BAPN_TYPE = "BAPN";
 	public static final String LOCALHOSP = "LOCALHOSP";
 
+	public static final String UKRDC_TYPE = "UKRDC";
+
 	public NationalIdentity() {
 	}
 	public NationalIdentity(String type, String id) {
 		this.type = type;
+		this.id = id;
+	}
+
+	/**
+	 * Default to the UKRDC_TYPE
+	 * @param id
+	 */
+	public NationalIdentity(String id) {
+		this.type = UKRDC_TYPE;
 		this.id = id;
 	}
 	

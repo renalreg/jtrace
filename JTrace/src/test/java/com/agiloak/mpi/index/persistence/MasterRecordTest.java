@@ -33,8 +33,17 @@ public class MasterRecordTest {
 		MasterRecordDAO.deleteByNationalId("NHS0000008","NHS");
 		MasterRecordDAO.deleteByNationalId("NHS0000009","NHS");
 		MasterRecordDAO.deleteByNationalId("NHS0000010","NHS");
+		MasterRecordDAO.deleteByNationalId("NHS0000011","NHS");
+		MasterRecordDAO.deleteByNationalId("NHS0000012","NHS");
 	}
 	
+	@Test
+	public void testGetSequence() throws MpiException {
+		String ukrdcId = MasterRecordDAO.allocate();
+		assert(ukrdcId!=null);
+		assert(ukrdcId.length()==9);
+	}
+
 	@Test
 	public void testDelete() throws MpiException {
 		MasterRecord mr = new MasterRecord();
@@ -47,6 +56,23 @@ public class MasterRecordTest {
 		assert(mr2!=null);
 		MasterRecordDAO.delete(mr);
 		MasterRecord mr3 = MasterRecordDAO.findByNationalId("NHS0000011","NHS");
+		assert(mr3==null);
+		MasterRecord mr4 = MasterRecordDAO.get(mr.getId());
+		assert(mr4==null);
+	}
+
+	@Test
+	public void testDeleteById() throws MpiException {
+		MasterRecord mr = new MasterRecord();
+		mr.setDateOfBirth(getDate("1962-08-31")).setGender("M");
+		mr.setGivenName("Nick").setSurname("Jones");
+		mr.setNationalId("NHS0000012").setNationalIdType("NHS");
+		mr.setEffectiveDate(getDate("2017-08-22"));
+		MasterRecordDAO.create(mr);
+		MasterRecord mr2 = MasterRecordDAO.findByNationalId("NHS0000012","NHS");
+		assert(mr2!=null);
+		MasterRecordDAO.delete(mr.getId());
+		MasterRecord mr3 = MasterRecordDAO.findByNationalId("NHS0000012","NHS");
 		assert(mr3==null);
 		MasterRecord mr4 = MasterRecordDAO.get(mr.getId());
 		assert(mr4==null);

@@ -73,7 +73,7 @@ public class UKRDCIndexManagerTest {
 		UKRDCIndexManager im = new UKRDCIndexManager();
 		
 		// Prepare Person 1
-		Person p1 = new Person().setDateOfBirth(d1).setSurname("UPDATE").setGivenName("PAT").setPrimaryIdType(NationalIdentity.UKRR_TYPE).setPrimaryId("NHS0000010").setGender("1");
+		Person p1 = new Person().setDateOfBirth(d1).setSurname("UPDATE").setGivenName("PAT").setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId("NHS0000010").setGender("1");
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId("UPD1000001").setLocalIdType("MR").setOriginator("UPD1");
 		im.createOrUpdate(p1);
@@ -91,7 +91,7 @@ public class UKRDCIndexManagerTest {
 		assert(true);
 
 		// Add national id to a record which previously had none
-		p2.setPrimaryIdType(NationalIdentity.UKRR_TYPE).setPrimaryId("NHS0000011");
+		p2.setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId("NHS0000011");
 		im.createOrUpdate(p2);
 		assert(true);
 
@@ -106,7 +106,7 @@ public class UKRDCIndexManagerTest {
 	public void testIndexManagerNew() throws MpiException {
 		
 		// Basic test - add a new record
-		Person p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICK").setPrimaryIdType(NationalIdentity.UKRR_TYPE).setPrimaryId("NHS0000001").setGender("1");
+		Person p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICK").setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId("NHS0000001").setGender("1");
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId("TST1000001").setLocalIdType("MR").setOriginator("TST1");
 		UKRDCIndexManager im = new UKRDCIndexManager();
@@ -114,7 +114,7 @@ public class UKRDCIndexManagerTest {
 		assert(true);
 		
 		// Basic test - link a 2nd record
-		Person p2 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICK").setPrimaryIdType(NationalIdentity.UKRR_TYPE).setPrimaryId("NHS0000001").setGender("1");
+		Person p2 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICK").setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId("NHS0000001").setGender("1");
 		p2.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p2.setLocalId("TST2000001").setLocalIdType("MR").setOriginator("TST2");
 		im = new UKRDCIndexManager();
@@ -122,7 +122,7 @@ public class UKRDCIndexManagerTest {
 		assert(true);
 
 		// Basic test - link a 3rd record - partial DOB match - should still link
-		Person p3 = new Person().setDateOfBirth(d2).setSurname("JONES").setGivenName("NICK").setPrimaryIdType(NationalIdentity.UKRR_TYPE).setPrimaryId("NHS0000001").setGender("1");
+		Person p3 = new Person().setDateOfBirth(d2).setSurname("JONES").setGivenName("NICK").setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId("NHS0000001").setGender("1");
 		p3.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p3.setLocalId("TST3000001").setLocalIdType("MR").setOriginator("TST3");
 		im = new UKRDCIndexManager();

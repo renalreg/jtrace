@@ -31,7 +31,7 @@ public class UKRDCIndexManagerLinkSystemTest {
 	public static void setup()  throws MpiException {
 
 		clear( "LNKT10001", "LNKT1");
-		MasterRecordDAO.deleteByNationalId("LNKT1000R1",NationalIdentity.UKRR_TYPE);
+		MasterRecordDAO.deleteByNationalId("LNKT1000R1",NationalIdentity.UKRDC_TYPE);
 		MasterRecordDAO.deleteByNationalId("LNKT1000N1",NationalIdentity.NHS_TYPE);
 		MasterRecordDAO.deleteByNationalId("LNKT1000C1",NationalIdentity.CHI_TYPE);
 		clear( "LNKT20001", "LNKT2");
@@ -47,7 +47,7 @@ public class UKRDCIndexManagerLinkSystemTest {
 		String idBase2 = originator2+"000";
 
 		UKRDCIndexManager im = new UKRDCIndexManager();
-		NationalIdentity ukrr = new NationalIdentity(NationalIdentity.UKRR_TYPE,idBase+"R1");
+		NationalIdentity ukrdc = new NationalIdentity(NationalIdentity.UKRDC_TYPE,idBase+"R1");
 		NationalIdentity nhs1 = new NationalIdentity(NationalIdentity.NHS_TYPE,idBase+"N1");
 		NationalIdentity chi1 = new NationalIdentity(NationalIdentity.CHI_TYPE,idBase+"C1");
 		
@@ -55,21 +55,21 @@ public class UKRDCIndexManagerLinkSystemTest {
 		Person p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICHOLAS").setGender("1");
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId(idBase+"1").setLocalIdType("MR").setOriginator(originator);
-		p1.setPrimaryIdType(NationalIdentity.UKRR_TYPE).setPrimaryId(idBase+"R1");
+		p1.setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(idBase+"R1");
 		p1.addNationalId(nhs1);
 		p1.addNationalId(chi1);
 		im.createOrUpdate(p1);
 		// VERIFY
 		Person person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		MasterRecord ukrrMaster = MasterRecordDAO.findByNationalId(idBase+"R1", NationalIdentity.UKRR_TYPE);
-		assert(ukrrMaster!=null);
+		MasterRecord ukrdcMaster = MasterRecordDAO.findByNationalId(idBase+"R1", NationalIdentity.UKRDC_TYPE);
+		assert(ukrdcMaster!=null);
 		List<LinkRecord> links = LinkRecordDAO.findByPerson(person.getId());
 		assert(links.size()==3);
 		List<WorkItem> items = WorkItemDAO.findByPerson(person.getId());
 		assert(items.size()==0);
 
-		// Setup person with no national links
+		// Setup person with no national links - will allocate the UKRDC Number
 		Person p2 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICHOLAS").setGender("1");
 		p2.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p2.setLocalId(idBase2+"1").setLocalIdType("MR").setOriginator(originator2);
@@ -78,18 +78,26 @@ public class UKRDCIndexManagerLinkSystemTest {
 		person = PersonDAO.findByLocalId(p2.getLocalIdType(), p2.getLocalId(), p2.getOriginator());
 		assert(person!=null);
 		links = LinkRecordDAO.findByPerson(person.getId());
-		assert(links.size()==0);
+		assert(links.size()==1);
+		MasterRecord allocatedMr = MasterRecordDAO.get(links.get(0).getMasterId());
+		assert(allocatedMr.getNationalIdType().equals(NationalIdentity.UKRDC_TYPE));
 		items = WorkItemDAO.findByPerson(person.getId());
 		assert(items.size()==0);
 
-		// LT1-1 - Link to UKRR
-		im.link(p2.getId(), ukrrMaster.getId(), "NJONES01", 1, "Verified with Saughall Medical Centre.");
+		// LT1-1 - Link to UKRDC
+		// LT1-3 - Deletes prior link
+		im.link(p2.getId(), ukrdcMaster.getId(), "NJONES01", 1, "Verified with Saughall Medical Centre.");
 		// VERIFY
-		LinkRecord newLink = LinkRecordDAO.find(ukrrMaster.getId(), p2.getId());
+		LinkRecord newLink = LinkRecordDAO.find(ukrdcMaster.getId(), p2.getId());
 		assert(newLink!=null);
-		assert(newLink.getMasterId()==ukrrMaster.getId());
+		assert(newLink.getMasterId()==ukrdcMaster.getId());
 		assert(newLink.getUpdatedBy().equals("NJONES01"));
 		assert(newLink.getLinkType()==LinkRecord.MANUAL_TYPE);
+		// LT1-4 - Deletes prior link
+		MasterRecord mr = MasterRecordDAO.get(allocatedMr.getId());
+		assert(mr==null);
+		LinkRecord oldLink = LinkRecordDAO.find(allocatedMr.getId(), p2.getId());
+		assert(oldLink==null);
 
 	}
 	

@@ -33,13 +33,13 @@ public class UKRDCIndexManagerSearchSystemTest {
 	public static void setup()  throws MpiException {
 
 		clear( "SRCT10001", "SRCT1");
-		MasterRecordDAO.deleteByNationalId("SRCT1000R1",NationalIdentity.UKRR_TYPE);
+		MasterRecordDAO.deleteByNationalId("SRCT1000R1",NationalIdentity.UKRDC_TYPE);
 		clear( "SRCT40001", "SRCT4");
-		MasterRecordDAO.deleteByNationalId("SRCT4000R1",NationalIdentity.UKRR_TYPE);
+		MasterRecordDAO.deleteByNationalId("SRCT4000R1",NationalIdentity.UKRDC_TYPE);
 		clear( "SRCT50001", "SRCT5");
-		MasterRecordDAO.deleteByNationalId("SRCT5000R1",NationalIdentity.UKRR_TYPE);
+		MasterRecordDAO.deleteByNationalId("SRCT5000R1",NationalIdentity.UKRDC_TYPE);
 		clear( "SRCT60001", "SRCT6");
-		MasterRecordDAO.deleteByNationalId("SRCT6000R1",NationalIdentity.UKRR_TYPE);
+		MasterRecordDAO.deleteByNationalId("SRCT6000R1",NationalIdentity.UKRDC_TYPE);
 
 	}
 
@@ -57,14 +57,14 @@ public class UKRDCIndexManagerSearchSystemTest {
 		Person p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICHOLAS").setGender("1");
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId(idBase+"1").setLocalIdType("MR").setOriginator(originator);
-		p1.setPrimaryIdType(NationalIdentity.UKRR_TYPE).setPrimaryId(idBase+"R1");
+		p1.setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(idBase+"R1");
 		p1.addNationalId(nhs1);
 		p1.addNationalId(chi1);
 		im.createOrUpdate(p1);
 		// VERIFY
 		Person person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		MasterRecord master = MasterRecordDAO.findByNationalId(idBase+"R1", NationalIdentity.UKRR_TYPE);
+		MasterRecord master = MasterRecordDAO.findByNationalId(idBase+"R1", NationalIdentity.UKRDC_TYPE);
 		assert(master!=null);
 		List<LinkRecord> links = LinkRecordDAO.findByPerson(person.getId());
 		assert(links.size()==3);
@@ -155,14 +155,14 @@ public class UKRDCIndexManagerSearchSystemTest {
 		Person p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICHOLAS").setGender("1");
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId(idBase+"1").setLocalIdType("MR").setOriginator(originator);
-		p1.setPrimaryIdType(NationalIdentity.UKRR_TYPE).setPrimaryId(idBase+"R1");
+		p1.setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(idBase+"R1");
 		p1.addNationalId(nhs1);
 		p1.addNationalId(chi1);
 		im.createOrUpdate(p1);
 		// VERIFY
 		Person person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		MasterRecord master = MasterRecordDAO.findByNationalId(idBase+"R1", NationalIdentity.UKRR_TYPE);
+		MasterRecord master = MasterRecordDAO.findByNationalId(idBase+"R1", NationalIdentity.UKRDC_TYPE);
 		assert(master!=null);
 		List<LinkRecord> links = LinkRecordDAO.findByPerson(person.getId());
 		assert(links.size()==3);
@@ -179,7 +179,7 @@ public class UKRDCIndexManagerSearchSystemTest {
 
 	}
 	
-	@Test
+	//@Test -- NOT POSSIBLE FROM V1.1.0 as number is allocated if not found
 	public void testSearchNoUKRDCFound() throws MpiException {
 
 		String originator = "SRCT5";
@@ -190,7 +190,7 @@ public class UKRDCIndexManagerSearchSystemTest {
 		NationalIdentity nhs2 = new NationalIdentity(NationalIdentity.NHS_TYPE,idBase+"N2");
 		NationalIdentity chi1 = new NationalIdentity(NationalIdentity.CHI_TYPE,idBase+"C1");
 		
-		// P1 NationalId for P1. New Person, New Masters for UKRDC, NHS and CHI
+		// P1 NationalId for P1. New Person, New Masters for NHS and CHI. Will Allocate a UKRDC number
 		Person p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICHOLAS").setGender("1");
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId(idBase+"1").setLocalIdType("MR").setOriginator(originator);
@@ -200,14 +200,12 @@ public class UKRDCIndexManagerSearchSystemTest {
 		// VERIFY
 		Person person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		MasterRecord master = MasterRecordDAO.findByNationalId(idBase+"R1", NationalIdentity.UKRR_TYPE);
-		assert(master==null);
 		List<LinkRecord> links = LinkRecordDAO.findByPerson(person.getId());
-		assert(links.size()==2);
+		assert(links.size()==3);
 		List<WorkItem> items = WorkItemDAO.findByPerson(person.getId());
 		assert(items.size()==0);
 
-		// ST5-1 - Match on NHS Number, but no UKRDC Number is linked
+		// ST5-1 - Match on NHS Number, but no UKRDC Number is linked - NOT POSSIBLE FROM V1.1.0 as number is allocated if not found
 		ProgrammeSearchRequest psr = new ProgrammeSearchRequest();
 		psr.setDateOfBirth(d1).setSurname("JONES").setGivenName("NICHOLAS");
 		psr.setNationalId(nhs1);
@@ -231,14 +229,14 @@ public class UKRDCIndexManagerSearchSystemTest {
 		Person p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICHOLAS").setGender("1");
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId(idBase+"1").setLocalIdType("MR").setOriginator(originator);
-		p1.setPrimaryIdType(NationalIdentity.UKRR_TYPE).setPrimaryId(idBase+"R1");
+		p1.setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(idBase+"R1");
 		p1.addNationalId(nhs1);
 		p1.addNationalId(chi1);
 		im.createOrUpdate(p1);
 		// VERIFY
 		Person person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		MasterRecord master = MasterRecordDAO.findByNationalId(idBase+"R1", NationalIdentity.UKRR_TYPE);
+		MasterRecord master = MasterRecordDAO.findByNationalId(idBase+"R1", NationalIdentity.UKRDC_TYPE);
 		assert(master!=null);
 		List<LinkRecord> links = LinkRecordDAO.findByPerson(person.getId());
 		assert(links.size()==3);

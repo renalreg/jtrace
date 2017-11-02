@@ -273,6 +273,10 @@ public class MasterRecordDAO {
 	}
 
 	public static void delete(MasterRecord master) throws MpiException {
+		delete(master.getId());
+	}
+	
+	public static void delete(int masterId) throws MpiException {
 		
 		String deleteSQL = "delete from jtrace.masterrecord where id = ? ";
 		
@@ -285,7 +289,7 @@ public class MasterRecordDAO {
 			
 			preparedStatement = conn.prepareStatement(deleteSQL);
 			conn = SimpleConnectionManager.getDBConnection();
-			preparedStatement.setInt(1, master.getId());
+			preparedStatement.setInt(1, masterId);
 			int affectedRows = preparedStatement.executeUpdate();
 			logger.debug("Affected Rows:"+affectedRows);
 			
@@ -306,7 +310,6 @@ public class MasterRecordDAO {
 		}
 
 	}
-	
 	public static void deleteByNationalId(String nationalId, String nationalIdType) throws MpiException {
 		
 		String deleteSQL = "delete from jtrace.masterrecord where nationalid = ? and nationalidtype = ? ";
@@ -341,6 +344,57 @@ public class MasterRecordDAO {
 
 		}
 
+	}
+	
+	public static String allocate() throws MpiException {
+		//
+
+		String nextValSQL = "select nextval('jtrace.ukrdc_id')";
+		
+		String  ukrdcId = "";
+
+		PreparedStatement preparedStatement = null;
+		Connection conn = null;
+		ResultSet rs = null;
+		
+		try {
+
+			conn = SimpleConnectionManager.getDBConnection();
+			
+			preparedStatement = conn.prepareStatement(nextValSQL);
+
+			rs = preparedStatement.executeQuery();
+			
+			if (rs.next()){
+				ukrdcId = new Integer(rs.getInt("nextval")).toString();
+			}
+			
+		} catch (Exception e) {
+			logger.error("Failure querying UKRDC Sequence.",e);
+			throw new MpiException("Failure querying UKRDC Sequence. "+e.getMessage());
+		} finally {
+
+			if (rs != null) {
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing resultset.",e);
+					throw new MpiException("Failure closing resultset. "+e.getMessage());
+				}
+			}
+			
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing prepared statement.",e);
+					throw new MpiException("Failure closing prepared statement. "+e.getMessage());
+				}
+			}
+
+		}
+		return ukrdcId;
+		
 	}
 	
 	private static MasterRecord buildMasterRecord(ResultSet rs) throws MpiException {
