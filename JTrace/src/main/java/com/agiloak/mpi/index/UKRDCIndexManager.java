@@ -472,6 +472,7 @@ public class UKRDCIndexManager {
 									LinkRecord newLink = new LinkRecord(ukrdcMaster.getId(), person.getId());
 									LinkRecordDAO.create(newLink);
 									linked = true;
+									break; //Only want to link once
 								} else {
 									logger.debug("Link to potential UKRDC Match not verified");
 									WorkItemManager wim = new WorkItemManager();
