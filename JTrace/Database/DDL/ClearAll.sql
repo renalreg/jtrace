@@ -5,3 +5,4 @@ delete from jtrace.workitem;
 delete from jtrace.tracerequest;
 delete from jtrace.traceresponse;
 delete from jtrace.traceresponseline;
+ALTER SEQUENCE jtrace.ukrdc_id RESTART WITH 100000000;
