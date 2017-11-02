@@ -12,7 +12,8 @@ import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.agiloak.mpi.index.persistence.SimpleConnectionManager;
+import com.agiloak.mpi.MpiException;
+import com.agiloak.mpi.SimpleConnectionManager;
 import com.agiloak.mpi.normalization.NormalizationManager;
 import com.agiloak.mpi.trace.TraceRequest;
 import com.agiloak.mpi.trace.TraceResponse;
@@ -46,7 +47,7 @@ public class TraceDAO {
 			while (rs.next()){
 				TraceResponseLine candidate;
 				candidate = new TraceResponseLine();
-				candidate.setMasterId(rs.getLong("masterid"));
+				candidate.setPersonId(rs.getInt("id"));
 				java.sql.Date dob = rs.getDate("dateofbirth");
 				candidate.setDateOfBirth(new java.util.Date(dob.getTime()));
 				candidate.setGender(rs.getString("gender"));
@@ -206,8 +207,8 @@ public class TraceDAO {
 			fullSQL += getSurnameQuery(parms, stdSurname, config);
 		}
 
-		System.out.println("BlockCount:"+blockCount);
-		System.out.println("FullSQL:"+fullSQL);
+		logger.debug("BlockCount:"+blockCount);
+		logger.debug("FullSQL:"+fullSQL);
 		
 		PreparedStatement queryStmt = null;
 		Connection conn = null;
@@ -239,7 +240,7 @@ public class TraceDAO {
 			while (rs.next()){
 				TraceResponseLine candidate;
 				candidate = new TraceResponseLine();
-				candidate.setMasterId(rs.getLong("masterid"));
+				candidate.setPersonId(rs.getInt("id"));
 				java.sql.Date dob = rs.getDate("dateofbirth");
 				candidate.setDateOfBirth(new java.util.Date(dob.getTime()));
 				candidate.setGender(rs.getString("gender"));
@@ -259,7 +260,7 @@ public class TraceDAO {
 			}
 			
 		} catch (SQLException e) {
-			System.out.println("Failure tracing Person:"+e.getErrorCode()+":"+e.getMessage());
+			logger.error("Failure tracing Person:"+e.getErrorCode()+":"+e.getMessage());
 
 		} finally {
 
@@ -346,12 +347,12 @@ public class TraceDAO {
 		return value;
 	}
 	
-	public static void saveRequest(TraceRequest request) {
+	public static void saveRequest(TraceRequest request) throws MpiException {
 
 		// traceid is set by at database sequence
 		
 		String insertSQL = "Insert into jtrace.tracerequest "+
-				"(traceid, tracetype, nameswap, localid, localidtype, localidoriginator, "+
+				"(traceid, tracetype, nameswap, localid, localidtype, originator, "+
 	            "givenname, othergivennames, surname, gender, postcode, dateofbirthstart, dateofbirthend,"+ 
 	            "street, longname, longaddress)"+
 				" values (?,?,?,?,?,?,"+
@@ -371,7 +372,7 @@ public class TraceDAO {
 			preparedStatement.setString(3, request.getNameSwap());
 			preparedStatement.setString(4, request.getLocalId());
 			preparedStatement.setString(5, request.getLocalIdType());
-			preparedStatement.setString(6, request.getLocalIdOriginator());
+			preparedStatement.setString(6, request.getOriginator());
 
 			preparedStatement.setString(7, request.getGivenName());
 			preparedStatement.setString(8, request.getOtherGivenNames());
@@ -388,9 +389,9 @@ public class TraceDAO {
 			int affectedRows = preparedStatement.executeUpdate();
 			logger.info("Affected Rows:"+affectedRows);
 			
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			logger.error("Failure inserting TraceRequest.",e);
-
+			throw new MpiException("TraceRequest insert failed");
 		} finally {
 
 			if (preparedStatement != null) {
@@ -398,6 +399,7 @@ public class TraceDAO {
 					preparedStatement.close();
 				} catch (SQLException e) {
 					logger.error("Failure closing prepared statement.",e);
+					throw new MpiException("TraceRequest insert failed");
 				}
 			}
 
@@ -405,7 +407,7 @@ public class TraceDAO {
 
 	}
 	
-	public static TraceResponse getResponse(String traceId) {
+	public static TraceResponse getResponse(String traceId) throws MpiException {
 
 		TraceResponse response = new TraceResponse();
 		response.setTraceId(traceId);
@@ -438,7 +440,7 @@ public class TraceDAO {
 			
 		} catch (SQLException e) {
 			logger.error("Failure reading TraceResponse.",e);
-
+			throw new MpiException("TraceResponse read failed");
 		} finally {
 
 			if (rs != null) {
@@ -446,6 +448,7 @@ public class TraceDAO {
 					rs.close();
 				} catch (SQLException e) {
 					logger.error("Failure closing resultset.",e);
+					throw new MpiException("TraceResponse read failed");
 				}
 			}
 			
@@ -454,6 +457,7 @@ public class TraceDAO {
 					preparedStatement.close();
 				} catch (SQLException e) {
 					logger.error("Failure closing prepared statement.",e);
+					throw new MpiException("TraceResponse read failed");
 				}
 			}
 
@@ -462,7 +466,7 @@ public class TraceDAO {
 		return response;
 	}
 
-	private static TraceResponse getResponseLines(TraceResponse response) {
+	private static TraceResponse getResponseLines(TraceResponse response) throws MpiException {
 
 		String readSQL = "Select * from jtrace.traceresponseline where traceid = ? ";
 
@@ -481,7 +485,7 @@ public class TraceDAO {
 			
 			while (rs.next()){
 				TraceResponseLine trl = new TraceResponseLine();
-				trl.setMasterId(rs.getLong("masterid"));
+				trl.setPersonId(rs.getInt("personid"));
 				trl.setWeight(rs.getDouble("weight"));
 				trl.setGivenName(rs.getString("givenname"));
 				trl.setOtherGivenNames(rs.getString("othergivennames"));
@@ -498,6 +502,7 @@ public class TraceDAO {
 			
 		} catch (SQLException e) {
 			logger.error("Failure reading TraceResponseLine.",e);
+			throw new MpiException("TraceResponseLine read failed");
 
 		} finally {
 
@@ -506,6 +511,7 @@ public class TraceDAO {
 					rs.close();
 				} catch (SQLException e) {
 					logger.error("Failure closing resultset.",e);
+					throw new MpiException("TraceResponseLine read failed");
 				}
 			}
 			
@@ -514,6 +520,7 @@ public class TraceDAO {
 					preparedStatement.close();
 				} catch (SQLException e) {
 					logger.error("Failure closing prepared statement.",e);
+					throw new MpiException("TraceResponseLine read failed");
 				}
 			}
 
@@ -522,7 +529,7 @@ public class TraceDAO {
 		return response;
 	}
 	
-	public static void saveResponse(TraceResponse response) {
+	public static void saveResponse(TraceResponse response) throws MpiException {
 
 		String insertSQL = "Insert into jtrace.traceresponse "+
 				"(traceid, tracestarttime, traceendtime, message, status, maxweight, matchcount)"+
@@ -555,7 +562,7 @@ public class TraceDAO {
 			
 		} catch (SQLException e) {
 			logger.error("Failure inserting TraceResponse.",e);
-
+			throw new MpiException("TraceResponse insert failed");
 		} finally {
 
 			if (preparedStatement != null) {
@@ -563,16 +570,17 @@ public class TraceDAO {
 					preparedStatement.close();
 				} catch (SQLException e) {
 					logger.error("Failure closing prepared statement.",e);
+					throw new MpiException("TraceResponse insert failed");
 				}
 			}
 
 		}
 
 	}
-	public static void saveResponseLine(TraceResponseLine responseLine, String traceId) {
+	public static void saveResponseLine(TraceResponseLine responseLine, String traceId) throws MpiException {
 
 		String insertSQL = "Insert into jtrace.traceresponseline "+
-				"(traceid, masterid, weight, givenname, othergivennames, surname, "+
+				"(traceid, personid, weight, givenname, othergivennames, surname, "+
 				"prevsurname, gender, postcode, dateofbirth, street, longname, "+
 				"longaddress) "+
 				" values (?,?,?,?,?,?,"+
@@ -588,7 +596,7 @@ public class TraceDAO {
 			
 			preparedStatement = conn.prepareStatement(insertSQL);
 			preparedStatement.setString(1, traceId);
-			preparedStatement.setLong(2, responseLine.getMasterId());
+			preparedStatement.setInt(2, responseLine.getPersonId());
 			preparedStatement.setDouble(3, responseLine.getWeight());
 			preparedStatement.setString(4, responseLine.getGivenName());
 			preparedStatement.setString(5, responseLine.getOtherGivenNames());
@@ -606,7 +614,7 @@ public class TraceDAO {
 			
 		} catch (SQLException e) {
 			logger.error("Failure inserting TraceResponseLine.",e);
-
+			throw new MpiException("TraceResponseLine insert failed");
 		} finally {
 
 			if (preparedStatement != null) {
@@ -614,10 +622,118 @@ public class TraceDAO {
 					preparedStatement.close();
 				} catch (SQLException e) {
 					logger.error("Failure closing prepared statement.",e);
+					throw new MpiException("TraceResponseLine insert failed");
 				}
 			}
 
 		}
 
 	}
+	
+	public static void clearByTraceId(String traceId) throws MpiException {
+
+		// traceid is set by at database sequence
+		
+		String deleteSQL1 = "delete from jtrace.tracerequest where traceid = ?";
+		String deleteSQL2 = "delete from jtrace.traceresponse where traceid = ?";
+		String deleteSQL3 = "delete from jtrace.traceresponseline where traceid = ?";
+
+		PreparedStatement preparedStatement = null;
+		Connection conn = null;
+		
+		try {
+
+			conn = SimpleConnectionManager.getDBConnection();
+			
+			preparedStatement = conn.prepareStatement(deleteSQL1);
+			preparedStatement.setString(1, traceId);
+			int affectedRows = preparedStatement.executeUpdate();
+			logger.debug("Affected TraceRequest Rows:"+affectedRows);
+			preparedStatement.close();
+					 
+			preparedStatement = conn.prepareStatement(deleteSQL2);
+			preparedStatement.setString(1, traceId);
+			affectedRows = preparedStatement.executeUpdate();
+			logger.debug("Affected TraceResponse Rows:"+affectedRows);
+			preparedStatement.close();
+					 
+			preparedStatement = conn.prepareStatement(deleteSQL3);
+			preparedStatement.setString(1, traceId);
+			affectedRows = preparedStatement.executeUpdate();
+			logger.debug("Affected TraceResponseLine Rows:"+affectedRows);
+			preparedStatement.close();
+					 
+		} catch (SQLException e) {
+			logger.error("Failure deleting trace:",e);
+			throw new MpiException("trace delete failed");
+
+		} finally {
+
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing Prepared Statement:",e);
+					throw new MpiException("trace delete failed");
+				}
+			}
+
+		}
+
+	}	
+	
+	public static String getTraceId(String localId, String localIdType, String originator, String traceType) throws MpiException {
+
+		String readSQL = "Select * from jtrace.tracerequest where tracetype = ? and localid = ? and localidtype = ? and originator = ? ";
+
+		PreparedStatement preparedStatement = null;
+		Connection conn = null;
+		ResultSet rs = null;
+		
+		String traceId = null;
+		
+		try {
+
+			conn = SimpleConnectionManager.getDBConnection();
+			
+			preparedStatement = conn.prepareStatement(readSQL);
+			preparedStatement.setString(1, traceType);
+			preparedStatement.setString(2, localId);
+			preparedStatement.setString(3, localIdType);
+			preparedStatement.setString(4, originator);
+
+			rs = preparedStatement.executeQuery();
+			
+			
+			if (rs.next()){
+				traceId = rs.getString("traceid");
+			}
+			
+		} catch (SQLException e) {
+			logger.error("Failure reading TraceRequest.",e);
+			throw new MpiException("TraceRequest read failed");
+		} finally {
+
+			if (rs != null) {
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing resultset.",e);
+					throw new MpiException("TraceRequest read failed");
+				}
+			}
+			
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing prepared statement.",e);
+					throw new MpiException("TraceRequest read failed");
+				}
+			}
+
+		}
+
+		return traceId;
+	}	
 }

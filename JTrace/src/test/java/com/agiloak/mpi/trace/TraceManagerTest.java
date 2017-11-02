@@ -6,6 +6,7 @@ import java.text.SimpleDateFormat;
 
 import org.junit.Test;
 
+import com.agiloak.mpi.MpiException;
 import com.agiloak.mpi.index.Person;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -28,7 +29,7 @@ public class TraceManagerTest {
 	}
 
 	@Test
-	public void testTrace() {
+	public void testTrace() throws MpiException  {
 		TraceResponse response;
 		TraceRequest request = new TraceRequest();
 		
@@ -37,7 +38,7 @@ public class TraceManagerTest {
 		
 		request.setLocalId("1000002");
 		request.setLocalIdType("TST");
-		request.setLocalIdOriginator("JUNIT");
+		request.setOriginator("JUNIT");
 		
 		request.setGivenName("Brittany");
 		request.setSurname("Newman");
@@ -62,7 +63,7 @@ public class TraceManagerTest {
 		
 		request.setLocalId("1000002");
 		request.setLocalIdType("TST");
-		request.setLocalIdOriginator("JUNIT");
+		request.setOriginator("JUNIT");
 		
 		request.setGivenName("Nick");
 		request.setSurname("JONES");
@@ -92,7 +93,7 @@ public class TraceManagerTest {
 		
 		request.setLocalId("1000002");
 		request.setLocalIdType("TST");
-		request.setLocalIdOriginator("JUNIT");
+		request.setOriginator("JUNIT");
 		
 		request.setGivenName("Nick");
 		request.setSurname("JONES");
@@ -116,14 +117,14 @@ public class TraceManagerTest {
 	}
 	
 	@Test
-	public void testTraceNameSwitch() {
+	public void testTraceNameSwitch() throws MpiException {
 		TraceRequest request = new TraceRequest();
 		request.setTraceType("AUTO");
 		request.setNameSwap("N");
 		
 		request.setLocalId("1000002");
 		request.setLocalIdType("TST");
-		request.setLocalIdOriginator("JUNIT");
+		request.setOriginator("JUNIT");
 		
 		request.setGivenName("JONES");
 		request.setSurname("Nick");
@@ -148,7 +149,7 @@ public class TraceManagerTest {
 		
 		request.setLocalId("1000002");
 		request.setLocalIdType("TST");
-		request.setLocalIdOriginator("JUNIT");
+		request.setOriginator("JUNIT");
 		
 		request.setGivenName("JONES");
 		request.setSurname("Nick");
@@ -167,14 +168,14 @@ public class TraceManagerTest {
 		System.out.println("End:"+response.getTraceEndTime());
 	}
 	@Test
-	public void testTraceDOB() {
+	public void testTraceDOB() throws MpiException  {
 		TraceRequest request = new TraceRequest();
 		request.setTraceType("AUTO");
 		request.setNameSwap("N");
 		
 		request.setLocalId("1000002");
 		request.setLocalIdType("TST");
-		request.setLocalIdOriginator("JUNIT");
+		request.setOriginator("JUNIT");
 
 		request.setDateOfBirthStart(getDate("1962-08-31"));
 		
@@ -189,7 +190,7 @@ public class TraceManagerTest {
 	}
 
 	@Test
-	public void testGetResponse() {
+	public void testGetResponse() throws MpiException {
 		TraceManager tracer = new TraceManager();
 		
 		TraceResponse response = tracer.getTraceResponse("f086aeb1-e6b7-498b-b78a-5675c1b55da2");

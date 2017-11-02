@@ -5,6 +5,8 @@ import java.text.SimpleDateFormat;
 
 import org.junit.Test;
 
+import com.agiloak.mpi.MpiException;
+
 public class IndexManagerTest {
 	
 	public static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
@@ -23,11 +25,11 @@ public class IndexManagerTest {
 	}
 	
 	@Test
-	public void testIndexManagerCreateSet() {
+	public void testIndexManagerCreateSet() throws MpiException {
 		Person person = new Person();
 		person.setLocalId("100001");
 		person.setLocalIdType("MR");
-		person.setLocalIdOriginator("MY");
+		person.setOriginator("MY");
 		person.setGivenName("Nick");
 		person.setOtherGivenNames("Ioan");
 		person.setSurname("JONES");
@@ -37,9 +39,8 @@ public class IndexManagerTest {
 		person.setPostcode("CH1 6LB");
 		person.setStreet("Oakdene, Townfield Lane");
 		
-		person.setSecondaryId("9000000001");
-		person.setSecondaryIdType("NHS");
-		person.setSecondaryIdOriginator("MY");
+		person.setPrimaryId("9000000001");
+		person.setPrimaryIdType("NHS");
 		
 		IndexManager im = new IndexManager();
 		im.create(person);
@@ -54,65 +55,60 @@ public class IndexManagerTest {
 		
 		// test case 4
 		person.setLocalId("1001");
-		person.setLocalIdOriginator("ABC");
-		person.setSecondaryIdOriginator("ABC");
+		person.setOriginator("ABC");
 		im.create(person);
 		assert(true);
 
 		// test case 5
 		person.setLocalId("101");
-		person.setLocalIdOriginator("DEF");
+		person.setOriginator("DEF");
 		person.setDateOfBirth(getDate("1961-08-31"));
-		person.setSecondaryIdOriginator("DEF");
 		im.create(person);
 		assert(true);
 
 		// test case 6
 		person.setLocalId("101");
-		person.setLocalIdOriginator("DEF");
+		person.setOriginator("DEF");
 		person.setDateOfBirth(getDate("1960-08-31"));
 		im.update(person);
 		assert(true);
 
 		// test case 7
 		person.setLocalId("101");
-		person.setLocalIdOriginator("DEF");
-		person.setSecondaryId("9000000002");
+		person.setOriginator("DEF");
+		person.setPrimaryId("9000000002");
 		im.update(person);
 		assert(true);
 
 		// test case 8
 		person.setLocalId("102");
-		person.setLocalIdOriginator("DEF");
-		person.setSecondaryId(null);
-		person.setSecondaryIdType(null);
-		person.setSecondaryIdOriginator(null);
+		person.setOriginator("DEF");
+		person.setPrimaryId(null);
+		person.setPrimaryIdType(null);
 		person.setDateOfBirth(getDate("1963-08-31"));
 		im.create(person);
 		assert(true);
 
 		// test case 9 - add 2ndary ref
-		person.setSecondaryId("9990001");
-		person.setSecondaryIdType("UKRDC");
-		person.setSecondaryIdOriginator("DEF");
+		person.setPrimaryId("9990001");
+		person.setPrimaryIdType("UKRDC");
 		im.update(person);
 		assert(true);
 
 		// test case 10 - delete 2ndary ref
-		person.setSecondaryId(null);
-		person.setSecondaryIdType(null);
-		person.setSecondaryIdOriginator(null);
+		person.setPrimaryId(null);
+		person.setPrimaryIdType(null);
 		im.update(person);
 		assert(true);
 
 	}
 
 	//@Test
-	public void testIndexManagerCreate() {
+	public void testIndexManagerCreate() throws MpiException {
 		Person person = new Person();
 		person.setLocalId("TST1000009");
 		person.setLocalIdType("MR");
-		person.setLocalIdOriginator("MY");
+		person.setOriginator("MY");
 		person.setGivenName("Nick");
 		person.setOtherGivenNames("Ioan");
 		person.setSurname("JONES");
@@ -123,8 +119,8 @@ public class IndexManagerTest {
 		person.setPostcode("CH1 6LB");
 		person.setStreet("Oakdene, Townfield Lane");
 		
-		person.setSecondaryId("9000000001");
-		person.setSecondaryIdType("NHS");
+		person.setPrimaryId("9000000001");
+		person.setPrimaryIdType("NHS");
 		
 		IndexManager im = new IndexManager();
 		im.create(person);
@@ -136,14 +132,14 @@ public class IndexManagerTest {
 	}
 
 	//@Test
-	public void testIndexManagerUpdate() {
+	public void testIndexManagerUpdate() throws MpiException {
 		
 		IndexManager im = new IndexManager();
 		Person person = new Person();
 		
 		person.setLocalId("TST1000001");
 		person.setLocalIdType("MR");
-		person.setLocalIdOriginator("MY");
+		person.setOriginator("MY");
 		person.setGivenName("Nick");
 		person.setOtherGivenNames("Ioan");
 		person.setSurname("JONES");

@@ -5,6 +5,8 @@ import java.text.SimpleDateFormat;
 
 import org.junit.Test;
 
+import com.agiloak.mpi.MpiException;
+
 public class TraceManagerSingleTest {
 
 	public static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
@@ -23,7 +25,7 @@ public class TraceManagerSingleTest {
 	}
 
 	@Test
-	public void testTrace() {
+	public void testTrace() throws MpiException {
 		TraceResponse response;
 		TraceRequest request = new TraceRequest();
 		
@@ -32,7 +34,7 @@ public class TraceManagerSingleTest {
 		
 		request.setLocalId("999999");
 		request.setLocalIdType("TST");
-		request.setLocalIdOriginator("JUNIT");
+		request.setOriginator("JUNIT");
 		
 		request.setGivenName("Nicholas");
 		request.setOtherGivenNames("Ioan");
@@ -58,7 +60,7 @@ public class TraceManagerSingleTest {
 		
 		request.setLocalId("100002");
 		request.setLocalIdType("TST");
-		request.setLocalIdOriginator("JUNIT");
+		request.setOriginator("JUNIT");
 		
 		request.setGivenName("Nicholas");
 		request.setOtherGivenNames("Ioan");
