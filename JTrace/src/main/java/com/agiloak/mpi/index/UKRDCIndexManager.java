@@ -160,9 +160,9 @@ public class UKRDCIndexManager {
 			logger.error("Date Of Birth is mandatory");
 			throw new MpiException("Date Of Birth is mandatory");
 		}
-		if (person.getLocalId()==null || person.getLocalId().length() < 5) {
-			logger.error("LocalId must be at least 5 characters");
-			throw new MpiException("LocalId must be at least 5 characters");
+		if (person.getLocalId()==null || person.getLocalId().length() < 1) {
+			logger.error("LocalId must be at least 1 character");
+			throw new MpiException("LocalId must be at least 1 character");
 		}
 		if (person.getLocalIdType()==null || person.getLocalIdType().length() < 1) {
 			logger.error("Local Id must be present");
