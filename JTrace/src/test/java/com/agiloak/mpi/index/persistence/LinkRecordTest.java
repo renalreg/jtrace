@@ -11,6 +11,7 @@ import org.junit.rules.ExpectedException;
 import com.agiloak.mpi.MpiException;
 import com.agiloak.mpi.index.LinkRecord;
 import com.agiloak.mpi.index.MasterRecord;
+import com.agiloak.mpi.index.Person;
 
 public class LinkRecordTest {
 	final static String UKRDC_TYPE = "UKRDC";
@@ -29,6 +30,8 @@ public class LinkRecordTest {
 		LinkRecordDAO.deleteByPerson(6);
 		LinkRecordDAO.deleteByPerson(7);
 		LinkRecordDAO.deleteByPerson(8);
+		LinkRecordDAO.deleteByPerson(9);
+		LinkRecordDAO.deleteByPerson(10);
 		MasterRecordDAO.deleteByNationalId(RR1, UKRDC_TYPE);
 	}
 	
@@ -151,6 +154,42 @@ public class LinkRecordTest {
 		
 		LinkRecord link = LinkRecordDAO.findByPersonAndType(personToTest, UKRDC_TYPE);
 		assert(lr.getId()==link.getId());
+	}
+
+	@Test
+	public void testCountByMasterAndOriginator() throws MpiException {
+		
+		Person person1 = new Person();
+		person1.setOriginator("TORG1").setLocalId("TST1000001").setLocalIdType("MR");
+		person1.setTitle("MR").setGivenName("Nick").setSurname("JONES");
+		person1.setDateOfBirth(new Date());
+		person1.setGender("1");
+		PersonDAO.create(person1);
+
+		Person person2 = new Person();
+		person2.setOriginator("TORG1").setLocalId("TST1000002").setLocalIdType("MR");
+		person2.setTitle("MR").setGivenName("Nick").setSurname("JONES");
+		person2.setDateOfBirth(new Date());
+		person2.setGender("1");
+		PersonDAO.create(person2);
+
+		MasterRecord mr = new MasterRecord();
+		mr.setNationalId(RR1).setNationalIdType(UKRDC_TYPE);
+		mr.setDateOfBirth(new Date());
+		mr.setEffectiveDate(new Date());
+		MasterRecordDAO.create(mr);
+		LinkRecord lr = new LinkRecord(mr.getId(),person1.getId());
+		LinkRecordDAO.create(lr);
+		
+		int count = LinkRecordDAO.countByMasterAndOriginator(mr.getId(), "TORG1");
+		assert(count==1);
+	
+		lr = new LinkRecord(mr.getId(),person2.getId());
+		LinkRecordDAO.create(lr);
+		
+		count = LinkRecordDAO.countByMasterAndOriginator(mr.getId(), "TORG1");
+		assert(count==2);
+
 	}
 
 	private void verifyEqual(LinkRecord lr2, LinkRecord lr1) throws MpiException {

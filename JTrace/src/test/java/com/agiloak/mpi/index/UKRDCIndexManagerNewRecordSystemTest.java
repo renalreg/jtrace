@@ -9,6 +9,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.agiloak.mpi.MpiException;
+import com.agiloak.mpi.audit.Audit;
+import com.agiloak.mpi.audit.persistence.AuditDAO;
 import com.agiloak.mpi.index.persistence.LinkRecordDAO;
 import com.agiloak.mpi.index.persistence.MasterRecordDAO;
 import com.agiloak.mpi.index.persistence.PersonDAO;
@@ -317,6 +319,10 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		assert(allocatedMr.getNationalIdType().equals(NationalIdentity.UKRDC_TYPE));
 		items = WorkItemDAO.findByPerson(person.getId());
 		assert(items.size()==0);
+		List<Audit> audits = AuditDAO.findByPerson(person.getId());
+		assert(audits.size()==1);
+		assert(audits.get(0).getType()==Audit.NO_MATCH_ASSIGN_NEW);
+		assert(audits.get(0).getMasterId()==allocatedMr.getId());
 		
 		// T2-2 - New + No NationalId + Matches to existing NHS Number. New Person and work
 		Person p3 = new Person().setDateOfBirth(d1).setSurname("WILLIAMS").setGivenName("JIM").setGender("1");
@@ -411,6 +417,10 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		assert(allocatedMr.getNationalIdType().equals(NationalIdentity.UKRDC_TYPE));
 		items = WorkItemDAO.findByPerson(person.getId());
 		assert(items.size()==1);
+		List<Audit> audits = AuditDAO.findByPerson(person.getId());
+		assert(audits.size()==1);
+		assert(audits.get(0).getType()==Audit.NO_MATCH_ASSIGN_NEW);
+		assert(audits.get(0).getMasterId()==allocatedMr.getId());
 		
 	}	
 
