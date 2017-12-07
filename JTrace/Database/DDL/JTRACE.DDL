@@ -1,7 +1,7 @@
 -- Database: "JTRACE"
-DROP DATABASE "JTRACE";
+DROP DATABASE "jtrace";
 
-CREATE DATABASE "JTRACE"
+CREATE DATABASE "jtrace"
   WITH OWNER = postgres
        ENCODING = 'UTF8'
        TABLESPACE = pg_default
@@ -17,4 +17,6 @@ GRANT ALL ON SCHEMA "jtrace" TO ukrdc;
 
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA jtrace TO ukrdc;
 
-ALTER ROLE ukrdc SET search_path TO jtrace;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA jtrace TO ukrdc;
+
+ALTER ROLE ukrdc SET search_path TO extract, jtrace;
