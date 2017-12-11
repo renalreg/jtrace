@@ -558,15 +558,20 @@ public class UKRDCIndexManager {
 				MasterRecordDAO.update(master);
 			}
 			
-			// Check for duplicates for this Originator and Master
-			int count = LinkRecordDAO.countByMasterAndOriginator(master.getId(), person.getOriginator());
-			if (count > 1) {
-				String warnMsg = "More than 1 record from Originator:"+person.getOriginator()+" linked to master:"+master.getId(); 
-				logger.debug(warnMsg);
-				WorkItemManager wim = new WorkItemManager();
-				wim.create(WorkItem.TYPE_MULTIPLE_NATID_LINKS_FROM_ORIGINATOR, person.getId(), master.getId(), warnMsg);
-				master.setStatus(MasterRecord.INVESTIGATE);
-				MasterRecordDAO.update(master);
+			// Check for duplicates for this Originator and Master (unless suppressed)
+			if (person.isSkipDuplicateCheck()) {
+				logger.debug("Duplicate check skipped at client request");
+			}
+			else {
+				int count = LinkRecordDAO.countByMasterAndOriginator(master.getId(), person.getOriginator());
+				if (count > 1) {
+					String warnMsg = "More than 1 record from Originator:"+person.getOriginator()+" linked to master:"+master.getId(); 
+					logger.debug(warnMsg);
+					WorkItemManager wim = new WorkItemManager();
+					wim.create(WorkItem.TYPE_MULTIPLE_NATID_LINKS_FROM_ORIGINATOR, person.getId(), master.getId(), warnMsg);
+					master.setStatus(MasterRecord.INVESTIGATE);
+					MasterRecordDAO.update(master);
+				}
 			}
 
 		} else {
