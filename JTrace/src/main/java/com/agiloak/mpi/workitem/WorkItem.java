@@ -15,6 +15,7 @@ public class WorkItem {
 	public final static int TYPE_STALE_DEMOGS_NOT_VERIFIED_NATIONAL = 5;
 	public final static int TYPE_DEMOGS_NOT_VERIFIED_AFTER_PRIMARY_UPDATE = 6;
 	public final static int TYPE_DEMOGS_NOT_VERIFIED_AFTER_NATIONAL_UPDATE = 7;
+	public final static int TYPE_MULTIPLE_NATID_LINKS_FROM_ORIGINATOR = 8;
 
 	public WorkItem(int type, int personId, int masterId, String desc) {
 		this.type = type;

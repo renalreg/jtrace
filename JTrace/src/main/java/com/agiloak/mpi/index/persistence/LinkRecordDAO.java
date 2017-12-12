@@ -271,6 +271,61 @@ public class LinkRecordDAO {
 
 	}		
 
+	public static int countByMasterAndOriginator(int masterId, String originator) throws MpiException {
+
+		String findSQL = "select count(*) as cnt from jtrace.person p, jtrace.linkrecord lr where "+
+				         "p.id = lr.personid and lr.masterid = ? and p.originator = ? and p.skipduplicatecheck = false ";
+		
+		PreparedStatement preparedStatement = null;
+		Connection conn = null;
+		ResultSet rs = null;
+		int cnt = 0 ;
+		
+		try {
+
+			conn = SimpleConnectionManager.getDBConnection();
+			
+			preparedStatement = conn.prepareStatement(findSQL);
+			preparedStatement.setInt(1, masterId);
+			preparedStatement.setString(2, originator);
+
+			rs = preparedStatement.executeQuery();
+			
+			if (rs.next()){
+				cnt = rs.getInt("cnt");
+			}
+			
+		} catch (Exception e) {
+			
+			logger.error("Failure querying countByMasterAndOriginator.",e);
+			throw new MpiException("Failure querying countByMasterAndOriginator. "+e.getMessage());
+			
+		} finally {
+
+			if (rs != null) {
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing resultset countByMasterAndOriginator.",e);
+					throw new MpiException("Failure closing resultset countByMasterAndOriginator. "+e.getMessage());
+				}
+			}
+			
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing prepared statement countByMasterAndOriginator.",e);
+					throw new MpiException("Failure closing prepared statement countByMasterAndOriginator. "+e.getMessage());
+				}
+			}
+
+		}
+		
+		return cnt;
+
+	}		
+
 	public static List<LinkRecord> findByPerson(int personId) throws MpiException {
 
 		String findSQL = "select * from jtrace.linkrecord where personid = ? ";
