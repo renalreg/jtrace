@@ -1,3 +1,4 @@
+delete from jtrace.audit;
 delete from jtrace.linkrecord;
 delete from jtrace.masterrecord;
 delete from jtrace.person;

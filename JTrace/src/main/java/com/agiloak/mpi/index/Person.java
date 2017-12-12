@@ -36,6 +36,9 @@ public class Person {
 	private String stdPrevSurname;
 	private String stdPostcode;
 	
+	// Options
+	private boolean skipDuplicateCheck;
+	
 	public Person(){
 		this.nationalIds = new ArrayList<NationalIdentity>();
 	}
@@ -271,6 +274,14 @@ public class Person {
 		return this;
 	}
 	
+	public boolean isSkipDuplicateCheck() {
+		return skipDuplicateCheck;
+	}
+
+	public void setSkipDuplicateCheck(boolean skipDuplicateCheck) {
+		this.skipDuplicateCheck = skipDuplicateCheck;
+	}
+
 	public String toString() {
 		return "[LID:"+originator+"-"+localIdType+"-"+localId+"]"+
 			   "[NID:"+primaryIdType+"-"+primaryId+"]";

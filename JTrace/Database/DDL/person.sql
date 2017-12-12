@@ -23,7 +23,8 @@ CREATE TABLE jtrace.person
   stdsurname character(4),
   stdprevsurname character(4),
   stdgivenname character(4),
-  stdpostcode character(8)
+  stdpostcode character(8),
+  skipduplicatecheck boolean
 )
 WITH (
   OIDS=FALSE

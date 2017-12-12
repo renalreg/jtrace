@@ -9,6 +9,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.agiloak.mpi.MpiException;
+import com.agiloak.mpi.audit.Audit;
+import com.agiloak.mpi.audit.persistence.AuditDAO;
 import com.agiloak.mpi.index.persistence.LinkRecordDAO;
 import com.agiloak.mpi.index.persistence.MasterRecordDAO;
 import com.agiloak.mpi.index.persistence.PersonDAO;
@@ -31,13 +33,13 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		clear("NSYS100002", "NSYS1");
 		clear("NSYS100003", "NSYS1");
 		
-		clear("NSYS200001", "NSYS2");
-		clear("NSYS200002", "NSYS2");
-		clear("NSYS200003", "NSYS2");
+		clear("NSYS200001", "NSYS2A");
+		clear("NSYS200002", "NSYS2A");
+		clear("NSYS200003", "NSYS2B");
 		
-		clear("NSYS300001", "NSYS3");
-		clear("NSYS300002", "NSYS3");
-		clear("NSYS300003", "NSYS3");
+		clear("NSYS300001", "NSYS3A");
+		clear("NSYS300002", "NSYS3A");
+		clear("NSYS300003", "NSYS3B");
 		
 		clear("NSYS400001", "NSYS4");
 		clear("NSYS400002", "NSYS4");
@@ -47,6 +49,13 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		clear("NSYS500002", "NSYS5");
 		clear("NSYS500003", "NSYS5");
 
+		clear("NSYS600001", "NSYS6");
+		clear("NSYS600002", "NSYS6");
+
+		clear("NSYS700001", "NSYS7");
+		clear("NSYS700002", "NSYS7");
+		clear("NHS0700001", "NSYS7");
+		clear("NHS0700002", "NSYS7");
 	}
 
 	@Test
@@ -272,7 +281,8 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 	public void testNewWithNoPrimaryId1() throws MpiException {
 
 		String ukrdcId = "RR2000001";
-		String orig = "NSYS2";
+		String orig = "NSYS2A";
+		String orig2 = "NSYS2B";
 		UKRDCIndexManager im = new UKRDCIndexManager();
 		
 		// Setup - Person with NationalId for match to TEST2. New Person, New Master and new link to the master
@@ -317,11 +327,15 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		assert(allocatedMr.getNationalIdType().equals(NationalIdentity.UKRDC_TYPE));
 		items = WorkItemDAO.findByPerson(person.getId());
 		assert(items.size()==0);
+		List<Audit> audits = AuditDAO.findByPerson(person.getId());
+		assert(audits.size()==1);
+		assert(audits.get(0).getType()==Audit.NO_MATCH_ASSIGN_NEW);
+		assert(audits.get(0).getMasterId()==allocatedMr.getId());
 		
 		// T2-2 - New + No NationalId + Matches to existing NHS Number. New Person and work
 		Person p3 = new Person().setDateOfBirth(d1).setSurname("WILLIAMS").setGivenName("JIM").setGender("1");
 		p3.setPostcode("CH1 6LB").setStreet("Townfield Lane");
-		p3.setLocalId("NSYS200003").setLocalIdType("MR").setOriginator(orig);
+		p3.setLocalId("NSYS200003").setLocalIdType("MR").setOriginator(orig2);
 		p3.addNationalId(new NationalIdentity(NationalIdentity.NHS_TYPE,"NHS0200001"));
 		natId = im.createOrUpdate(p3);
 		// VERIFY 
@@ -343,7 +357,8 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 	public void testNewWithNoPrimaryId2() throws MpiException {
 
 		String ukrdcId = "RR3000001";
-		String orig = "NSYS3";
+		String orig = "NSYS3A";
+		String orig2 = "NSYS3B";
 		UKRDCIndexManager im = new UKRDCIndexManager();
 		
 		// Setup - Person with UKRDC
@@ -393,7 +408,7 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		// T3-1 - New + No UKRDC Number but an NHS Number which matches to an existing NHS Number which could corroborate the UKRDC - but UKRDC:Person don't match (1 part DOB only). Will Allocate
 		Person p3 = new Person().setDateOfBirth(d3).setSurname("WILLIAMS").setGivenName("JIM").setGender("1");
 		p3.setPostcode("CH1 6LB").setStreet("Townfield Lane");
-		p3.setLocalId("NSYS300003").setLocalIdType("MR").setOriginator(orig);
+		p3.setLocalId("NSYS300003").setLocalIdType("MR").setOriginator(orig2);
 		p3.addNationalId(new NationalIdentity(NationalIdentity.NHS_TYPE,"NHS0300001"));
 		natId = im.createOrUpdate(p3);
 		// VERIFY 
@@ -411,7 +426,136 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		assert(allocatedMr.getNationalIdType().equals(NationalIdentity.UKRDC_TYPE));
 		items = WorkItemDAO.findByPerson(person.getId());
 		assert(items.size()==1);
+		List<Audit> audits = AuditDAO.findByPerson(person.getId());
+		assert(audits.size()==1);
+		assert(audits.get(0).getType()==Audit.NO_MATCH_ASSIGN_NEW);
+		assert(audits.get(0).getMasterId()==allocatedMr.getId());
 		
+	}	
+
+	@Test
+	public void testNewChangeMRN() throws MpiException {
+
+		String ukrdcId = "RR6000001";
+		String orig = "NSYS6";
+		UKRDCIndexManager im = new UKRDCIndexManager();
+		
+		// Setup - Person with NationalId for match to TEST2. New Person, New Master and new link to the master
+		Person p1 = new Person().setDateOfBirth(d1).setSurname("WILLIAMS").setGivenName("JIM").setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(ukrdcId).setGender("1");
+		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
+		p1.setLocalId("NSYS600001").setLocalIdType("MR").setOriginator(orig);
+		p1.addNationalId(new NationalIdentity(NationalIdentity.NHS_TYPE,"NHS0600001"));
+		NationalIdentity natId = im.createOrUpdate(p1);
+		// VERIFY SETUP
+		assert(natId!=null);
+		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
+		assert(natId.getId().equals(ukrdcId));
+		Person person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
+		assert(person!=null);
+		MasterRecord master1 = MasterRecordDAO.findByNationalId(ukrdcId, NationalIdentity.UKRDC_TYPE);
+		assert(master1!=null);
+		MasterRecord master2 = MasterRecordDAO.findByNationalId("NHS0600001", NationalIdentity.NHS_TYPE);
+		assert(master2!=null);
+		List<LinkRecord> links = LinkRecordDAO.findByPerson(person.getId());
+		assert(links.size()==2);
+		assert(links.get(0).getMasterId()==master2.getId()); // NHS Numbers linked before UKRDC in current process
+		assert(links.get(1).getMasterId()==master1.getId()); 
+		List<WorkItem> items = WorkItemDAO.findByPerson(person.getId());
+		assert(items.size()==0);
+		
+		// T2-2 - Change MRN
+		p1.setLocalId("NSYS600002");
+		natId = im.createOrUpdate(p1);
+		// VERIFY 
+		assert(natId!=null);
+		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
+		assert(natId.getId().equals(ukrdcId));
+		person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
+		assert(person!=null);
+		links = LinkRecordDAO.findByPerson(person.getId());
+		assert(links.size()==2);
+		assert(links.get(0).getMasterId()==master2.getId()); 
+		assert(links.get(1).getMasterId()==master1.getId()); 
+		items = WorkItemDAO.findByPerson(person.getId());
+		assert(items.size()==1);
+		assert(items.get(0).getType()==WorkItem.TYPE_MULTIPLE_NATID_LINKS_FROM_ORIGINATOR);
+		MasterRecord mr = MasterRecordDAO.get(master2.getId());
+		assert(mr.getStatus()==MasterRecord.INVESTIGATE);
+		
+	}	
+
+	@Test
+	public void testNewSetSkip() throws MpiException {
+
+		String ukrdcId = "RR7000001";
+		String orig = "NSYS7";
+		UKRDCIndexManager im = new UKRDCIndexManager();
+		
+		// Setup - Person with NationalId for match to TEST2. New Person, New Master and new link to the master
+		Person p1 = new Person().setDateOfBirth(d1).setSurname("WILLIAMS").setGivenName("JIM").setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(ukrdcId).setGender("1");
+		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
+		p1.setLocalId("NSYS700001").setLocalIdType("MR").setOriginator(orig);
+		p1.addNationalId(new NationalIdentity(NationalIdentity.NHS_TYPE,"NHS0700001"));
+		NationalIdentity natId = im.createOrUpdate(p1);
+		// VERIFY SETUP
+		assert(natId!=null);
+		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
+		assert(natId.getId().equals(ukrdcId));
+		Person person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
+		assert(person!=null);
+		assert(!person.isSkipDuplicateCheck());
+		MasterRecord master1 = MasterRecordDAO.findByNationalId(ukrdcId, NationalIdentity.UKRDC_TYPE);
+		assert(master1!=null);
+		MasterRecord master2 = MasterRecordDAO.findByNationalId("NHS0700001", NationalIdentity.NHS_TYPE);
+		assert(master2!=null);
+		List<LinkRecord> links = LinkRecordDAO.findByPerson(person.getId());
+		assert(links.size()==2);
+		assert(links.get(0).getMasterId()==master2.getId()); // NHS Numbers linked before UKRDC in current process
+		assert(links.get(1).getMasterId()==master1.getId()); 
+		List<WorkItem> items = WorkItemDAO.findByPerson(person.getId());
+		assert(items.size()==0);
+		
+		// Test 1 - patient from same org with the same NHS Number - should raise a warning
+		Person p2 = new Person().setDateOfBirth(d1).setSurname("WILLIAMS").setGivenName("JIM").setGender("1");
+		p2.setPostcode("CH1 6LB").setStreet("Townfield Lane");
+		p2.setLocalId("NSYS700002").setLocalIdType("MR").setOriginator(orig);
+		p2.addNationalId(new NationalIdentity(NationalIdentity.NHS_TYPE,"NHS0700001"));
+		NationalIdentity natId2 = im.createOrUpdate(p2);
+		// VERIFY UPDATES
+		assert(natId2!=null);
+		assert(natId2.getType()==NationalIdentity.UKRDC_TYPE);
+		assert(natId2.getId().equals(ukrdcId));
+		items = WorkItemDAO.findByPerson(p2.getId());
+		assert(items.size()==1);
+		assert(items.get(0).getType()==WorkItem.TYPE_MULTIPLE_NATID_LINKS_FROM_ORIGINATOR);
+
+		// Test 2 - patient from same org with the same NHS Number, but this is a fake MRN using NHS Number and flagged as such - Warning should be suppressed
+		Person p3 = new Person().setDateOfBirth(d1).setSurname("WILLIAMS").setGivenName("JIM").setGender("1");
+		p3.setPostcode("CH1 6LB").setStreet("Townfield Lane");
+		p3.setLocalId("NHS0700001").setLocalIdType("MR").setOriginator(orig);
+		p3.addNationalId(new NationalIdentity(NationalIdentity.NHS_TYPE,"NHS0700001"));
+		p3.setSkipDuplicateCheck(true);
+		NationalIdentity natId3 = im.createOrUpdate(p3);
+		// VERIFY UPDATES
+		assert(natId3!=null);
+		assert(natId3.getType()==NationalIdentity.UKRDC_TYPE);
+		assert(natId3.getId().equals(ukrdcId));
+		items = WorkItemDAO.findByPerson(p3.getId());
+		assert(items.size()==0);
+
+		// Test 3 - patient from same org with the same NHS Number, but this is a fake MRN using NHS Number but not flagged as such - Warning should be created
+		Person p4 = new Person().setDateOfBirth(d1).setSurname("WILLIAMS").setGivenName("JIM").setGender("1");
+		p4.setPostcode("CH1 6LB").setStreet("Townfield Lane");
+		p4.setLocalId("NHS0700002").setLocalIdType("MR").setOriginator(orig);
+		p4.addNationalId(new NationalIdentity(NationalIdentity.NHS_TYPE,"NHS0700001"));
+		NationalIdentity natId4 = im.createOrUpdate(p4);
+		// VERIFY UPDATES
+		assert(natId4!=null);
+		assert(natId4.getType()==NationalIdentity.UKRDC_TYPE);
+		assert(natId4.getId().equals(ukrdcId));
+		items = WorkItemDAO.findByPerson(p4.getId());
+		assert(items.size()==1);
+		assert(items.get(0).getType()==WorkItem.TYPE_MULTIPLE_NATID_LINKS_FROM_ORIGINATOR);
 	}	
 
 	private static java.util.Date getDate(String sDate){

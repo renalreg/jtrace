@@ -122,7 +122,7 @@ public class UKRDCIndexManagerValidationUnitTest {
 		im.createOrUpdate(p1);
 	}
 	@Test
-	public void testShortLocalId() throws MpiException, SQLException {
+	public void testEmptyLocalId() throws MpiException, SQLException {
 		String originator = "IMUT1";
 		String idBase = originator+"000";
 		exception.expect(MpiException.class);
@@ -130,6 +130,16 @@ public class UKRDCIndexManagerValidationUnitTest {
 		Person p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICHOLAS").setGender("1");
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId("").setLocalIdType("MR").setOriginator(originator);
+		UKRDCIndexManager im = new UKRDCIndexManager();
+		im.createOrUpdate(p1);
+	}
+	@Test
+	public void testRadarLocalId() throws MpiException, SQLException {
+		String originator = "IMUT1";
+		String idBase = originator+"000";
+		Person p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICHOLAS").setGender("1");
+		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
+		p1.setLocalId("1").setLocalIdType("MR").setOriginator(originator);
 		UKRDCIndexManager im = new UKRDCIndexManager();
 		im.createOrUpdate(p1);
 	}

@@ -68,6 +68,9 @@ public class PersonDAO {
 				person.setStdGivenName(rs.getString("stdgivenname"));
 				person.setStdPrevSurname(rs.getString("stdprevsurname"));
 				person.setStdPostcode(rs.getString("stdpostcode"));
+			
+				person.setSkipDuplicateCheck(rs.getBoolean("skipduplicatecheck"));
+
 			}
 			
 		} catch (Exception e) {
@@ -146,6 +149,8 @@ public class PersonDAO {
 				person.setStdPrevSurname(rs.getString("stdprevsurname"));
 				person.setStdPostcode(rs.getString("stdpostcode"));
 				
+				person.setSkipDuplicateCheck(rs.getBoolean("skipduplicatecheck"));
+				
 				personList.add(person);
 				
 			}
@@ -189,12 +194,12 @@ public class PersonDAO {
 				"(dateofbirth, gender, dateofdeath,"+ 
 	            "givenname, surname, othergivennames, title, postcode, street, "+ 
 	            "stdsurname, stdgivenname, stdpostcode,"+
-	            "prevsurname, stdprevsurname, nationalid, nationalidtype,"+
-	            "localid, localidtype, originator)"+
+	            "prevsurname, stdprevsurname, nationalid, nationalidtype, skipduplicatecheck, "+
+	            "localid, localidtype, originator )"+
 				" values (?,?,?,"+
 	            " ?,?,?,?,?,?,"+
 	            " ?,?,?,"+
-	            " NULL, NULL,?,?,"+
+	            " NULL, NULL,?,?,?,"+
 				" ?,?,?)";
 		
 		PreparedStatement preparedStatement = null;
@@ -206,9 +211,9 @@ public class PersonDAO {
 			
 			preparedStatement = conn.prepareStatement(insertSQL, Statement.RETURN_GENERATED_KEYS);
 			populatePersonStatement(preparedStatement, person);
-			preparedStatement.setString(15, person.getLocalId());
-			preparedStatement.setString(16, person.getLocalIdType());
-			preparedStatement.setString(17, person.getOriginator());
+			preparedStatement.setString(16, person.getLocalId());
+			preparedStatement.setString(17, person.getLocalIdType());
+			preparedStatement.setString(18, person.getOriginator());
 
 			int affectedRows = preparedStatement.executeUpdate();
 			logger.debug("Affected Rows:"+affectedRows);
@@ -253,7 +258,7 @@ public class PersonDAO {
 			   "dateofbirth=?, gender=?,"+ 
 		       "dateofdeath=?, givenname=?, surname=?, othergivennames=?,"+ 
 		       "title=?, postcode=?, street=?, stdsurname=?,"+ 
-		       "stdgivenname=?, stdpostcode=?, nationalid=?, nationalidtype=?,"+
+		       "stdgivenname=?, stdpostcode=?, nationalid=?, nationalidtype=?, skipduplicatecheck = ?, "+
 		       "prevsurname=?, stdprevsurname=? "+
 		       "WHERE id = ? ";
 		
@@ -267,9 +272,9 @@ public class PersonDAO {
 			preparedStatement = conn.prepareStatement(updateSQL);
 			
 			populatePersonStatement(preparedStatement, person);
-			preparedStatement.setString(15, person.getPrevSurname());
-			preparedStatement.setString(16, person.getStdPrevSurname());
-			preparedStatement.setInt(17, person.getId());
+			preparedStatement.setString(16, person.getPrevSurname());
+			preparedStatement.setString(17, person.getStdPrevSurname());
+			preparedStatement.setInt(18, person.getId());
 
 			int affectedRows = preparedStatement.executeUpdate();
 			logger.debug("Affected Rows:"+affectedRows);
@@ -356,6 +361,8 @@ public class PersonDAO {
 		
 		preparedStatement.setString(13, person.getPrimaryId());
 		preparedStatement.setString(14, person.getPrimaryIdType());
+
+		preparedStatement.setBoolean(15, person.isSkipDuplicateCheck());
 		
 	}
 	

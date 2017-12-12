@@ -9,6 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.agiloak.mpi.MpiException;
+import com.agiloak.mpi.audit.Audit;
+import com.agiloak.mpi.audit.AuditManager;
 import com.agiloak.mpi.index.persistence.LinkRecordDAO;
 import com.agiloak.mpi.index.persistence.MasterRecordDAO;
 import com.agiloak.mpi.index.persistence.PersonDAO;
@@ -160,9 +162,9 @@ public class UKRDCIndexManager {
 			logger.error("Date Of Birth is mandatory");
 			throw new MpiException("Date Of Birth is mandatory");
 		}
-		if (person.getLocalId()==null || person.getLocalId().length() < 5) {
-			logger.error("LocalId must be at least 5 characters");
-			throw new MpiException("LocalId must be at least 5 characters");
+		if (person.getLocalId()==null || person.getLocalId().length() < 1) {
+			logger.error("LocalId must be at least 1 character");
+			throw new MpiException("LocalId must be at least 1 character");
 		}
 		if (person.getLocalIdType()==null || person.getLocalIdType().length() < 1) {
 			logger.error("Local Id must be present");
@@ -429,7 +431,7 @@ public class UKRDCIndexManager {
 				// a master record does not exist for this Primary id so create one
 				master = new MasterRecord(person);		
 				MasterRecordDAO.create(master);
-
+				
 				logger.debug("Linking to the new master record");
 				// and link this record to it
 				LinkRecord link = new LinkRecord(master.getId(), person.getId());
@@ -471,6 +473,12 @@ public class UKRDCIndexManager {
 									logger.debug("Linking to the found and verified master record");
 									LinkRecord newLink = new LinkRecord(ukrdcMaster.getId(), person.getId());
 									LinkRecordDAO.create(newLink);
+									
+									// Audit the creation of the new UKRDC Number
+									AuditManager am = new AuditManager();
+									am.create(Audit.NEW_MATCH_THROUGH_NATIONAL_ID, person.getId(), ukrdcMaster.getId(), 
+												"Common NatID["+natId.getType()+":"+natId.getId()+"]");
+
 									linked = true;
 									break; //Only want to link once
 								} else {
@@ -495,6 +503,10 @@ public class UKRDCIndexManager {
 				ukrdcMaster.setNationalId(ukrdcId);
 				ukrdcMaster.setNationalIdType(NationalIdentity.UKRDC_TYPE);
 				MasterRecordDAO.create(ukrdcMaster);
+
+				// Audit the creation of the new UKRDC Number
+				AuditManager am = new AuditManager();
+				am.create(Audit.NO_MATCH_ASSIGN_NEW, person.getId(), ukrdcMaster.getId(), "UKRDC Number Allocated");
 
 				logger.debug("Linking to the new master record");
 				// and link this record to it
@@ -544,6 +556,22 @@ public class UKRDCIndexManager {
 			if (person.getEffectiveDate().compareTo(master.getEffectiveDate())>0) {
 				master.updateDemographics(person);
 				MasterRecordDAO.update(master);
+			}
+			
+			// Check for duplicates for this Originator and Master (unless suppressed)
+			if (person.isSkipDuplicateCheck()) {
+				logger.debug("Duplicate check skipped at client request");
+			}
+			else {
+				int count = LinkRecordDAO.countByMasterAndOriginator(master.getId(), person.getOriginator());
+				if (count > 1) {
+					String warnMsg = "More than 1 record from Originator:"+person.getOriginator()+" linked to master:"+master.getId(); 
+					logger.debug(warnMsg);
+					WorkItemManager wim = new WorkItemManager();
+					wim.create(WorkItem.TYPE_MULTIPLE_NATID_LINKS_FROM_ORIGINATOR, person.getId(), master.getId(), warnMsg);
+					master.setStatus(MasterRecord.INVESTIGATE);
+					MasterRecordDAO.update(master);
+				}
 			}
 
 		} else {
