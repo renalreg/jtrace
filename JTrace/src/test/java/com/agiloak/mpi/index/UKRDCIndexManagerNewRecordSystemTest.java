@@ -557,6 +557,33 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		assert(items.size()==1);
 		assert(items.get(0).getType()==WorkItem.TYPE_MULTIPLE_NATID_LINKS_FROM_ORIGINATOR);
 	}	
+	
+	@Test
+	public void testNewLongLocalId() throws MpiException {
+
+		UKRDCIndexManager im = new UKRDCIndexManager();
+		String orig = "NSYS8";
+		
+		// T1-1 NationalId for P1. New Person, New Master and new link to the master
+		Person p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICHOLAS").setGender("1");
+		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
+		p1.setLocalId("NSYS1000011234567").setLocalIdType("MR").setOriginator(orig);
+		NationalIdentity natId = im.createOrUpdate(p1);
+		// VERIFY
+		assert(natId!=null);
+		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
+		Person person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
+		assert(person!=null);
+		MasterRecord master = MasterRecordDAO.findByNationalId(natId.getId(), NationalIdentity.UKRDC_TYPE);
+		assert(master!=null);
+		List<LinkRecord> links = LinkRecordDAO.findByPerson(person.getId());
+		assert(links.size()==1);
+		assert(links.get(0).getMasterId()==master.getId()); 
+		List<WorkItem> items = WorkItemDAO.findByPerson(person.getId());
+		assert(items.size()==0);
+		
+	}
+
 
 	private static java.util.Date getDate(String sDate){
 		
