@@ -24,8 +24,6 @@ import com.agiloak.mpi.workitem.persistence.WorkItemDAO;
 public class UKRDCIndexManagerMultiUnitLinkSystemTest {
 	
 	private Date d1 = getDate("1962-08-31");
-	private Date d2 = getDate("1962-08-30");
-	private Date d3 = getDate("1961-08-30");
 
 	public static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
 	
@@ -55,7 +53,8 @@ public class UKRDCIndexManagerMultiUnitLinkSystemTest {
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId(local1).setLocalIdType("MR").setOriginator(orig1);
 		p1.addNationalId(new NationalIdentity(NationalIdentity.NHS_TYPE,nhsNo));
-		NationalIdentity natId1 = im.createOrUpdate(p1);
+		UKRDCIndexManagerResponse resp = im.store(p1);
+		NationalIdentity natId1 = resp.getNationalIdentity();
 		// VERIFY
 		assert(natId1!=null);
 		assert(natId1.getType()==NationalIdentity.UKRDC_TYPE);
@@ -75,7 +74,8 @@ public class UKRDCIndexManagerMultiUnitLinkSystemTest {
 		p2.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p2.setLocalId(local2).setLocalIdType("MR").setOriginator(orig2);
 		p2.addNationalId(new NationalIdentity(NationalIdentity.NHS_TYPE,nhsNo));
-		NationalIdentity natId2 = im.createOrUpdate(p2);
+		UKRDCIndexManagerResponse resp2 = im.store(p2);
+		NationalIdentity natId2 = resp2.getNationalIdentity();
 		// VERIFY 
 		assert(natId2!=null);
 		assert(natId2.getType()==NationalIdentity.UKRDC_TYPE);
@@ -94,7 +94,8 @@ public class UKRDCIndexManagerMultiUnitLinkSystemTest {
 		p3.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p3.setLocalId(local3).setLocalIdType("MR").setOriginator(orig3);
 		p3.addNationalId(new NationalIdentity(NationalIdentity.NHS_TYPE,nhsNo));
-		NationalIdentity natId3 = im.createOrUpdate(p3);
+		UKRDCIndexManagerResponse resp3 = im.store(p3);
+		NationalIdentity natId3 = resp3.getNationalIdentity();
 		// VERIFY 
 		assert(natId3!=null);
 		assert(natId3.getType()==NationalIdentity.UKRDC_TYPE);

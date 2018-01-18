@@ -1,8 +1,5 @@
 package com.agiloak.mpi.index;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 
 import org.junit.BeforeClass;
@@ -14,21 +11,19 @@ import com.agiloak.mpi.MpiException;
 import com.agiloak.mpi.index.persistence.LinkRecordDAO;
 import com.agiloak.mpi.index.persistence.MasterRecordDAO;
 import com.agiloak.mpi.index.persistence.PersonDAO;
-import com.agiloak.mpi.trace.persistence.TraceDAO;
 import com.agiloak.mpi.workitem.WorkItem;
 import com.agiloak.mpi.workitem.persistence.WorkItemDAO;
 
-public class UKRDCIndexManagerSearchSystemTest {
+public class UKRDCIndexManagerSearchSystemTest extends UKRDCIndexManagerBaseTest {
 	
 	@Rule
 	public final ExpectedException exception = ExpectedException.none();
 
-	private Date d1 = getDate("1962-08-31");
-	private Date d2 = getDate("1962-08-30");
-	private Date d3 = getDate("1961-08-30");
+	//private Date d1 = getDate("1962-08-31");
+	private String d1 = "1962-08-31";
+	private String d2 = "1962-08-30";
+	private String d3 = "1961-08-30";
 
-	public static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-	
 	@BeforeClass
 	public static void setup()  throws MpiException {
 
@@ -49,18 +44,17 @@ public class UKRDCIndexManagerSearchSystemTest {
 		String originator = "SRCT1";
 		String idBase = originator+"000";
 
-		UKRDCIndexManager im = new UKRDCIndexManager();
 		NationalIdentity nhs1 = new NationalIdentity(NationalIdentity.NHS_TYPE,idBase+"N1");
 		NationalIdentity chi1 = new NationalIdentity(NationalIdentity.CHI_TYPE,idBase+"C1");
 		
 		// P1 NationalId for P1. New Person, New Masters for UKRDC, NHS and CHI
-		Person p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICHOLAS").setGender("1");
+		Person p1 = new Person().setDateOfBirth(getDate(d1)).setSurname("JONES").setGivenName("NICHOLAS").setGender("1");
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId(idBase+"1").setLocalIdType("MR").setOriginator(originator);
 		p1.setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(idBase+"R1");
 		p1.addNationalId(nhs1);
 		p1.addNationalId(chi1);
-		im.createOrUpdate(p1);
+		store(p1);
 		// VERIFY
 		Person person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
@@ -76,7 +70,7 @@ public class UKRDCIndexManagerSearchSystemTest {
 		ProgrammeSearchRequest psr = new ProgrammeSearchRequest();
 		psr.setDateOfBirth(d1).setSurname("JONES").setGivenName("NICHOLAS");
 		psr.setNationalId(nhs1);
-		String ukrdcId = im.search(psr);
+		String ukrdcId = search(psr).getNationalIdentity().getId();
 		// VERIFY 
 		assert(ukrdcId!=null);
 		assert(ukrdcId.equals(idBase+"R1"));
@@ -85,7 +79,7 @@ public class UKRDCIndexManagerSearchSystemTest {
 		psr = new ProgrammeSearchRequest();
 		psr.setDateOfBirth(d3).setSurname("JONES").setGivenName("NICHOLAS");
 		psr.setNationalId(nhs1);
-		ukrdcId = im.search(psr);
+		ukrdcId = search(psr).getNationalIdentity().getId();
 		// VERIFY 
 		assert(ukrdcId==null);
 
@@ -93,7 +87,7 @@ public class UKRDCIndexManagerSearchSystemTest {
 		psr = new ProgrammeSearchRequest();
 		psr.setDateOfBirth(d2).setSurname("JONAS").setGivenName("NORTON");
 		psr.setNationalId(nhs1);
-		ukrdcId = im.search(psr);
+		ukrdcId = search(psr).getNationalIdentity().getId();
 		// VERIFY 
 		assert(ukrdcId.equals(idBase+"R1"));
 
@@ -101,7 +95,7 @@ public class UKRDCIndexManagerSearchSystemTest {
 		psr = new ProgrammeSearchRequest();
 		psr.setDateOfBirth(d2).setSurname("JONAS").setGivenName("HORTON");
 		psr.setNationalId(nhs1);
-		ukrdcId = im.search(psr);
+		ukrdcId = search(psr).getNationalIdentity().getId();
 		// VERIFY 
 		assert(ukrdcId==null);
 
@@ -109,34 +103,30 @@ public class UKRDCIndexManagerSearchSystemTest {
 		psr = new ProgrammeSearchRequest();
 		psr.setDateOfBirth(d2).setSurname("JOHNSON").setGivenName("NORTON");
 		psr.setNationalId(nhs1);
-		ukrdcId = im.search(psr);
+		ukrdcId = search(psr).getNationalIdentity().getId();
 		// VERIFY 
 		assert(ukrdcId==null);
 
 	}
 
 	@Test
-	public void testSearchValidation1() throws MpiException {
-
-		UKRDCIndexManager im = new UKRDCIndexManager();
+	public void testSearchValidation1() {
 
 		// ST2-1 - No National Id
 		ProgrammeSearchRequest psr = new ProgrammeSearchRequest();
 		psr.setDateOfBirth(d1).setSurname("JONES").setGivenName("NICHOLAS");
-		exception.expect(MpiException.class);
-		String ukrdcId = im.search(psr);
+		UKRDCIndexManagerResponse resp = search(psr);
+		assert(resp.getStatus()==UKRDCIndexManagerResponse.FAIL);
 		
 	}
 
 	@Test
-	public void testSearchValidation2() throws MpiException {
-
-		UKRDCIndexManager im = new UKRDCIndexManager();
+	public void testSearchValidation2() {
 
 		// ST3-1 - No Search Request
 		ProgrammeSearchRequest psr = null;
-		exception.expect(MpiException.class);
-		String ukrdcId = im.search(psr);
+		UKRDCIndexManagerResponse resp = search(psr);
+		assert(resp.getStatus()==UKRDCIndexManagerResponse.FAIL);
 		
 	}
 
@@ -146,19 +136,18 @@ public class UKRDCIndexManagerSearchSystemTest {
 		String originator = "SRCT4";
 		String idBase = originator+"000";
 
-		UKRDCIndexManager im = new UKRDCIndexManager();
 		NationalIdentity nhs1 = new NationalIdentity(NationalIdentity.NHS_TYPE,idBase+"N1");
 		NationalIdentity nhs2 = new NationalIdentity(NationalIdentity.NHS_TYPE,idBase+"N2");
 		NationalIdentity chi1 = new NationalIdentity(NationalIdentity.CHI_TYPE,idBase+"C1");
 		
 		// P1 NationalId for P1. New Person, New Masters for UKRDC, NHS and CHI
-		Person p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICHOLAS").setGender("1");
+		Person p1 = new Person().setDateOfBirth(getDate(d1)).setSurname("JONES").setGivenName("NICHOLAS").setGender("1");
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId(idBase+"1").setLocalIdType("MR").setOriginator(originator);
 		p1.setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(idBase+"R1");
 		p1.addNationalId(nhs1);
 		p1.addNationalId(chi1);
-		im.createOrUpdate(p1);
+		store(p1);
 		// VERIFY
 		Person person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
@@ -173,7 +162,7 @@ public class UKRDCIndexManagerSearchSystemTest {
 		ProgrammeSearchRequest psr = new ProgrammeSearchRequest();
 		psr.setDateOfBirth(d1).setSurname("JONES").setGivenName("NICHOLAS");
 		psr.setNationalId(nhs2);
-		String ukrdcId = im.search(psr);
+		String ukrdcId = search(psr).getNationalIdentity().getId();
 		// VERIFY 
 		assert(ukrdcId==null);
 
@@ -185,18 +174,16 @@ public class UKRDCIndexManagerSearchSystemTest {
 		String originator = "SRCT5";
 		String idBase = originator+"000";
 
-		UKRDCIndexManager im = new UKRDCIndexManager();
 		NationalIdentity nhs1 = new NationalIdentity(NationalIdentity.NHS_TYPE,idBase+"N1");
-		NationalIdentity nhs2 = new NationalIdentity(NationalIdentity.NHS_TYPE,idBase+"N2");
 		NationalIdentity chi1 = new NationalIdentity(NationalIdentity.CHI_TYPE,idBase+"C1");
 		
 		// P1 NationalId for P1. New Person, New Masters for NHS and CHI. Will Allocate a UKRDC number
-		Person p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICHOLAS").setGender("1");
+		Person p1 = new Person().setDateOfBirth(getDate(d1)).setSurname("JONES").setGivenName("NICHOLAS").setGender("1");
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId(idBase+"1").setLocalIdType("MR").setOriginator(originator);
 		p1.addNationalId(nhs1);
 		p1.addNationalId(chi1);
-		im.createOrUpdate(p1);
+		store(p1);
 		// VERIFY
 		Person person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
@@ -209,7 +196,7 @@ public class UKRDCIndexManagerSearchSystemTest {
 		ProgrammeSearchRequest psr = new ProgrammeSearchRequest();
 		psr.setDateOfBirth(d1).setSurname("JONES").setGivenName("NICHOLAS");
 		psr.setNationalId(nhs1);
-		String ukrdcId = im.search(psr);
+		String ukrdcId = search(psr).getNationalIdentity().getId();
 		// VERIFY 
 		assert(ukrdcId==null);
 
@@ -221,18 +208,17 @@ public class UKRDCIndexManagerSearchSystemTest {
 		String originator = "SRCT6";
 		String idBase = originator+"000";
 
-		UKRDCIndexManager im = new UKRDCIndexManager();
 		NationalIdentity nhs1 = new NationalIdentity(NationalIdentity.NHS_TYPE,idBase+"N1");
 		NationalIdentity chi1 = new NationalIdentity(NationalIdentity.CHI_TYPE,idBase+"C1");
 		
 		// P1 NationalId for P1. New Person, New Masters for UKRDC, NHS and CHI
-		Person p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICHOLAS").setGender("1");
+		Person p1 = new Person().setDateOfBirth(getDate(d1)).setSurname("JONES").setGivenName("NICHOLAS").setGender("1");
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId(idBase+"1").setLocalIdType("MR").setOriginator(originator);
 		p1.setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(idBase+"R1");
 		p1.addNationalId(nhs1);
 		p1.addNationalId(chi1);
-		im.createOrUpdate(p1);
+		store(p1);
 		// VERIFY
 		Person person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
@@ -248,50 +234,31 @@ public class UKRDCIndexManagerSearchSystemTest {
 		psr.setSurname("JONES").setGivenName("NICHOLAS");
 		psr.setDateOfBirth("1962-08-31");
 		psr.setNationalId(NationalIdentity.NHS_TYPE, idBase+"N1");
-		String ukrdcId = im.search(psr);
+		String ukrdcId = search(psr).getNationalIdentity().getId();
 		// VERIFY 
 		assert(ukrdcId.equals(idBase+"R1"));
 
 	}
 	
 	@Test
-	public void testSearchRequestBuildBadDate() throws MpiException {
-
-		UKRDCIndexManager im = new UKRDCIndexManager();
+	public void testSearchRequestBuildBadDate() {
 
 		// ST7-1 - bad date
+		String originator = "SRCT7";
+		String idBase = originator+"000";
 		ProgrammeSearchRequest psr = new ProgrammeSearchRequest();
-		exception.expect(MpiException.class);
-		psr.setDateOfBirth("196-08-31");
-		String ukrdcId = im.search(psr);
-		
-	}
+		psr.setNationalId(NationalIdentity.NHS_TYPE, idBase+"N1");
+		psr.setDateOfBirth("1962-z-31");
+		UKRDCIndexManagerResponse resp = search(psr);
+		assert(resp.getStatus()==UKRDCIndexManagerResponse.FAIL);
+		assert(resp.getMessage().contains("Date"));
 
-	private static java.util.Date getDate(String sDate){
-		
-		java.util.Date uDate = null;
-	    try {
-		   uDate = formatter.parse(sDate);
-		} catch (ParseException e) {
-			e.printStackTrace();
-			assert(false);
-		}	
-	    return uDate;
-	    
 	}
 	
-	public static void clear(String localId, String originator)  throws MpiException {
-		
-		Person person = PersonDAO.findByLocalId("MR", localId, originator);
-		if (person != null) {
-			LinkRecordDAO.deleteByPerson(person.getId());
-			WorkItemDAO.deleteByPerson(person.getId());
-			PersonDAO.delete(person);
-			String traceId = TraceDAO.getTraceId(localId, "MR", originator, "AUTO");
-			if (traceId != null) {
-				TraceDAO.clearByTraceId(traceId);
-			}
-		}
+	protected UKRDCIndexManagerResponse search(ProgrammeSearchRequest psr) {
+		UKRDCIndexManager im = new UKRDCIndexManager();
+		UKRDCIndexManagerResponse resp = im.search(psr);
+		return resp;
+	}
 
-	}	
 }

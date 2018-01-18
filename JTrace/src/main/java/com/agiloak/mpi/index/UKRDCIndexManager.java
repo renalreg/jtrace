@@ -1,10 +1,13 @@
 package com.agiloak.mpi.index;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +24,8 @@ import com.agiloak.mpi.workitem.WorkItemManager;
 public class UKRDCIndexManager {
 	
 	private final static Logger logger = LoggerFactory.getLogger(UKRDCIndexManager.class);
-
+	public static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+	
 	/**
 	 * Allow manual linking of records
 	 * @param patientId
@@ -30,7 +34,7 @@ public class UKRDCIndexManager {
 	 * @param linkCode
 	 * @param linkDesc
 	 */
-	public void link(int personId, int masterId, String user, int linkCode, String linkDesc) throws MpiException {
+	private void linkInternal(int personId, int masterId, String user, int linkCode, String linkDesc) throws MpiException {
 
 		if (personId==0 || masterId==0 || linkCode==0 || user==null || user.length()==0 || 
 			linkDesc==null || linkDesc.length()==0) {
@@ -79,7 +83,7 @@ public class UKRDCIndexManager {
 	 * @return
 	 * @throws MpiException
 	 */
-	public String search(ProgrammeSearchRequest psr) throws MpiException {
+	private String searchInternal(ProgrammeSearchRequest psr) throws MpiException {
 		String ukrdcId = null;
 		
 		if (psr==null) {
@@ -94,6 +98,14 @@ public class UKRDCIndexManager {
 			throw new MpiException("NationalId Must be provided");
 		}
 
+		Date dob;
+	    try {
+		   dob = formatter.parse(psr.getDateOfBirth());
+		} catch (ParseException e) {
+			logger.error("Invalid Date Of Birth Format");
+			throw new MpiException("Invalid Date Of Birth Format");
+		}	
+
 		MasterRecord nationalMaster = MasterRecordDAO.findByNationalId(psr.getNationalId().getId(), psr.getNationalId().getType());
 		// If the national record is not found then we can't match to a UKRDC id
 		if (nationalMaster == null) {
@@ -101,10 +113,10 @@ public class UKRDCIndexManager {
 			logger.debug("National Identity not known");
 			return null;
 		}
-
+	
 		// Create a person from the request to use in the verify process
 		Person searchPerson = new Person();
-		searchPerson.setDateOfBirth(psr.getDateOfBirth());
+		searchPerson.setDateOfBirth(dob);
 		searchPerson.setGivenName(psr.getGivenName());
 		searchPerson.setSurname(psr.getSurname());
 		
@@ -140,7 +152,7 @@ public class UKRDCIndexManager {
 		return ukrdcId;
 	}
 
-	private void validate(Person person) throws MpiException {
+	private void validateInternal(Person person) throws MpiException {
 		
 		if (person.getPrimaryIdType()!=null && person.getPrimaryIdType() != NationalIdentity.UKRDC_TYPE) {
 			logger.error("If provided, the primaryIdType must be UKRDC");
@@ -176,12 +188,68 @@ public class UKRDCIndexManager {
 		}
 	}
 	
+	public UKRDCIndexManagerResponse validate(Person person) {
+		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
+		try {
+			validateInternal(person);
+			resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
+		} catch (MpiException e) {
+			resp.setStatus(UKRDCIndexManagerResponse.FAIL);
+			resp.setMessage(e.getMessage());
+			resp.setStackTrace(ExceptionUtils.getStackTrace(e));
+		}
+		return resp;
+	}
+	
+	public UKRDCIndexManagerResponse store(Person person) {
+		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
+		try {
+			NationalIdentity natId = createOrUpdate(person);
+			resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
+			resp.setNationalIdentity(natId);
+		} catch (MpiException e) {
+			resp.setStatus(UKRDCIndexManagerResponse.FAIL);
+			resp.setMessage(e.getMessage());
+			resp.setStackTrace(ExceptionUtils.getStackTrace(e));
+		}
+		return resp;
+	}
+
+	public UKRDCIndexManagerResponse search(ProgrammeSearchRequest psr) {
+		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
+		try {
+			String ukrdcId = searchInternal(psr);
+			NationalIdentity natId = new NationalIdentity(ukrdcId);
+			resp.setNationalIdentity(natId);
+			resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
+		} catch (MpiException e) {
+			resp.setStatus(UKRDCIndexManagerResponse.FAIL);
+			resp.setMessage(e.getMessage());
+			resp.setStackTrace(ExceptionUtils.getStackTrace(e));
+		}
+		return resp;
+	}
+
+	public UKRDCIndexManagerResponse link(int personId, int masterId, String user, int linkCode, String linkDesc) {
+		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
+		try {
+			linkInternal(personId, masterId, user, linkCode, linkDesc);
+			resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
+		} catch (MpiException e) {
+			resp.setStatus(UKRDCIndexManagerResponse.FAIL);
+			resp.setMessage(e.getMessage());
+			resp.setStackTrace(ExceptionUtils.getStackTrace(e));
+		}
+		return resp;
+	}
+	
+	
 	/**
 	 *  Created for the UKRDC this is a combined createOrUpdate. This method updates the person, the master (as appropriate) and the link records ( as appropriate)
 	 *  
 	 * @param person
 	 */
-	public NationalIdentity createOrUpdate(Person person) throws MpiException {
+	private NationalIdentity createOrUpdate(Person person) throws MpiException {
 
 		logger.debug("*********Processing person record:"+person);
 		NationalIdentity ukrdcId = null;
@@ -190,7 +258,7 @@ public class UKRDCIndexManager {
 			person.setEffectiveDate(new Date());
 		}
 		
-		validate(person);
+		validateInternal(person);
 		
 		Person storedPerson = PersonDAO.findByLocalId(person.getLocalIdType(), person.getLocalId(), person.getOriginator());
 		if (storedPerson != null) {
