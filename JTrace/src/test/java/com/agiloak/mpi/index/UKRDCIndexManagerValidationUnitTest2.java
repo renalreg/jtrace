@@ -11,7 +11,7 @@ import org.junit.rules.ExpectedException;
 
 import com.agiloak.mpi.MpiException;
 
-public class UKRDCIndexManagerValidationUnitTest {
+public class UKRDCIndexManagerValidationUnitTest2 {
 	
 	@Rule
 	public final ExpectedException exception = ExpectedException.none();
@@ -28,7 +28,7 @@ public class UKRDCIndexManagerValidationUnitTest {
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId(idBase+"1").setLocalIdType("MR").setOriginator(originator);
 		UKRDCIndexManager im = new UKRDCIndexManager();
-		UKRDCIndexManagerResponse resp = im.store(p1);
+		UKRDCIndexManagerResponse resp = im.validate(p1);
 		assert(resp.getStatus()==UKRDCIndexManagerResponse.FAIL);
 		assert(resp.getMessage().contains("Surname"));
 	}
@@ -41,7 +41,7 @@ public class UKRDCIndexManagerValidationUnitTest {
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId(idBase+"1").setLocalIdType("MR").setOriginator(originator);
 		UKRDCIndexManager im = new UKRDCIndexManager();
-		UKRDCIndexManagerResponse resp = im.store(p1);
+		UKRDCIndexManagerResponse resp = im.validate(p1);
 		assert(resp.getStatus()==UKRDCIndexManagerResponse.FAIL);
 		assert(resp.getMessage().contains("Surname"));
 	}
@@ -54,7 +54,7 @@ public class UKRDCIndexManagerValidationUnitTest {
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId(idBase+"1").setLocalIdType("MR").setOriginator(originator);
 		UKRDCIndexManager im = new UKRDCIndexManager();
-		UKRDCIndexManagerResponse resp = im.store(p1);
+		UKRDCIndexManagerResponse resp = im.validate(p1);
 		assert(resp.getStatus()==UKRDCIndexManagerResponse.FAIL);
 		assert(resp.getMessage().contains("Given"));
 	}
@@ -67,7 +67,7 @@ public class UKRDCIndexManagerValidationUnitTest {
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId(idBase+"1").setLocalIdType("MR").setOriginator(originator);
 		UKRDCIndexManager im = new UKRDCIndexManager();
-		UKRDCIndexManagerResponse resp = im.store(p1);
+		UKRDCIndexManagerResponse resp = im.validate(p1);
 		assert(resp.getStatus()==UKRDCIndexManagerResponse.FAIL);
 		assert(resp.getMessage().contains("Given"));
 	}
@@ -80,7 +80,7 @@ public class UKRDCIndexManagerValidationUnitTest {
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId(idBase+"1").setLocalIdType("MR").setOriginator(originator);
 		UKRDCIndexManager im = new UKRDCIndexManager();
-		UKRDCIndexManagerResponse resp = im.store(p1);
+		UKRDCIndexManagerResponse resp = im.validate(p1);
 		assert(resp.getStatus()==UKRDCIndexManagerResponse.FAIL);
 		assert(resp.getMessage().contains("Gender"));
 	}
@@ -93,7 +93,7 @@ public class UKRDCIndexManagerValidationUnitTest {
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId(idBase+"1").setLocalIdType("MR").setOriginator(originator);
 		UKRDCIndexManager im = new UKRDCIndexManager();
-		UKRDCIndexManagerResponse resp = im.store(p1);
+		UKRDCIndexManagerResponse resp = im.validate(p1);
 		assert(resp.getStatus()==UKRDCIndexManagerResponse.FAIL);
 		assert(resp.getMessage().contains("Gender"));
 	}
@@ -106,7 +106,7 @@ public class UKRDCIndexManagerValidationUnitTest {
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId(idBase+"1").setLocalIdType("MR").setOriginator(originator);
 		UKRDCIndexManager im = new UKRDCIndexManager();
-		UKRDCIndexManagerResponse resp = im.store(p1);
+		UKRDCIndexManagerResponse resp = im.validate(p1);
 		assert(resp.getStatus()==UKRDCIndexManagerResponse.FAIL);
 		assert(resp.getMessage().contains("Date"));
 	}
@@ -119,7 +119,7 @@ public class UKRDCIndexManagerValidationUnitTest {
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalIdType("MR").setOriginator(originator);
 		UKRDCIndexManager im = new UKRDCIndexManager();
-		UKRDCIndexManagerResponse resp = im.store(p1);
+		UKRDCIndexManagerResponse resp = im.validate(p1);
 		assert(resp.getStatus()==UKRDCIndexManagerResponse.FAIL);
 		assert(resp.getMessage().contains("Local"));
 	}
@@ -132,7 +132,7 @@ public class UKRDCIndexManagerValidationUnitTest {
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId("").setLocalIdType("MR").setOriginator(originator);
 		UKRDCIndexManager im = new UKRDCIndexManager();
-		UKRDCIndexManagerResponse resp = im.store(p1);
+		UKRDCIndexManagerResponse resp = im.validate(p1);
 		assert(resp.getStatus()==UKRDCIndexManagerResponse.FAIL);
 		assert(resp.getMessage().contains("Local"));
 	}
@@ -145,7 +145,7 @@ public class UKRDCIndexManagerValidationUnitTest {
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId("1").setLocalIdType("MR").setOriginator(originator);
 		UKRDCIndexManager im = new UKRDCIndexManager();
-		UKRDCIndexManagerResponse resp = im.store(p1);
+		UKRDCIndexManagerResponse resp = im.validate(p1);
 		assert(resp.getStatus()==UKRDCIndexManagerResponse.SUCCESS);
 		assert(resp.getMessage().length()==0);
 	}
@@ -158,7 +158,7 @@ public class UKRDCIndexManagerValidationUnitTest {
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId("00000000").setOriginator(originator);
 		UKRDCIndexManager im = new UKRDCIndexManager();
-		UKRDCIndexManagerResponse resp = im.store(p1);
+		UKRDCIndexManagerResponse resp = im.validate(p1);
 		assert(resp.getStatus()==UKRDCIndexManagerResponse.FAIL);
 		assert(resp.getMessage().contains("Local"));
 	}
@@ -171,7 +171,7 @@ public class UKRDCIndexManagerValidationUnitTest {
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId("00000000").setLocalIdType("").setOriginator(originator);
 		UKRDCIndexManager im = new UKRDCIndexManager();
-		UKRDCIndexManagerResponse resp = im.store(p1);
+		UKRDCIndexManagerResponse resp = im.validate(p1);
 		assert(resp.getStatus()==UKRDCIndexManagerResponse.FAIL);
 		assert(resp.getMessage().contains("Local"));
 	}
@@ -182,7 +182,7 @@ public class UKRDCIndexManagerValidationUnitTest {
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId("00000000").setLocalIdType("MR");
 		UKRDCIndexManager im = new UKRDCIndexManager();
-		UKRDCIndexManagerResponse resp = im.store(p1);
+		UKRDCIndexManagerResponse resp = im.validate(p1);
 		assert(resp.getStatus()==UKRDCIndexManagerResponse.FAIL);
 		assert(resp.getMessage().contains("Originator"));
 	}
@@ -193,7 +193,7 @@ public class UKRDCIndexManagerValidationUnitTest {
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId("00000000").setLocalIdType("MR").setOriginator("");
 		UKRDCIndexManager im = new UKRDCIndexManager();
-		UKRDCIndexManagerResponse resp = im.store(p1);
+		UKRDCIndexManagerResponse resp = im.validate(p1);
 		assert(resp.getStatus()==UKRDCIndexManagerResponse.FAIL);
 		assert(resp.getMessage().contains("Originator"));
 	}
