@@ -1,7 +1,5 @@
 package com.agiloak.mpi.index;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
@@ -14,18 +12,16 @@ import com.agiloak.mpi.audit.persistence.AuditDAO;
 import com.agiloak.mpi.index.persistence.LinkRecordDAO;
 import com.agiloak.mpi.index.persistence.MasterRecordDAO;
 import com.agiloak.mpi.index.persistence.PersonDAO;
-import com.agiloak.mpi.trace.persistence.TraceDAO;
 import com.agiloak.mpi.workitem.WorkItem;
 import com.agiloak.mpi.workitem.persistence.WorkItemDAO;
 
-public class UKRDCIndexManagerNewRecordSystemTest {
+public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseTest {
 	
 	private Date d1 = getDate("1962-08-31");
 	private Date d2 = getDate("1962-08-30");
 	private Date d3 = getDate("1961-08-30");
 
-	public static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-	
+
 	@BeforeClass
 	public static void setup()  throws MpiException {
 
@@ -61,7 +57,6 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 	@Test
 	public void testNewWithPrimaryId() throws MpiException {
 
-		UKRDCIndexManager im = new UKRDCIndexManager();
 		String orig = "NSYS1";
 		String ukrdcId = "RR1000001";
 		
@@ -69,7 +64,7 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		Person p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICHOLAS").setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(ukrdcId).setGender("1");
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId("NSYS100001").setLocalIdType("MR").setOriginator(orig);
-		NationalIdentity natId = im.createOrUpdate(p1);
+		NationalIdentity natId = store(p1);
 		// VERIFY
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
@@ -88,7 +83,7 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		Person p2 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICHOLAS").setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(ukrdcId).setGender("1");
 		p2.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p2.setLocalId("NSYS100002").setLocalIdType("MR").setOriginator(orig);
-		natId = im.createOrUpdate(p2);
+		natId = store(p2);
 		// VERIFY 
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
@@ -107,7 +102,7 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		Person p3 = new Person().setDateOfBirth(d2).setSurname("JONES").setGivenName("MATTY").setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(ukrdcId).setGender("1");
 		p3.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p3.setLocalId("NSYS100003").setLocalIdType("MR").setOriginator(orig);
-		natId = im.createOrUpdate(p3);
+		natId = store(p3);
 		// VERIFY 
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
@@ -129,7 +124,6 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 	@Test
 	public void testNewWithPrimaryIdEffDate() throws MpiException {
 
-		UKRDCIndexManager im = new UKRDCIndexManager();
 		String orig = "NSYS4";
 		String ukrdcId = "RR4000001";
 		
@@ -138,7 +132,7 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId("NSYS400001").setLocalIdType("MR").setOriginator(orig);
 		p1.setEffectiveDate(getDate("2017-08-01"));
-		NationalIdentity natId = im.createOrUpdate(p1);
+		NationalIdentity natId = store(p1);
 		// VERIFY
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
@@ -159,7 +153,7 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		p2.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p2.setLocalId("NSYS400002").setLocalIdType("MR").setOriginator(orig);
 		p2.setEffectiveDate(getDate("2017-08-02"));
-		natId = im.createOrUpdate(p2);
+		natId = store(p2);
 		// VERIFY 
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
@@ -181,7 +175,7 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		p3.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p3.setLocalId("NSYS400003").setLocalIdType("MR").setOriginator(orig);
 		p3.setEffectiveDate(getDate("2017-08-01"));
-		natId = im.createOrUpdate(p3);
+		natId = store(p3);
 		// VERIFY 
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
@@ -205,14 +199,13 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 
 		String orig = "NSYS5";
 		String ukrdcId = "RR5000001";
-		UKRDCIndexManager im = new UKRDCIndexManager();
 		
 		// T5-1 Setup step. NationalId for P1. New Person, New Master and new link to the master
 		Person p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICHOLAS").setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(ukrdcId).setGender("1");
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId("NSYS500001").setLocalIdType("MR").setOriginator(orig);
 		p1.setEffectiveDate(getDate("2017-08-01"));
-		NationalIdentity natId = im.createOrUpdate(p1);
+		NationalIdentity natId = store(p1);
 		// VERIFY
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
@@ -234,7 +227,7 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		p2.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p2.setLocalId("NSYS500002").setLocalIdType("MR").setOriginator(orig);
 		p2.setEffectiveDate(getDate("2017-08-02"));
-		natId = im.createOrUpdate(p2);
+		natId = store(p2);
 		// VERIFY 
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
@@ -258,7 +251,7 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		p3.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p3.setLocalId("NSYS500003").setLocalIdType("MR").setOriginator(orig);
 		p3.setEffectiveDate(getDate("2017-08-01"));
-		natId = im.createOrUpdate(p3);
+		natId = store(p3);
 		// VERIFY 
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
@@ -283,14 +276,13 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		String ukrdcId = "RR2000001";
 		String orig = "NSYS2A";
 		String orig2 = "NSYS2B";
-		UKRDCIndexManager im = new UKRDCIndexManager();
 		
 		// Setup - Person with NationalId for match to TEST2. New Person, New Master and new link to the master
 		Person p1 = new Person().setDateOfBirth(d1).setSurname("WILLIAMS").setGivenName("JIM").setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(ukrdcId).setGender("1");
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId("NSYS200001").setLocalIdType("MR").setOriginator(orig);
 		p1.addNationalId(new NationalIdentity(NationalIdentity.NHS_TYPE,"NHS0200001"));
-		NationalIdentity natId = im.createOrUpdate(p1);
+		NationalIdentity natId = store(p1);
 		// VERIFY SETUP
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
@@ -312,7 +304,7 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		Person p2 = new Person().setDateOfBirth(d1).setSurname("LORIMER").setGivenName("PETER").setGender("1");
 		p2.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p2.setLocalId("NSYS200002").setLocalIdType("MR").setOriginator(orig);
-		natId = im.createOrUpdate(p2);
+		natId = store(p2);
 		// VERIFY 
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
@@ -337,7 +329,7 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		p3.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p3.setLocalId("NSYS200003").setLocalIdType("MR").setOriginator(orig2);
 		p3.addNationalId(new NationalIdentity(NationalIdentity.NHS_TYPE,"NHS0200001"));
-		natId = im.createOrUpdate(p3);
+		natId = store(p3);
 		// VERIFY 
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
@@ -359,7 +351,6 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		String ukrdcId = "RR3000001";
 		String orig = "NSYS3A";
 		String orig2 = "NSYS3B";
-		UKRDCIndexManager im = new UKRDCIndexManager();
 		
 		// Setup - Person with UKRDC
 		Person p1 = new Person().setDateOfBirth(d1).setSurname("WILLIAMS").setGivenName("JIM").setGender("1");
@@ -367,7 +358,7 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		p1.setLocalId("NSYS300001").setLocalIdType("MR").setOriginator(orig);
 		p1.setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(ukrdcId);
 		p1.setEffectiveDate(getDate("2017-08-02"));
-		NationalIdentity natId = im.createOrUpdate(p1);
+		NationalIdentity natId = store(p1);
 		// VERIFY SETUP
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
@@ -389,7 +380,7 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		p2.setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(ukrdcId);
 		p2.addNationalId(new NationalIdentity(NationalIdentity.NHS_TYPE,"NHS0300001"));
 		p2.setEffectiveDate(getDate("2017-08-01"));
-		natId = im.createOrUpdate(p2);
+		natId = store(p2);
 		// VERIFY 
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
@@ -410,7 +401,7 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		p3.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p3.setLocalId("NSYS300003").setLocalIdType("MR").setOriginator(orig2);
 		p3.addNationalId(new NationalIdentity(NationalIdentity.NHS_TYPE,"NHS0300001"));
-		natId = im.createOrUpdate(p3);
+		natId = store(p3);
 		// VERIFY 
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
@@ -438,14 +429,13 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 
 		String ukrdcId = "RR6000001";
 		String orig = "NSYS6";
-		UKRDCIndexManager im = new UKRDCIndexManager();
 		
 		// Setup - Person with NationalId for match to TEST2. New Person, New Master and new link to the master
 		Person p1 = new Person().setDateOfBirth(d1).setSurname("WILLIAMS").setGivenName("JIM").setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(ukrdcId).setGender("1");
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId("NSYS600001").setLocalIdType("MR").setOriginator(orig);
 		p1.addNationalId(new NationalIdentity(NationalIdentity.NHS_TYPE,"NHS0600001"));
-		NationalIdentity natId = im.createOrUpdate(p1);
+		NationalIdentity natId = store(p1);
 		// VERIFY SETUP
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
@@ -465,7 +455,7 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		
 		// T2-2 - Change MRN
 		p1.setLocalId("NSYS600002");
-		natId = im.createOrUpdate(p1);
+		natId = store(p1);
 		// VERIFY 
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
@@ -489,14 +479,13 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 
 		String ukrdcId = "RR7000001";
 		String orig = "NSYS7";
-		UKRDCIndexManager im = new UKRDCIndexManager();
 		
 		// Setup - Person with NationalId for match to TEST2. New Person, New Master and new link to the master
 		Person p1 = new Person().setDateOfBirth(d1).setSurname("WILLIAMS").setGivenName("JIM").setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(ukrdcId).setGender("1");
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId("NSYS700001").setLocalIdType("MR").setOriginator(orig);
 		p1.addNationalId(new NationalIdentity(NationalIdentity.NHS_TYPE,"NHS0700001"));
-		NationalIdentity natId = im.createOrUpdate(p1);
+		NationalIdentity natId = store(p1);
 		// VERIFY SETUP
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
@@ -520,7 +509,7 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		p2.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p2.setLocalId("NSYS700002").setLocalIdType("MR").setOriginator(orig);
 		p2.addNationalId(new NationalIdentity(NationalIdentity.NHS_TYPE,"NHS0700001"));
-		NationalIdentity natId2 = im.createOrUpdate(p2);
+		NationalIdentity natId2 = store(p2);
 		// VERIFY UPDATES
 		assert(natId2!=null);
 		assert(natId2.getType()==NationalIdentity.UKRDC_TYPE);
@@ -535,7 +524,7 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		p3.setLocalId("NHS0700001").setLocalIdType("MR").setOriginator(orig);
 		p3.addNationalId(new NationalIdentity(NationalIdentity.NHS_TYPE,"NHS0700001"));
 		p3.setSkipDuplicateCheck(true);
-		NationalIdentity natId3 = im.createOrUpdate(p3);
+		NationalIdentity natId3 = store(p3);
 		// VERIFY UPDATES
 		assert(natId3!=null);
 		assert(natId3.getType()==NationalIdentity.UKRDC_TYPE);
@@ -548,7 +537,7 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		p4.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p4.setLocalId("NHS0700002").setLocalIdType("MR").setOriginator(orig);
 		p4.addNationalId(new NationalIdentity(NationalIdentity.NHS_TYPE,"NHS0700001"));
-		NationalIdentity natId4 = im.createOrUpdate(p4);
+		NationalIdentity natId4 = store(p4);
 		// VERIFY UPDATES
 		assert(natId4!=null);
 		assert(natId4.getType()==NationalIdentity.UKRDC_TYPE);
@@ -561,14 +550,13 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 	@Test
 	public void testNewLongLocalId() throws MpiException {
 
-		UKRDCIndexManager im = new UKRDCIndexManager();
 		String orig = "NSYS8";
 		
 		// T1-1 NationalId for P1. New Person, New Master and new link to the master
 		Person p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICHOLAS").setGender("1");
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId("NSYS1000011234567").setLocalIdType("MR").setOriginator(orig);
-		NationalIdentity natId = im.createOrUpdate(p1);
+		NationalIdentity natId = store(p1);
 		// VERIFY
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
@@ -582,38 +570,5 @@ public class UKRDCIndexManagerNewRecordSystemTest {
 		List<WorkItem> items = WorkItemDAO.findByPerson(person.getId());
 		assert(items.size()==0);
 		
-	}
-
-
-	private static java.util.Date getDate(String sDate){
-		
-		java.util.Date uDate = null;
-	    try {
-		   uDate = formatter.parse(sDate);
-		} catch (ParseException e) {
-			e.printStackTrace();
-			assert(false);
-		}	
-	    return uDate;
-	    
-	}
-	
-	public static void clear(String localId, String originator)  throws MpiException {
-		
-		Person person = PersonDAO.findByLocalId("MR", localId, originator);
-		if (person != null) {
-			List<LinkRecord> links = LinkRecordDAO.findByPerson(person.getId());
-			for (LinkRecord link : links) {
-				MasterRecordDAO.delete(link.getMasterId());
-			}
-			LinkRecordDAO.deleteByPerson(person.getId());
-			WorkItemDAO.deleteByPerson(person.getId());
-			PersonDAO.delete(person);
-			String traceId = TraceDAO.getTraceId(localId, "MR", originator, "AUTO");
-			if (traceId != null) {
-				TraceDAO.clearByTraceId(traceId);
-			}
-		}
-
 	}	
 }

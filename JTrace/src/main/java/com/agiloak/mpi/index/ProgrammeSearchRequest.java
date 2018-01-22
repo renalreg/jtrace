@@ -1,19 +1,11 @@
 package com.agiloak.mpi.index;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
-import com.agiloak.mpi.MpiException;
-
 public class ProgrammeSearchRequest {
-
-	public static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
 
 	private String givenName; 
 	private String surname; 
 	private String gender; 
-	private Date dateOfBirth; 
+	private String dateOfBirth; 
 	private NationalIdentity nationalId;
 	
 	public String getGivenName() {
@@ -37,20 +29,11 @@ public class ProgrammeSearchRequest {
 		this.gender = gender;
 		return this;
 	}
-	public Date getDateOfBirth() {
+	public String getDateOfBirth() {
 		return dateOfBirth;
 	}
-	public ProgrammeSearchRequest setDateOfBirth(Date dateOfBirth) {
+	public ProgrammeSearchRequest setDateOfBirth(String dateOfBirth) {
 		this.dateOfBirth = dateOfBirth;
-		return this;
-	}
-	public ProgrammeSearchRequest setDateOfBirth(String dateOfBirth) throws MpiException{
-	    try {
-		   this.dateOfBirth = formatter.parse(dateOfBirth);
-		} catch (ParseException e) {
-			e.printStackTrace();
-			throw new MpiException("Invalid DOB Format");
-		}	
 		return this;
 	}
 	public NationalIdentity getNationalId() {

@@ -1,7 +1,5 @@
 package com.agiloak.mpi.index;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -15,22 +13,16 @@ import com.agiloak.mpi.MpiException;
 import com.agiloak.mpi.index.persistence.LinkRecordDAO;
 import com.agiloak.mpi.index.persistence.MasterRecordDAO;
 import com.agiloak.mpi.index.persistence.PersonDAO;
-import com.agiloak.mpi.trace.persistence.TraceDAO;
 import com.agiloak.mpi.workitem.WorkItem;
 import com.agiloak.mpi.workitem.persistence.WorkItemDAO;
 
-public class UKRDCIndexManagerUpdateRecordSystemTest {
+public class UKRDCIndexManagerUpdateRecordSystemTest extends UKRDCIndexManagerBaseTest {
 
 	private final static Logger logger = LoggerFactory.getLogger(UKRDCIndexManagerUpdateRecordSystemTest.class);
 	
 	private Date d1 = getDate("1970-01-29");
-	private Date d2 = getDate("1970-01-28");
-
-	private Date d3 = getDate("1980-06-01");
 	private Date d4 = getDate("1980-06-06");
 
-	public static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-	
 	@BeforeClass
 	public static void setup()  throws MpiException {
 		
@@ -50,13 +42,12 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 
 		String originator = "UPDT1";
 		String idBase = originator+"000";
-		UKRDCIndexManager im = new UKRDCIndexManager();
 		
 		// P1 - Setup a person with no national ids - UKRDC will be generated
 		Person p1 = new Person().setDateOfBirth(d1).setSurname("ANT").setGivenName("ADAM").setGender("1");
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId(idBase+"1").setLocalIdType("MR").setOriginator(originator);
-		NationalIdentity natId = im.createOrUpdate(p1);
+		NationalIdentity natId = store(p1);
 		// VERIFY SETUP
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
@@ -72,7 +63,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		logger.debug("************* test1SimpleUpdateNoNationalIds ********UT1-1********");
 		// UT1-1 - Simple Update - change surname - still no national ids - should retain the UKRDC from first run
 		p1.setSurname("ANT2").setPostcode("CH1 6LB").setStreet("Townfield Lane");
-		NationalIdentity natId2 = im.createOrUpdate(p1);
+		NationalIdentity natId2 = store(p1);
 		// VERIFY
 		assert(natId2!=null);
 		assert(natId2.getType()==NationalIdentity.UKRDC_TYPE);
@@ -97,12 +88,11 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 
 		String originator = "UPDT2";
 		String idBase = originator+"000";
-		UKRDCIndexManager im = new UKRDCIndexManager();
 		// P1 - Setup a person with no national ids
 		Person p1 = new Person().setDateOfBirth(d1).setSurname("BOLD").setGivenName("BRENDA").setGender("2");
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId(idBase+"1").setLocalIdType("MR").setOriginator(originator);
-		NationalIdentity natId = im.createOrUpdate(p1);
+		NationalIdentity natId = store(p1);
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(natId.getId().startsWith("10")); // Allocated numbers will start with 10 whereas numbers sent in from test stub begin RR 
@@ -113,7 +103,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		p1.setId(0); // reset the id - incoming record won't have this.
 		String ukrdcId = idBase+"R1";
 		p1.setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(ukrdcId);
-		natId = im.createOrUpdate(p1);
+		natId = store(p1);
 		// VERIFY
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
@@ -132,7 +122,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		// UT2-2 - No UKRDC on inbound, but already on record - just leave it there - this may be a common occurrence
 		p1.setId(0); // reset the id - incoming record won't have this.
 		p1.setPrimaryIdType(null).setPrimaryId(null);
-		natId = im.createOrUpdate(p1);
+		natId = store(p1);
 		// VERIFY
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
@@ -151,7 +141,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		// UT2-2 - UKRDC on inbound matching that on on record 
 		p1.setId(0); // reset the id - incoming record won't have this.
 		p1.setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(idBase+"R1");
-		natId = im.createOrUpdate(p1);
+		natId = store(p1);
 		// VERIFY
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
@@ -171,7 +161,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		p1.setId(0); // reset the id - incoming record won't have this.
 		p1.setPrimaryIdType(null).setPrimaryId(null);
 		p1.setGivenName("BELINDA");
-		natId = im.createOrUpdate(p1);
+		natId = store(p1);
 		// VERIFY
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
@@ -194,7 +184,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		p1.setPrimaryIdType(null).setPrimaryId(null);
 		p1.setGivenName("BELINDER");
 		p1.setEffectiveDate(getDate("2017-08-01"));
-		natId = im.createOrUpdate(p1);
+		natId = store(p1);
 		// VERIFY
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
@@ -219,7 +209,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		p1.setGivenName("BELINDER");
 		p1.setDateOfBirth(d4);
 		p1.setEffectiveDate(getDate("2017-08-01"));
-		natId = im.createOrUpdate(p1);
+		natId = store(p1);
 		// VERIFY
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
@@ -253,7 +243,6 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		String ukrdcId1 = idBase+"R1";
 		String ukrdcId2 = idBase+"R2";
 		String ukrdcId3 = idBase+"R3";
-		UKRDCIndexManager im = new UKRDCIndexManager();
 
 		// P1 - Setup a person with a UKRDC
 		logger.debug("************* test3UpdateChangingUKRDCId ********SETUP-1********");
@@ -261,7 +250,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId(idBase+"1").setLocalIdType("MR").setOriginator(originator);
 		p1.setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(ukrdcId1);
-		NationalIdentity natId = im.createOrUpdate(p1);
+		NationalIdentity natId = store(p1);
 		// VERIFY SETUP
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
@@ -271,7 +260,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		// UT3-1 - Change the UKRDC ID. Should delete the link to the previous and the original master whilst creating new links
 		p1.setId(0); // reset the id - incoming record won't have this.
 		p1.setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(ukrdcId2);
-		natId = im.createOrUpdate(p1);
+		natId = store(p1);
 		// VERIFY
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
@@ -294,7 +283,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		p2.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p2.setLocalId(idBase2+"1").setLocalIdType("MR").setOriginator(originator2);
 		p2.setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(ukrdcId2);
-		natId = im.createOrUpdate(p2);
+		natId = store(p2);
 		// VERIFY SETUP
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
@@ -304,7 +293,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		// UT3-2 - Change the UKRDC ID. Should delete the link to the previous. Original master stays in place though because p2 is linked to it
 		p1.setId(0); // reset the id - incoming record won't have this.
 		p1.setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(ukrdcId3);
-		natId = im.createOrUpdate(p1);
+		natId = store(p1);
 		// VERIFY
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
@@ -331,14 +320,13 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		String idBase = originator+"000";
 		String ukrdcId1 = idBase+"R1";
 
-		UKRDCIndexManager im = new UKRDCIndexManager();
 		// P1 - Setup a person with a UKRDC
 		logger.debug("************* test4AddingOtherNationalId ********SETUP-1********");
 		Person p1 = new Person().setDateOfBirth(d1).setSurname("DERBY").setGivenName("DORIS").setGender("2");
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId(idBase+"1").setLocalIdType("MR").setOriginator(originator);
 		p1.setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(ukrdcId1);
-		NationalIdentity natId = im.createOrUpdate(p1);
+		NationalIdentity natId = store(p1);
 		// VERIFY SETUP
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
@@ -349,7 +337,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		p1.setId(0); // reset the id - incoming record won't have this.
 		p1.addNationalId(new NationalIdentity(NationalIdentity.NHS_TYPE,idBase+"N1"));
 		p1.addNationalId(new NationalIdentity(NationalIdentity.CHI_TYPE,idBase+"C1"));
-		natId = im.createOrUpdate(p1);
+		natId = store(p1);
 		// VERIFY
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
@@ -377,7 +365,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		p1.setNationalIds(new ArrayList<NationalIdentity>());
 		p1.addNationalId(new NationalIdentity(NationalIdentity.NHS_TYPE,idBase+"N1"));
 		p1.addNationalId(new NationalIdentity(NationalIdentity.HSC_TYPE,idBase+"H1"));
-		natId = im.createOrUpdate(p1);
+		natId = store(p1);
 		// VERIFY
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
@@ -405,7 +393,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		// UT4-3 - Remove the CHI and add a new HSI
 		p1.setId(0); // reset the id - incoming record won't have this.
 		p1.setSurname("DARBY");
-		natId = im.createOrUpdate(p1);
+		natId = store(p1);
 		// VERIFY
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
@@ -438,7 +426,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 		p1.setId(0); // reset the id - incoming record won't have this.
 		p1.setSurname("DARBEY");
 		p1.setEffectiveDate(getDate("2017-08-01"));
-		natId = im.createOrUpdate(p1);
+		natId = store(p1);
 		// VERIFY
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
@@ -468,35 +456,4 @@ public class UKRDCIndexManagerUpdateRecordSystemTest {
 
 	}
 	
-	private static java.util.Date getDate(String sDate){
-		
-		java.util.Date uDate = null;
-	    try {
-		   uDate = formatter.parse(sDate);
-		} catch (ParseException e) {
-			e.printStackTrace();
-			assert(false);
-		}	
-	    return uDate;
-	    
-	}
-	
-	public static void clear(String localId, String originator)  throws MpiException {
-		
-		Person person = PersonDAO.findByLocalId("MR", localId, originator);
-		if (person != null) {
-			List<LinkRecord> links = LinkRecordDAO.findByPerson(person.getId());
-			for (LinkRecord link : links) {
-				MasterRecordDAO.delete(link.getMasterId());
-			}
-			LinkRecordDAO.deleteByPerson(person.getId());
-			WorkItemDAO.deleteByPerson(person.getId());
-			PersonDAO.delete(person);
-			String traceId = TraceDAO.getTraceId(localId, "MR", originator, "AUTO");
-			if (traceId != null) {
-				TraceDAO.clearByTraceId(traceId);
-			}
-		}
-
-	}	
 }
