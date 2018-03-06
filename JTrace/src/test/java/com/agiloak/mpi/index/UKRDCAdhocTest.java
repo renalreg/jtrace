@@ -32,7 +32,7 @@ public class UKRDCAdhocTest {
 	}
 
 
-	@Test
+	//@Test
 	public void testNewWithPrimaryId() throws MpiException {
 
 		UKRDCIndexManager im = new UKRDCIndexManager();

@@ -3,8 +3,6 @@ package com.agiloak.mpi.index;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
-import org.junit.Test;
-
 import com.agiloak.mpi.MpiException;
 
 public class IndexManagerTest {
@@ -24,7 +22,7 @@ public class IndexManagerTest {
 	    
 	}
 	
-	@Test
+	//@Test
 	public void testIndexManagerCreateSet() throws MpiException {
 		Person person = new Person();
 		person.setLocalId("100001");

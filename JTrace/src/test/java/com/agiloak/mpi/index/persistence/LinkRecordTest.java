@@ -161,14 +161,14 @@ public class LinkRecordTest {
 		
 		Person person1 = new Person();
 		person1.setOriginator("TORG1").setLocalId("TST1000001").setLocalIdType("MR");
-		person1.setTitle("MR").setGivenName("Nick").setSurname("JONES");
+		person1.setTitle("MR").setGivenName("NICK").setSurname("JONES");
 		person1.setDateOfBirth(new Date());
 		person1.setGender("1");
 		PersonDAO.create(person1);
 
 		Person person2 = new Person();
 		person2.setOriginator("TORG1").setLocalId("TST1000002").setLocalIdType("MR");
-		person2.setTitle("MR").setGivenName("Nick").setSurname("JONES");
+		person2.setTitle("MR").setGivenName("NICK").setSurname("JONES");
 		person2.setDateOfBirth(new Date());
 		person2.setGender("1");
 		PersonDAO.create(person2);
