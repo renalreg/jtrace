@@ -188,6 +188,34 @@ public class UKRDCIndexManager {
 		}
 	}
 	
+	protected void standardise(Person person) throws MpiException {
+		
+		person.setGivenName(person.getGivenName().trim().toUpperCase());
+		person.setSurname(person.getSurname().trim().toUpperCase());
+		person.setGender(person.getGender().trim().toUpperCase());
+		
+		String postcode = person.getPostcode();
+		postcode = postcode.trim().toUpperCase().replaceAll(" ", "");
+		if ((postcode.length() >=5) && (postcode.length() <=7)) {
+			int spacePosition = postcode.length()-3;
+			person.setPostcode(postcode.substring(0, spacePosition)+" "+postcode.substring(spacePosition));
+		} else {
+			person.setPostcode(postcode);
+		}
+
+		// optional fields
+		if (person.getTitle() != null) {
+			person.setTitle(person.getTitle().trim().toUpperCase());
+		}
+		if (person.getOtherGivenNames()!=null) {
+			person.setOtherGivenNames(person.getOtherGivenNames().trim().toUpperCase());
+		}
+		if (person.getStreet()!=null) {
+			person.setStreet(person.getStreet().trim().toUpperCase());
+		}
+
+	}
+
 	public UKRDCIndexManagerResponse validate(Person person) {
 		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
 		try {
@@ -259,6 +287,8 @@ public class UKRDCIndexManager {
 		}
 		
 		validateInternal(person);
+		
+		standardise(person);
 		
 		Person storedPerson = PersonDAO.findByLocalId(person.getLocalIdType(), person.getLocalId(), person.getOriginator());
 		if (storedPerson != null) {
