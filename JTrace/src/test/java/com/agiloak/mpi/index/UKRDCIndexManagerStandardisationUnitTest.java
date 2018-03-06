@@ -1,10 +1,14 @@
 package com.agiloak.mpi.index;
 
+import java.util.Date;
+
 import org.junit.Test;
 
 import com.agiloak.mpi.MpiException;
 
-public class UKRDCIndexManagerStandardisationUnitTest {
+public class UKRDCIndexManagerStandardisationUnitTest extends UKRDCIndexManagerBaseTest {
+
+	private Date d1 = getDate("1962-08-31");
 	
 	@Test
 	public void testHappyDay1() throws MpiException {
@@ -90,5 +94,24 @@ public class UKRDCIndexManagerStandardisationUnitTest {
 		UKRDCIndexManager im = new UKRDCIndexManager();
 		im.standardise(p1);
 		assert(p1.getPostcode().equals("CH1166LB"));
+	}
+	
+	@Test
+	public void testMandatoryOnlyStandardise() throws MpiException {
+		Person p1 = new Person().setGivenName(" nicholas ").setGender(" m ").setSurname(" jones ");
+		UKRDCIndexManager im = new UKRDCIndexManager();
+		im.standardise(p1);
+		assert(p1.getGivenName().equals("NICHOLAS"));
+		assert(p1.getSurname().equals("JONES"));
+		assert(p1.getGender().equals("M"));
+	}
+
+	@Test
+	public void testMandatoryOnlyStore() throws MpiException {
+		Person p1 = new Person().setGivenName(" nicholas ").setGender(" m ").setSurname(" jones ");
+		p1.setDateOfBirth(d1).setLocalId("A").setLocalIdType("MRN").setOriginator("ORIG1");
+		UKRDCIndexManager im = new UKRDCIndexManager();
+		UKRDCIndexManagerResponse resp = im.store(p1);
+		assert(resp.getStatus()==UKRDCIndexManagerResponse.SUCCESS);
 	}
 }

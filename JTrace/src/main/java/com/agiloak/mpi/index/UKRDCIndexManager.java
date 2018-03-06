@@ -179,8 +179,8 @@ public class UKRDCIndexManager {
 			throw new MpiException("LocalId must be at least 1 character");
 		}
 		if (person.getLocalIdType()==null || person.getLocalIdType().length() < 1) {
-			logger.error("Local Id must be present");
-			throw new MpiException("LocalId must be present");
+			logger.error("Local Id Type must be present");
+			throw new MpiException("LocalId type must be present");
 		}
 		if (person.getOriginator()==null || person.getOriginator().length() < 1) {
 			logger.error("Originator must be present");
@@ -194,16 +194,17 @@ public class UKRDCIndexManager {
 		person.setSurname(person.getSurname().trim().toUpperCase());
 		person.setGender(person.getGender().trim().toUpperCase());
 		
-		String postcode = person.getPostcode();
-		postcode = postcode.trim().toUpperCase().replaceAll(" ", "");
-		if ((postcode.length() >=5) && (postcode.length() <=7)) {
-			int spacePosition = postcode.length()-3;
-			person.setPostcode(postcode.substring(0, spacePosition)+" "+postcode.substring(spacePosition));
-		} else {
-			person.setPostcode(postcode);
-		}
-
 		// optional fields
+		if (person.getPostcode()!=null) {
+			String postcode = person.getPostcode();
+			postcode = postcode.trim().toUpperCase().replaceAll(" ", "");
+			if ((postcode.length() >=5) && (postcode.length() <=7)) {
+				int spacePosition = postcode.length()-3;
+				person.setPostcode(postcode.substring(0, spacePosition)+" "+postcode.substring(spacePosition));
+			} else {
+				person.setPostcode(postcode);
+			}
+		}
 		if (person.getTitle() != null) {
 			person.setTitle(person.getTitle().trim().toUpperCase());
 		}
@@ -221,7 +222,7 @@ public class UKRDCIndexManager {
 		try {
 			validateInternal(person);
 			resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
-		} catch (MpiException e) {
+		} catch (Exception e) {
 			resp.setStatus(UKRDCIndexManagerResponse.FAIL);
 			resp.setMessage(e.getMessage());
 			resp.setStackTrace(ExceptionUtils.getStackTrace(e));
@@ -235,7 +236,7 @@ public class UKRDCIndexManager {
 			NationalIdentity natId = createOrUpdate(person);
 			resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
 			resp.setNationalIdentity(natId);
-		} catch (MpiException e) {
+		} catch (Exception e) {
 			resp.setStatus(UKRDCIndexManagerResponse.FAIL);
 			resp.setMessage(e.getMessage());
 			resp.setStackTrace(ExceptionUtils.getStackTrace(e));
@@ -250,7 +251,7 @@ public class UKRDCIndexManager {
 			NationalIdentity natId = new NationalIdentity(ukrdcId);
 			resp.setNationalIdentity(natId);
 			resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
-		} catch (MpiException e) {
+		} catch (Exception e) {
 			resp.setStatus(UKRDCIndexManagerResponse.FAIL);
 			resp.setMessage(e.getMessage());
 			resp.setStackTrace(ExceptionUtils.getStackTrace(e));
@@ -263,7 +264,7 @@ public class UKRDCIndexManager {
 		try {
 			linkInternal(personId, masterId, user, linkCode, linkDesc);
 			resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
-		} catch (MpiException e) {
+		} catch (Exception e) {
 			resp.setStatus(UKRDCIndexManagerResponse.FAIL);
 			resp.setMessage(e.getMessage());
 			resp.setStackTrace(ExceptionUtils.getStackTrace(e));
