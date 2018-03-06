@@ -61,7 +61,7 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 		String ukrdcId = "RR1000001";
 		
 		// T1-1 NationalId for P1. New Person, New Master and new link to the master
-		Person p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICHOLAS").setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(ukrdcId).setGender("1");
+		Person p1 = new Person().setDateOfBirth(d1).setSurname(" JONES").setGivenName("NICHOLAS ").setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(ukrdcId).setGender("1");
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId("NSYS100001").setLocalIdType("MR").setOriginator(orig);
 		NationalIdentity natId = store(p1);
@@ -80,7 +80,7 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 		assert(items.size()==0);
 
 		// T1-2 - New + NationalId + NationalId exists + Matches. New Person & Link to existing Master
-		Person p2 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICHOLAS").setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(ukrdcId).setGender("1");
+		Person p2 = new Person().setDateOfBirth(d1).setSurname("JONES ").setGivenName(" NICHOLAS").setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(ukrdcId).setGender("1");
 		p2.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p2.setLocalId("NSYS100002").setLocalIdType("MR").setOriginator(orig);
 		natId = store(p2);
@@ -149,7 +149,7 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 		assert(items.size()==0);
 
 		// T4-2 - New + NationalId + NationalId exists + Matches. New Person & Link to existing Master. Effective date is later than previous update so master is updated 
-		Person p2 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICHOLAS2").setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(ukrdcId).setGender("1");
+		Person p2 = new Person().setDateOfBirth(d1).setSurname("jones").setGivenName("nicholas2").setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(ukrdcId).setGender("1");
 		p2.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p2.setLocalId("NSYS400002").setLocalIdType("MR").setOriginator(orig);
 		p2.setEffectiveDate(getDate("2017-08-02"));
@@ -171,7 +171,7 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 		assert(items.size()==0);
 		
 		// T4-3 - New + NationalId + NationalId exists + Matches. New Person & Link to existing Master. Effective date is earlier than previous update so no master is updated 
-		Person p3 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICHOLAS3").setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(ukrdcId).setGender("1");
+		Person p3 = new Person().setDateOfBirth(d1).setSurname(" JonES ").setGivenName(" NicHolAs3 ").setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(ukrdcId).setGender("1");
 		p3.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p3.setLocalId("NSYS400003").setLocalIdType("MR").setOriginator(orig);
 		p3.setEffectiveDate(getDate("2017-08-01"));

@@ -234,15 +234,15 @@ public class PersonTest {
 
 		Person person = new Person();
 		person.setOriginator("TST").setLocalId("TST1000001").setLocalIdType("MR");
-		person.setTitle("MR").setGivenName("Nick").setOtherGivenNames("Ioan").setSurname("JONES");
+		person.setTitle("MR").setGivenName("NICK").setOtherGivenNames("IOAN").setSurname("JONES");
 		person.setDateOfBirth(getDate("1962-08-31"));
 		person.setDateOfDeath(getDate("2062-08-31"));
 		person.setGender("1");
-		person.setPostcode("CH1 6LB").setStreet("Oakdene, Townfield Lane");
+		person.setPostcode("CH1 6LB").setStreet("OAKDENE, TOWNFIELD LANE");
 		PersonDAO.create(person);
 		assert(person != null);
 
-		person.setGivenName("Nicholas");
+		person.setGivenName("NICHOLAS");
 		person.setPostcode("IA52245");
 		PersonDAO.update(person);
 		assert(person != null);
