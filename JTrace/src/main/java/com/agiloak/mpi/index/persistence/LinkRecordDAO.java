@@ -329,7 +329,7 @@ public class LinkRecordDAO {
 	public static int countByMasterAndOriginatorExcludingPid(int masterId, String originator, int personId) throws MpiException {
 
 		String findSQL = "select count(*) as cnt from jtrace.person p, jtrace.linkrecord lr where "+
-				         "p.id = lr.personid and lr.masterid = ? and p.originator = ? and p.skipduplicatecheck = false and p.id is not ? ";
+				         "p.id = lr.personid and lr.masterid = ? and p.originator = ? and p.skipduplicatecheck = false and p.id <> ? ";
 		
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;

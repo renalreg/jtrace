@@ -201,6 +201,12 @@ public class UKRDCIndexManager {
 	}
 	
 	private void validateNationalIdWithEMPI(Person person, String id, String type) throws MpiException {
+
+		// This check needs to ignore the same patient record when detecting duplicates, so pick up the id from the MPI (where it exists)
+		Person storedPerson = PersonDAO.findByLocalId(person.getLocalIdType(), person.getLocalId(), person.getOriginator());
+		if (storedPerson != null) {
+			person.setId(storedPerson.getId());
+		}
 		
 		MasterRecord master = MasterRecordDAO.findByNationalId(id, type);
 		if (master != null) {

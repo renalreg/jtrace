@@ -18,7 +18,32 @@ public class UKRDCIndexManagerValidationUnitTest3 {
 	
 	public static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
 	private Date d1 = getDate("1962-08-31");
+	
+	@Test
+	public void testSameRecordUpdate() throws MpiException, SQLException {
+		String originator = "IMVUT31";
 
+		// setup a person
+		Person p1 = new Person().setDateOfBirth(d1).setGivenName("NICHOLAS").setGender("1");
+		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
+		p1.setLocalId("00000001").setLocalIdType("MR").setOriginator(originator);
+		p1.addNationalId(new NationalIdentity("NHS", "1000000001"));
+		p1.setSurname("JONES").setGivenName("NICK").setGender("M").setDateOfBirth(d1);
+		UKRDCIndexManager im = new UKRDCIndexManager();
+		UKRDCIndexManagerResponse resp = im.store(p1);
+		assert(resp.getStatus()==UKRDCIndexManagerResponse.SUCCESS);
+
+		// same record update
+		Person p2 = new Person().setDateOfBirth(d1).setGivenName("NICHOLAS").setGender("1");
+		p2.setPostcode("CH1 6LB").setStreet("Townfield Lane");
+		p2.setLocalId("00000001").setLocalIdType("MR").setOriginator(originator);
+		p2.addNationalId(new NationalIdentity("NHS", "1000000001"));
+		p2.setSurname("JONES").setGivenName("NICK").setGender("M").setDateOfBirth(d1);
+		UKRDCIndexManagerResponse resp2 = im.validate(p2);
+		assert(resp2.getStatus()==UKRDCIndexManagerResponse.SUCCESS);
+		
+	}
+	
 	@Test
 	public void testDuplicateNatIdFromOrg() throws MpiException, SQLException {
 		String originator = "IMVUT31";
