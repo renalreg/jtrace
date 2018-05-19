@@ -188,6 +188,40 @@ public class UKRDCIndexManager {
 		}
 	}
 	
+	private void validateWithEMPI(Person person) throws MpiException {
+
+		if (person.isSkipDuplicateCheck()) return;
+
+		for (NationalIdentity natId : person.getNationalIds()) {
+			
+			// For each National Identity - see if already used for this org.
+			validateNationalIdWithEMPI(person, natId.getId(), natId.getType());
+		}			
+
+	}
+	
+	private void validateNationalIdWithEMPI(Person person, String id, String type) throws MpiException {
+
+		// This check needs to ignore the same patient record when detecting duplicates, so pick up the id from the MPI (where it exists)
+		Person storedPerson = PersonDAO.findByLocalId(person.getLocalIdType(), person.getLocalId(), person.getOriginator());
+		if (storedPerson != null) {
+			person.setId(storedPerson.getId());
+		}
+		
+		MasterRecord master = MasterRecordDAO.findByNationalId(id, type);
+		if (master != null) {
+			
+			// Check for duplicates for this Originator and Master
+			int count = LinkRecordDAO.countByMasterAndOriginatorExcludingPid(master.getId(), person.getOriginator(), person.getId());
+			if (count > 0) {
+				String errorMsg = "Another record from Unit:"+person.getOriginator()+" already linked to master:"+master.getId(); 
+				logger.error(errorMsg);
+				throw new MpiException(errorMsg);
+			}
+		}
+
+	}
+	
 	protected void standardise(Person person) throws MpiException {
 		
 		person.setGivenName(person.getGivenName().trim().toUpperCase());
@@ -221,6 +255,7 @@ public class UKRDCIndexManager {
 		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
 		try {
 			validateInternal(person);
+			validateWithEMPI(person);
 			resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
 		} catch (Exception e) {
 			resp.setStatus(UKRDCIndexManagerResponse.FAIL);
@@ -664,7 +699,7 @@ public class UKRDCIndexManager {
 			else {
 				int count = LinkRecordDAO.countByMasterAndOriginator(master.getId(), person.getOriginator());
 				if (count > 1) {
-					String warnMsg = "More than 1 record from Originator:"+person.getOriginator()+" linked to master:"+master.getId(); 
+					String warnMsg = "More than 1 record from Unit:"+person.getOriginator()+" linked to master:"+master.getId(); 
 					logger.debug(warnMsg);
 					WorkItemManager wim = new WorkItemManager();
 					wim.create(WorkItem.TYPE_MULTIPLE_NATID_LINKS_FROM_ORIGINATOR, person.getId(), master.getId(), warnMsg);
