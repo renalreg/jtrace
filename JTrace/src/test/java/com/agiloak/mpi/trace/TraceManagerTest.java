@@ -4,9 +4,11 @@ import java.lang.reflect.Type;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.agiloak.mpi.MpiException;
+import com.agiloak.mpi.SimpleConnectionManager;
 import com.agiloak.mpi.index.Person;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -14,6 +16,10 @@ import com.google.gson.reflect.TypeToken;
 public class TraceManagerTest {
 
 	public static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+	@BeforeClass
+	public static void setup()  throws MpiException {
+		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE");
+	}
 	
 	private static java.util.Date getDate(String sDate){
 		

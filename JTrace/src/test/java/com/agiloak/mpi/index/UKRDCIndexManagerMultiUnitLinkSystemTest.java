@@ -9,6 +9,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.agiloak.mpi.MpiException;
+import com.agiloak.mpi.SimpleConnectionManager;
 import com.agiloak.mpi.index.persistence.LinkRecordDAO;
 import com.agiloak.mpi.index.persistence.MasterRecordDAO;
 import com.agiloak.mpi.index.persistence.PersonDAO;
@@ -29,6 +30,7 @@ public class UKRDCIndexManagerMultiUnitLinkSystemTest {
 	
 	@BeforeClass
 	public static void setup()  throws MpiException {
+		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE");
 
 		clear("MUST100001", "MUST1");
 		clear("MUST200001", "MUST2");

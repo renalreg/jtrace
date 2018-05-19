@@ -31,7 +31,9 @@ public class LinkRecordDAO {
 	private final static Logger logger = LoggerFactory.getLogger(LinkRecordDAO.class);
 
 	public static void create(LinkRecord link) throws MpiException {
-		
+
+		logger.debug("Starting");
+
 		String insertSQL = "Insert into jtrace.linkrecord "+
 				"(masterid, personid, lastupdated, linktype, linkcode, linkdesc, updatedby)"+
 				" values (?,?,?,?,?,?,?)";
@@ -80,13 +82,23 @@ public class LinkRecordDAO {
 					throw new MpiException("LinkRecord insert failed");
 				}
 			}
+			if(conn!= null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing Connection",e);
+					throw new MpiException("LinkRecord insert failed. "+e.getMessage());
+				}
+			}
 
 		}
 
 	}
 	
 	public static void delete(LinkRecord link) throws MpiException {
-		
+
+		logger.debug("Starting");
+
 		String deleteSQL = "delete from jtrace.linkrecord where masterid = ? and personid = ?";
 		
 		PreparedStatement preparedStatement = null;
@@ -117,6 +129,14 @@ public class LinkRecordDAO {
 					throw new MpiException("LinkRecord delete failed");
 				}
 			}
+			if(conn!= null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing Connection",e);
+					throw new MpiException("LinkRecord delete failed. "+e.getMessage());
+				}
+			}
 
 		}
 
@@ -124,6 +144,8 @@ public class LinkRecordDAO {
 	
 	public static void deleteByPerson(int personId) throws MpiException {
 		
+		logger.debug("Starting");
+
 		String deleteSQL = "delete from jtrace.linkrecord where personid = ?";
 		
 		PreparedStatement preparedStatement = null;
@@ -153,6 +175,14 @@ public class LinkRecordDAO {
 					throw new MpiException("LinkRecord delete failed");
 				}
 			}
+			if(conn!= null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing Connection",e);
+					throw new MpiException("LinkRecord delete failed. "+e.getMessage());
+				}
+			}
 
 		}
 
@@ -165,6 +195,8 @@ public class LinkRecordDAO {
 	 * @throws MpiException
 	 */
 	public static LinkRecord find(int masterId, int personId) throws MpiException {
+
+		logger.debug("Starting");
 
 		String findSQL = "select * from jtrace.linkrecord where masterid = ? and personid = ? ";
 		
@@ -210,6 +242,14 @@ public class LinkRecordDAO {
 					throw new MpiException("Failure closing prepared statement. "+e.getMessage());
 				}
 			}
+			if(conn!= null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing Connection",e);
+					throw new MpiException("LinkRecord find failed. "+e.getMessage());
+				}
+			}
 
 		}
 		
@@ -218,6 +258,8 @@ public class LinkRecordDAO {
 	}
 	
 	public static LinkRecord findByPersonAndType(int personId, String type) throws MpiException {
+
+		logger.debug("Starting");
 
 		String findSQL = "select * from jtrace.linkrecord lr, jtrace.masterrecord mr where "+
 				         "lr.masterid = mr.id and lr.personid = ? and mr.nationalidtype = ? ";
@@ -264,6 +306,14 @@ public class LinkRecordDAO {
 					throw new MpiException("Failure closing prepared statement. "+e.getMessage());
 				}
 			}
+			if(conn!= null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing Connection",e);
+					throw new MpiException("LinkRecord find failed. "+e.getMessage());
+				}
+			}
 
 		}
 		
@@ -272,6 +322,8 @@ public class LinkRecordDAO {
 	}		
 
 	public static int countByMasterAndOriginator(int masterId, String originator) throws MpiException {
+
+		logger.debug("Starting");
 
 		String findSQL = "select count(*) as cnt from jtrace.person p, jtrace.linkrecord lr where "+
 				         "p.id = lr.personid and lr.masterid = ? and p.originator = ? and p.skipduplicatecheck = false ";
@@ -319,6 +371,14 @@ public class LinkRecordDAO {
 					throw new MpiException("Failure closing prepared statement countByMasterAndOriginator. "+e.getMessage());
 				}
 			}
+			if(conn!= null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing Connection",e);
+					throw new MpiException("LinkRecord count failed. "+e.getMessage());
+				}
+			}
 
 		}
 		
@@ -327,6 +387,8 @@ public class LinkRecordDAO {
 	}		
 
 	public static int countByMasterAndOriginatorExcludingPid(int masterId, String originator, int personId) throws MpiException {
+
+		logger.debug("Starting");
 
 		String findSQL = "select count(*) as cnt from jtrace.person p, jtrace.linkrecord lr where "+
 				         "p.id = lr.personid and lr.masterid = ? and p.originator = ? and p.skipduplicatecheck = false and p.id <> ? ";
@@ -375,6 +437,14 @@ public class LinkRecordDAO {
 					throw new MpiException("Failure closing prepared statement countByMasterAndOriginatorExcludingPid. "+e.getMessage());
 				}
 			}
+			if(conn!= null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing Connection",e);
+					throw new MpiException("LinkRecord count failed. "+e.getMessage());
+				}
+			}
 
 		}
 		
@@ -383,6 +453,8 @@ public class LinkRecordDAO {
 	}		
 
 	public static List<LinkRecord> findByPerson(int personId) throws MpiException {
+
+		logger.debug("Starting");
 
 		String findSQL = "select * from jtrace.linkrecord where personid = ? ";
 		
@@ -428,6 +500,15 @@ public class LinkRecordDAO {
 					throw new MpiException("Failure closing prepared statement. "+e.getMessage());
 				}
 			}
+			
+			if(conn!= null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing Connection",e);
+					throw new MpiException("LinkRecord find failed. "+e.getMessage());
+				}
+			}
 
 		}
 		
@@ -436,6 +517,8 @@ public class LinkRecordDAO {
 	}		
 	
 	public static List<LinkRecord> findByMaster(int masterId) throws MpiException {
+
+		logger.debug("Starting");
 
 		String findSQL = "select * from jtrace.linkrecord where masterid = ? ";
 		
@@ -481,6 +564,14 @@ public class LinkRecordDAO {
 					throw new MpiException("Failure closing prepared statement. "+e.getMessage());
 				}
 			}
+			if(conn!= null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing Connection",e);
+					throw new MpiException("LinkRecord find failed. "+e.getMessage());
+				}
+			}
 
 		}
 		
@@ -489,6 +580,8 @@ public class LinkRecordDAO {
 	}		
 	
 	private static LinkRecord buildLinkRecord(ResultSet rs) throws MpiException {
+
+		logger.debug("Starting");
 
 		LinkRecord linkRecord = null;
 		try {

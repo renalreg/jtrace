@@ -4,6 +4,13 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
+import javax.sql.DataSource;
+
+import org.apache.commons.dbcp.ConnectionFactory;
+import org.apache.commons.dbcp.DriverManagerConnectionFactory;
+import org.apache.commons.dbcp.PoolableConnectionFactory;
+import org.apache.commons.dbcp.PoolingDataSource;
+import org.apache.commons.pool.impl.GenericObjectPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,22 +27,28 @@ public class SimpleConnectionManager {
 	private static String DB_PASSWORD = "postgres";
 	private static String DB_SERVER = "localhost:5432";
 	private static String DB_NAME = "JTRACE";
-	private static boolean defaultConnection = true;
-
-	private static Connection dbConn;
+	private static GenericObjectPool gPool = null;
+	private static DataSource dataSource = null;
+	
+	private final static int defaultPoolSize = 10;
 	
 	// For test only - default the db connection settings
-	public static void reset() {
+	public static void reset() throws MpiException {
 		logger.info("JTRACE database configuration reset to default:");
 		DB_USER = "postgres";
 		DB_PASSWORD = "postgres";
 		DB_SERVER = "localhost:5432";
 		DB_NAME = "JTRACE";
-		defaultConnection = true;
-		dbConn = null; // force reconnect		
+		try {
+			dataSource = setUpPool(defaultPoolSize);
+		} catch (Exception e) {
+			logger.error("Failed to setup connection pool");
+			throw new MpiException("CONN POOL ERROR:"+e.getMessage());
+		}
 	}
 	
 	/**
+	 * Legacy support for earlier version - default poolsize to defaultPoolSize
 	 * Allow the connection to be configured externally. Hardcoded values remain as defaults (for now).
 	 * @param user
 	 * @param password
@@ -44,6 +57,19 @@ public class SimpleConnectionManager {
 	 * @param dbName
 	 */
 	public static void configure(String user, String password, String server, String port, String dbName) throws MpiException {
+		logger.warn("Using default pool size:"+defaultPoolSize);
+
+		configure(user, password, server, port, dbName, defaultPoolSize);
+	}
+	/**
+	 * Allow the connection to be configured externally. Hardcoded values remain as defaults (for now).
+	 * @param user
+	 * @param password
+	 * @param server
+	 * @param port
+	 * @param dbName
+	 */
+	public static void configure(String user, String password, String server, String port, String dbName, int poolSize) throws MpiException {
 		
 		if (user==null || password == null || server == null || port == null || dbName == null) {
 			logger.error("Invalid database configuration. 1 or more null parameters");
@@ -59,11 +85,28 @@ public class SimpleConnectionManager {
 		DB_PASSWORD = password;
 		DB_SERVER = server + ":" + port;
 		DB_NAME = dbName;
-		defaultConnection = false;
-		dbConn = null; // force reconnect
-		getDBConnection();
+		try {
+			dataSource = setUpPool(poolSize);
+		} catch (Exception e) {
+			logger.error("Failed to setup connection pool");
+			throw new MpiException("CONN POOL ERROR:"+e.getMessage());
+		}
 	}
-	
+	public static DataSource setUpPool(int poolSize) throws Exception{
+		Class.forName(DB_DRIVER);
+        // Creates an Instance of GenericObjectPool That Holds Our Pool of Connections Object!
+        gPool = new GenericObjectPool();
+        gPool.setMaxActive(poolSize);
+
+        // Creates a ConnectionFactory Object Which Will Be Use by the Pool to Create the Connection Object!
+        String dbURL = DB_CONNECTION + DB_SERVER + "/" +DB_NAME;
+        ConnectionFactory cf = new DriverManagerConnectionFactory(dbURL, DB_USER, DB_PASSWORD);
+
+		// Creates a PoolableConnectionFactory That Will Wraps the Connection Object Created by the ConnectionFactory to Add Object Pooling Functionality!
+        PoolableConnectionFactory pcf = new PoolableConnectionFactory(cf, gPool, null, null, false, true);
+        return new PoolingDataSource(gPool);
+
+	}
 	/**
 	 * Get the Database Connection using configured connection properties 
 	 *  
@@ -71,7 +114,21 @@ public class SimpleConnectionManager {
 	 *  
 	 * @return  Connection  A Connection to the Database
 	 */
-	public static Connection getDBConnection() {
+	public static Connection getDBConnection() throws MpiException {
+		Connection conn = null;
+		try {
+			conn = dataSource.getConnection();
+		} catch (SQLException e) {
+			logger.error("Failed to get connection from pool");
+			throw new MpiException("CONN POOL ERROR:"+e.getMessage());
+		}
+		logger.debug("Returning Connection:"+((Object)conn).hashCode());
+		return conn;
+	}
+
+/*	
+	public static Connection getDBConnectionOld() {
+
 		if (dbConn!=null) {
 			try {
 				if (dbConn.isValid(1)){
@@ -118,4 +175,5 @@ public class SimpleConnectionManager {
 		return dbConn;
 	
 	}
+*/
 }

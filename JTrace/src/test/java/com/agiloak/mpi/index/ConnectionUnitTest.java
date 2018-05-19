@@ -21,32 +21,40 @@ public class ConnectionUnitTest {
 	@Test
 	public void testDefaultConnection() throws MpiException, SQLException {
 		SimpleConnectionManager.reset();
-		Connection conn = SimpleConnectionManager.getDBConnection();
-		assert(conn!=null);
-		assert(conn.isValid(1));
+		Connection conn1 = SimpleConnectionManager.getDBConnection();
+		assert(conn1!=null);
+		assert(conn1.isValid(1));
+		
 		Connection conn2 = SimpleConnectionManager.getDBConnection();
-		assert(conn==conn2);
-		assert(conn!=null);
-		assert(conn.isValid(1));
+		assert(conn2!=conn1);
+		assert(conn2!=null);
+		assert(conn2.isValid(1));
 	}
 	
 	@Test
 	public void testConfiguredConnectionBadDatabase() throws MpiException, SQLException {
-		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE2");
-		Connection conn = SimpleConnectionManager.getDBConnection();
-		assert(conn==null);
+		try {
+			SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE2");
+			Connection conn = SimpleConnectionManager.getDBConnection();
+			assert(false);
+		} catch (MpiException ex) {
+			assert(true);
+		}
 	}
 
 	@Test
 	public void testConfiguredConnection() throws MpiException, SQLException {
 		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE");
-		Connection conn = SimpleConnectionManager.getDBConnection();
-		assert(conn!=null);
-		assert(conn.isValid(1));
+		
+		Connection conn1 = SimpleConnectionManager.getDBConnection();
+		assert(conn1!=null);
+		assert(conn1.isValid(1));
+		
 		Connection conn2 = SimpleConnectionManager.getDBConnection();
-		assert(conn==conn2);
-		assert(conn!=null);
-		assert(conn.isValid(1));
+		assert(conn2!=conn1);
+		assert(conn2!=null);
+		assert(conn2.isValid(1));
+		
 	}
 	
 	@Test

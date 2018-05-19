@@ -8,6 +8,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import com.agiloak.mpi.MpiException;
+import com.agiloak.mpi.SimpleConnectionManager;
 import com.agiloak.mpi.index.persistence.LinkRecordDAO;
 import com.agiloak.mpi.index.persistence.MasterRecordDAO;
 import com.agiloak.mpi.index.persistence.PersonDAO;
@@ -27,6 +28,7 @@ public class UKRDCIndexManagerSearchSystemTest extends UKRDCIndexManagerBaseTest
 	@BeforeClass
 	public static void setup()  throws MpiException {
 
+		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE");
 		clear( "SRCT10001", "SRCT1");
 		MasterRecordDAO.deleteByNationalId("SRCT1000R1",NationalIdentity.UKRDC_TYPE);
 		clear( "SRCT40001", "SRCT4");

@@ -6,6 +6,7 @@ import java.util.List;
 import org.junit.BeforeClass;
 
 import com.agiloak.mpi.MpiException;
+import com.agiloak.mpi.SimpleConnectionManager;
 import com.agiloak.mpi.index.persistence.LinkRecordDAO;
 import com.agiloak.mpi.index.persistence.PersonDAO;
 import com.agiloak.mpi.workitem.WorkItem;
@@ -17,6 +18,7 @@ public class UKRDCIndexManagerTraceSystemTest extends UKRDCIndexManagerBaseTest 
 
 	@BeforeClass
 	public static void setup()  throws MpiException {
+		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE");
 		
 		clear( "TUP1000001", "TRC");
 		clear( "TUP1000002", "TRC");

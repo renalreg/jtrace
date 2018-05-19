@@ -22,6 +22,7 @@ public class AuditDAO {
 
 	public static void create(Audit audit) throws MpiException {
 
+		logger.debug("Starting");
 		
 		String insertSQL = "Insert into jtrace.audit "+
 				"(personid, masterid, type, description, lastupdated, updatedby)"+ 
@@ -70,11 +71,21 @@ public class AuditDAO {
 					throw new MpiException("Audit insert failed");
 				}
 			}
+			if(conn!= null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing Connection",e);
+					throw new MpiException("Audit insert failed. "+e.getMessage());
+				}
+			}
 
 		}
 
 	}
 	public static void deleteByPerson(int personId) throws MpiException {
+		
+		logger.debug("Starting");
 		
 		String deleteSQL = "delete from jtrace.audit where personid = ?";
 		
@@ -105,12 +116,22 @@ public class AuditDAO {
 					throw new MpiException("Audit delete failed");
 				}
 			}
+			if(conn!= null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing Connection",e);
+					throw new MpiException("Audit delete failed. "+e.getMessage());
+				}
+			}
 
 		}
 
 	}	
 	
 	public static List<Audit> findByPerson(int personId) throws MpiException {
+
+		logger.debug("Starting");
 
 		String findSQL = "select * from jtrace.audit where personid = ? ";
 		
@@ -162,6 +183,14 @@ public class AuditDAO {
 				} catch (SQLException e) {
 					logger.error("Failure closing prepared statement.",e);
 					throw new MpiException("Failure closing prepared statement. "+e.getMessage());
+				}
+			}
+			if(conn!= null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing Connection",e);
+					throw new MpiException("Audit read failed. "+e.getMessage());
 				}
 			}
 

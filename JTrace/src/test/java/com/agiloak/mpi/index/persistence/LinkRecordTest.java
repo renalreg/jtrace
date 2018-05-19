@@ -9,6 +9,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import com.agiloak.mpi.MpiException;
+import com.agiloak.mpi.SimpleConnectionManager;
 import com.agiloak.mpi.index.LinkRecord;
 import com.agiloak.mpi.index.MasterRecord;
 import com.agiloak.mpi.index.Person;
@@ -22,6 +23,7 @@ public class LinkRecordTest {
 
 	@Before
 	public void setup() throws MpiException {
+		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE");
 		LinkRecordDAO.deleteByPerson(1);
 		LinkRecordDAO.deleteByPerson(2);
 		LinkRecordDAO.deleteByPerson(3);

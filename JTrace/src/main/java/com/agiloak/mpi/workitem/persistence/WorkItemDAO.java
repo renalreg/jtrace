@@ -22,6 +22,7 @@ public class WorkItemDAO {
 
 	public static void create(WorkItem workItem) throws MpiException {
 
+		logger.debug("Starting");
 		
 		String insertSQL = "Insert into jtrace.workitem "+
 				"(personid, masterid, type, description, status, lastupdated, updatedby, updatedesc)"+ 
@@ -72,14 +73,22 @@ public class WorkItemDAO {
 					throw new MpiException("WorkItem insert failed");
 				}
 			}
-
+			if(conn!= null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing Connection",e);
+					throw new MpiException("WorkItem insert failed. "+e.getMessage());
+				}
+			}
 		}
 
 	}
 	
 	public static void update(WorkItem workItem) throws MpiException {
 
-		
+		logger.debug("Starting");
+
 		String updateSQL = "update jtrace.workitem "
 				+"set status =?, lastupdated=?, updatedby=?, updatedesc=? "
 				+"where personid=? and masterid=?"; 
@@ -116,13 +125,23 @@ public class WorkItemDAO {
 					throw new MpiException("WorkItem insert failed");
 				}
 			}
+			if(conn!= null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing Connection",e);
+					throw new MpiException("WorkItem insert failed. "+e.getMessage());
+				}
+			}
 
 		}
 
 	}
 	
 	public static void deleteByPerson(int personId) throws MpiException {
-		
+
+		logger.debug("Starting");
+
 		String deleteSQL = "delete from jtrace.workitem where personid = ?";
 		
 		PreparedStatement preparedStatement = null;
@@ -152,12 +171,22 @@ public class WorkItemDAO {
 					throw new MpiException("WorkItem delete failed");
 				}
 			}
+			if(conn!= null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing Connection",e);
+					throw new MpiException("WorkItem delete failed. "+e.getMessage());
+				}
+			}
 
 		}
 
 	}	
 	
 	public static List<WorkItem> findByPerson(int personId) throws MpiException {
+
+		logger.debug("Starting");
 
 		String findSQL = "select * from jtrace.workitem where personid = ? ";
 		
@@ -213,6 +242,14 @@ public class WorkItemDAO {
 					throw new MpiException("Failure closing prepared statement. "+e.getMessage());
 				}
 			}
+			if(conn!= null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing Connection",e);
+					throw new MpiException("WorkItem read failed. "+e.getMessage());
+				}
+			}
 
 		}
 		
@@ -221,6 +258,8 @@ public class WorkItemDAO {
 	}	
 	public static WorkItem findByPersonAndMaster(int personId, int masterId) throws MpiException {
 
+		logger.debug("Starting");
+		
 		String findSQL = "select * from jtrace.workitem where personid = ? and masterid = ?";
 		
 		PreparedStatement preparedStatement = null;
@@ -272,6 +311,14 @@ public class WorkItemDAO {
 				} catch (SQLException e) {
 					logger.error("Failure closing prepared statement.",e);
 					throw new MpiException("Failure closing prepared statement. "+e.getMessage());
+				}
+			}
+			if(conn!= null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing Connection",e);
+					throw new MpiException("WorkItem read failed. "+e.getMessage());
 				}
 			}
 

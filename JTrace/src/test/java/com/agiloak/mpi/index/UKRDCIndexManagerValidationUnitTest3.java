@@ -5,11 +5,13 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import com.agiloak.mpi.MpiException;
+import com.agiloak.mpi.SimpleConnectionManager;
 
 public class UKRDCIndexManagerValidationUnitTest3 {
 	
@@ -18,6 +20,11 @@ public class UKRDCIndexManagerValidationUnitTest3 {
 	
 	public static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
 	private Date d1 = getDate("1962-08-31");
+
+	@BeforeClass
+	public static void setup()  throws MpiException {
+		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE");
+	}
 	
 	@Test
 	public void testSameRecordUpdate() throws MpiException, SQLException {

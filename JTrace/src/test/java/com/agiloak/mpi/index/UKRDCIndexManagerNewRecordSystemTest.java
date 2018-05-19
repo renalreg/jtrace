@@ -5,8 +5,11 @@ import java.util.List;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.agiloak.mpi.MpiException;
+import com.agiloak.mpi.SimpleConnectionManager;
 import com.agiloak.mpi.audit.Audit;
 import com.agiloak.mpi.audit.persistence.AuditDAO;
 import com.agiloak.mpi.index.persistence.LinkRecordDAO;
@@ -17,6 +20,8 @@ import com.agiloak.mpi.workitem.persistence.WorkItemDAO;
 
 public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseTest {
 	
+	private final static Logger logger = LoggerFactory.getLogger(UKRDCIndexManagerNewRecordSystemTest.class);
+
 	private Date d1 = getDate("1962-08-31");
 	private Date d2 = getDate("1962-08-30");
 	private Date d3 = getDate("1961-08-30");
@@ -24,6 +29,8 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 
 	@BeforeClass
 	public static void setup()  throws MpiException {
+		logger.debug("***************START OF SETUP****************");
+		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE");
 
 		clear("NSYS100001", "NSYS1");
 		clear("NSYS100002", "NSYS1");
@@ -52,10 +59,12 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 		clear("NSYS700002", "NSYS7");
 		clear("NHS0700001", "NSYS7");
 		clear("NHS0700002", "NSYS7");
+		logger.debug("***************END OF SETUP****************");
 	}
 
 	@Test
 	public void testNewWithPrimaryId() throws MpiException {
+		logger.debug("***************START TEST****************");
 
 		String orig = "NSYS1";
 		String ukrdcId = "RR1000001";
@@ -123,6 +132,8 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 
 	@Test
 	public void testNewWithPrimaryIdEffDate() throws MpiException {
+
+		logger.debug("***************START TEST****************");
 
 		String orig = "NSYS4";
 		String ukrdcId = "RR4000001";
@@ -196,6 +207,8 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 
 	@Test
 	public void testNewWithPrimaryIdEffDate2() throws MpiException {
+
+		logger.debug("***************START TEST****************");
 
 		String orig = "NSYS5";
 		String ukrdcId = "RR5000001";
@@ -273,6 +286,8 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 	@Test
 	public void testNewWithNoPrimaryId1() throws MpiException {
 
+		logger.debug("***************START TEST****************");
+
 		String ukrdcId = "RR2000001";
 		String orig = "NSYS2A";
 		String orig2 = "NSYS2B";
@@ -347,6 +362,8 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 
 	@Test
 	public void testNewWithNoPrimaryId2() throws MpiException {
+
+		logger.debug("***************START TEST****************");
 
 		String ukrdcId = "RR3000001";
 		String orig = "NSYS3A";
@@ -427,6 +444,8 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 	@Test
 	public void testNewChangeMRN() throws MpiException {
 
+		logger.debug("***************START TEST****************");
+
 		String ukrdcId = "RR6000001";
 		String orig = "NSYS6";
 		
@@ -476,6 +495,8 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 
 	@Test
 	public void testNewSetSkip() throws MpiException {
+
+		logger.debug("***************START TEST****************");
 
 		String ukrdcId = "RR7000001";
 		String orig = "NSYS7";
@@ -549,6 +570,8 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 	
 	@Test
 	public void testNewLongLocalId() throws MpiException {
+
+		logger.debug("***************START TEST****************");
 
 		String orig = "NSYS8";
 		
