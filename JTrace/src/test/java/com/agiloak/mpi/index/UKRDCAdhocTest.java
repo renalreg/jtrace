@@ -6,10 +6,10 @@ import java.util.Date;
 
 import org.junit.BeforeClass;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import com.agiloak.mpi.MpiException;
+import com.agiloak.mpi.SimpleConnectionManager;
 import com.agiloak.mpi.index.persistence.LinkRecordDAO;
 import com.agiloak.mpi.index.persistence.PersonDAO;
 import com.agiloak.mpi.trace.persistence.TraceDAO;
@@ -26,9 +26,8 @@ public class UKRDCAdhocTest {
 	
 	@BeforeClass
 	public static void setup()  throws MpiException {
-
+		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE");
 		clear( "LNKT10001", "LNKT1");
-
 	}
 
 

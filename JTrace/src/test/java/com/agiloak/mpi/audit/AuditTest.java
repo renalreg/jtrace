@@ -8,6 +8,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import com.agiloak.mpi.MpiException;
+import com.agiloak.mpi.SimpleConnectionManager;
 import com.agiloak.mpi.audit.persistence.AuditDAO;
 
 public class AuditTest {
@@ -17,6 +18,7 @@ public class AuditTest {
 	
 	@BeforeClass
 	public static void setup()  throws MpiException {
+		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE");
 		AuditDAO.deleteByPerson(1);
 		AuditDAO.deleteByPerson(2);
 		AuditDAO.deleteByPerson(3);

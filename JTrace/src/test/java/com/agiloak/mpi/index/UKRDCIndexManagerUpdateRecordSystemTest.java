@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.agiloak.mpi.MpiException;
+import com.agiloak.mpi.SimpleConnectionManager;
 import com.agiloak.mpi.index.persistence.LinkRecordDAO;
 import com.agiloak.mpi.index.persistence.MasterRecordDAO;
 import com.agiloak.mpi.index.persistence.PersonDAO;
@@ -26,6 +27,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest extends UKRDCIndexManagerBa
 	@BeforeClass
 	public static void setup()  throws MpiException {
 		
+		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE");
 		//  Revised
 		clear( "UPDT10001", "UPDT1");
 		clear( "UPDT20001", "UPDT2");

@@ -9,6 +9,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import com.agiloak.mpi.MpiException;
+import com.agiloak.mpi.SimpleConnectionManager;
 import com.agiloak.mpi.workitem.persistence.WorkItemDAO;
 
 public class WorkItemTest {
@@ -18,6 +19,7 @@ public class WorkItemTest {
 	
 	@BeforeClass
 	public static void setup()  throws MpiException {
+		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE");
 		// delete test data
 		WorkItemDAO.deleteByPerson(1);
 		WorkItemDAO.deleteByPerson(2);

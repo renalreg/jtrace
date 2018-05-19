@@ -4,9 +4,11 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.agiloak.mpi.MpiException;
+import com.agiloak.mpi.SimpleConnectionManager;
 
 public class MatchRulesTest {
 	
@@ -17,6 +19,11 @@ public class MatchRulesTest {
 	private Date d5 = getDate("1961-07-30");
 	
 	public static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+
+	@BeforeClass
+	public static void setup()  throws MpiException {
+		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE");
+	}
 	
 	@Test
 	public void testGetSafeSubstring() throws MpiException {

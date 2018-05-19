@@ -22,6 +22,8 @@ public class PersonDAO {
 
 	public static Person findByLocalId(String localIdType, String localId, String originator) throws MpiException {
 
+		logger.debug("Starting");
+
 		String findSQL = "select * from jtrace.person where localidtype = ? and localid = ? and originator = ? ";
 		
 		PreparedStatement preparedStatement = null;
@@ -95,6 +97,14 @@ public class PersonDAO {
 					throw new MpiException("Person read failed. "+e.getMessage());
 				}
 			}
+			if(conn!= null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing connection.",e);
+					throw new MpiException("Person read failed. "+e.getMessage());
+				}
+			}
 
 		}
 		
@@ -103,6 +113,8 @@ public class PersonDAO {
 	}
 
 	public static List<Person> findByMasterId(int masterId) throws MpiException {
+
+		logger.debug("Starting");
 
 		String findSQL = "select * from jtrace.person p, jtrace.linkrecord lr where lr.masterid = ? and p.id = lr.personid ";
 		
@@ -178,6 +190,14 @@ public class PersonDAO {
 				}
 			}
 
+			if(conn!= null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing connection.",e);
+					throw new MpiException("Person read failed. "+e.getMessage());
+				}
+			}
 		}
 		
 		return personList;
@@ -185,6 +205,8 @@ public class PersonDAO {
 	}
 
 	public static void create(Person person) throws MpiException {
+
+		logger.debug("Starting");
 
 		// id is set by at database sequence
 		// prevsurname is NULL for an insert
@@ -242,12 +264,22 @@ public class PersonDAO {
 					throw new MpiException("Person create failed. "+e.getMessage());
 				}
 			}
+			if(conn!= null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing connection.",e);
+					throw new MpiException("Person read failed. "+e.getMessage());
+				}
+			}
 
 		}
 
 	}
 
 	public static void update(Person person) throws MpiException {
+
+		logger.debug("Starting");
 
 		if (person.getId()==0) {
 			logger.error("Person has no ID - cannot update.");
@@ -292,6 +324,14 @@ public class PersonDAO {
 					throw new MpiException("Person update failed. "+e.getMessage());
 				}
 			}
+			if(conn!= null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing connection.",e);
+					throw new MpiException("Person read failed. "+e.getMessage());
+				}
+			}
 
 		}
 
@@ -299,6 +339,8 @@ public class PersonDAO {
 
 	public static void delete(Person person) throws MpiException {
 		
+		logger.debug("Starting");
+
 		String deleteSQL = "delete from jtrace.person where id = ?";
 		
 		PreparedStatement preparedStatement = null;
@@ -307,9 +349,7 @@ public class PersonDAO {
 		try {
 
 			conn = SimpleConnectionManager.getDBConnection();
-			
 			preparedStatement = conn.prepareStatement(deleteSQL);
-			conn = SimpleConnectionManager.getDBConnection();
 			preparedStatement.setInt(1, person.getId());
 			int affectedRows = preparedStatement.executeUpdate();
 			logger.debug("Affected Rows:"+affectedRows);
@@ -327,12 +367,22 @@ public class PersonDAO {
 					throw new MpiException("Person delete failed. "+e.getMessage());
 				}
 			}
+			if(conn!= null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing connection.",e);
+					throw new MpiException("Person read failed. "+e.getMessage());
+				}
+			}
 
 		}
 
 	}
 			
 	private static void populatePersonStatement(PreparedStatement preparedStatement, Person person) throws SQLException {
+
+		logger.debug("Starting");
 
 		if (person.getDateOfBirth() != null ) {
 			preparedStatement.setTimestamp(1, new Timestamp(person.getDateOfBirth().getTime()));

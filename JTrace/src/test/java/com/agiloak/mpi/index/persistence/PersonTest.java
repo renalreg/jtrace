@@ -11,6 +11,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import com.agiloak.mpi.MpiException;
+import com.agiloak.mpi.SimpleConnectionManager;
 import com.agiloak.mpi.index.LinkRecord;
 import com.agiloak.mpi.index.MasterRecord;
 import com.agiloak.mpi.index.Person;
@@ -24,6 +25,7 @@ public class PersonTest {
 
 	@Before
 	public void setup()  throws MpiException {
+		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE");
 		
 		int masterId = 0;
 		MasterRecord mr = MasterRecordDAO.findByNationalId("NHS0000001","NHS");
