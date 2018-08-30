@@ -7,7 +7,7 @@ CREATE TABLE jtrace.person
   id SERIAL UNIQUE,
   originator character varying(50) NOT NULL,
   localid character(17) NOT NULL,
-  localidtype character(5) NOT NULL,
+  localidtype character(10) NOT NULL,
   nationalid character(10),
   nationalidtype character(5),
   dateofbirth date NOT NULL,
