@@ -279,6 +279,30 @@ public class UKRDCIndexManager {
 		return resp;
 	}
 
+	public UKRDCIndexManagerResponse getUKRDCId(int masterId) {
+		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
+		try {
+			MasterRecord master = MasterRecordDAO.get(masterId);
+			if (master == null) {
+				resp.setStatus(UKRDCIndexManagerResponse.FAIL);
+				resp.setMessage("Master ID does not exist");
+			} else {
+				if (master.getNationalIdType().equals(NationalIdentity.UKRDC_TYPE)) {
+					resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
+					resp.setNationalIdentity(new NationalIdentity(master.getNationalIdType(), master.getNationalId()));
+				} else {
+					resp.setStatus(UKRDCIndexManagerResponse.FAIL);
+					resp.setMessage("Master ID is not a UKRDC ID");
+				}
+			}
+		} catch (Exception e) {
+			resp.setStatus(UKRDCIndexManagerResponse.FAIL);
+			resp.setMessage(e.getMessage());
+			resp.setStackTrace(ExceptionUtils.getStackTrace(e));
+		}
+		return resp;
+	}
+
 	public UKRDCIndexManagerResponse search(ProgrammeSearchRequest psr) {
 		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
 		try {
