@@ -20,6 +20,7 @@ import com.agiloak.mpi.index.persistence.PersonDAO;
 import com.agiloak.mpi.normalization.NormalizationManager;
 import com.agiloak.mpi.workitem.WorkItem;
 import com.agiloak.mpi.workitem.WorkItemManager;
+import com.agiloak.mpi.workitem.persistence.WorkItemDAO;
 
 public class UKRDCIndexManager {
 	
@@ -303,6 +304,38 @@ public class UKRDCIndexManager {
 		return resp;
 	}
 
+	public UKRDCIndexManagerResponse merge(int superceedingId, int supercededId) {
+		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
+		try {
+			resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
+			// 1 - LINK
+			// For every record linking to the superceeded record id
+			List<LinkRecord> links = LinkRecordDAO.findByMaster(supercededId);
+			for (LinkRecord link : links) {
+				LinkRecordDAO.delete(link);
+
+				LinkRecord newLink = new LinkRecord(superceedingId, link.getPersonId());
+				LinkRecordDAO.create(newLink);
+
+				// 2 - AUDIT
+				AuditManager am = new AuditManager();
+				am.create(Audit.UKRDC_MERGE, link.getPersonId(), superceedingId, "Superceeding:"+superceedingId+", Superceded:"+supercededId);
+			}
+
+			// 3 - WORK ITEMS
+			WorkItemManager wim = new WorkItemManager();
+			wim.deleteByMaster(supercededId);
+			
+			// 4- MASTER RECORD
+			MasterRecordDAO.delete(supercededId);
+			
+		} catch (Exception e) {
+			resp.setStatus(UKRDCIndexManagerResponse.FAIL);
+			resp.setMessage(e.getMessage());
+			resp.setStackTrace(ExceptionUtils.getStackTrace(e));
+		}
+		return resp;
+	}
 	public UKRDCIndexManagerResponse search(ProgrammeSearchRequest psr) {
 		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
 		try {

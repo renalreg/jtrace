@@ -6,6 +6,7 @@ public class Audit {
 
 	public final static int NO_MATCH_ASSIGN_NEW = 1;
 	public final static int NEW_MATCH_THROUGH_NATIONAL_ID = 2;
+	public final static int UKRDC_MERGE = 3;
 
 	public Audit(int type, int personId, int masterId, String desc) {
 		this.type = type;

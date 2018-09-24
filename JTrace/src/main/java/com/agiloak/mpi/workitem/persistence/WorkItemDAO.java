@@ -184,6 +184,52 @@ public class WorkItemDAO {
 
 	}	
 	
+	public static void deleteByMasterId(int masterId) throws MpiException {
+
+		logger.debug("Starting");
+
+		String deleteSQL = "delete from jtrace.workitem where masterid = ?";
+		
+		PreparedStatement preparedStatement = null;
+		Connection conn = null;
+		
+		try {
+
+			conn = SimpleConnectionManager.getDBConnection();
+			
+			preparedStatement = conn.prepareStatement(deleteSQL);
+			preparedStatement.setInt(1, masterId);
+
+			int affectedRows = preparedStatement.executeUpdate();
+			logger.debug("Affected Rows:"+affectedRows);
+					 
+		} catch (SQLException e) {
+			logger.error("Failure deleting WorkItem:",e);
+			throw new MpiException("WorkItem delete failed");
+
+		} finally {
+
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing Prepared Statement:",e);
+					throw new MpiException("WorkItem delete failed");
+				}
+			}
+			if(conn!= null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing Connection",e);
+					throw new MpiException("WorkItem delete failed. "+e.getMessage());
+				}
+			}
+
+		}
+
+	}	
+	
 	public static List<WorkItem> findByPerson(int personId) throws MpiException {
 
 		logger.debug("Starting");

@@ -99,4 +99,15 @@ public class WorkItemManager {
 		
 	}
 	
+	public void deleteByMaster(int masterId) throws MpiException {
+
+		if ( masterId==0 ) {
+			throw new MpiException("Master Id must be provided");
+		}
+		logger.debug("Delete work items for masterId:"+masterId);
+
+		WorkItemDAO.deleteByPerson(masterId);
+		
+	}
+	
 }
