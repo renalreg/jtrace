@@ -136,6 +136,27 @@ public class WorkItemTest {
 	}
 
 	@Test
+	public void testDeleteByMaster() throws MpiException {
+		WorkItemManager wim = new WorkItemManager();
+		wim.create(WorkItem.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 2, 2, "test");
+		wim.create(WorkItem.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 2, 3, "test2");
+		assert(true);
+		List<WorkItem> workItems = wim.findByPerson(2);
+		assert(workItems.size()==2);
+		
+		wim.deleteByMaster(3);
+		List<WorkItem> workItems2 = wim.findByPerson(2);
+		assert(workItems2.size()==1);
+		
+	}
+	@Test
+	public void testDeleteyMasterNoMaster() throws MpiException {
+		WorkItemManager wim = new WorkItemManager();
+		exception.expect(MpiException.class);
+		wim.deleteByMaster(0);
+		assert(true);
+	}
+	@Test
 	public void testCreateNoPerson() throws MpiException {
 		WorkItemManager wim = new WorkItemManager();
 		exception.expect(MpiException.class);

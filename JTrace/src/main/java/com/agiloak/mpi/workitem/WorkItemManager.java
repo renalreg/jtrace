@@ -106,7 +106,7 @@ public class WorkItemManager {
 		}
 		logger.debug("Delete work items for masterId:"+masterId);
 
-		WorkItemDAO.deleteByPerson(masterId);
+		WorkItemDAO.deleteByMasterId(masterId);
 		
 	}
 	

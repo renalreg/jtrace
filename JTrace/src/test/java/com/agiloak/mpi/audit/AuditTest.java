@@ -22,6 +22,7 @@ public class AuditTest {
 		AuditDAO.deleteByPerson(1);
 		AuditDAO.deleteByPerson(2);
 		AuditDAO.deleteByPerson(3);
+		AuditDAO.deleteByPerson(4);
 	}
 
 	@Test
@@ -47,6 +48,22 @@ public class AuditTest {
 		
 		Audit audit = am.create(Audit.NEW_MATCH_THROUGH_NATIONAL_ID, 2, 1, "test");
 		List<Audit> audits = AuditDAO.findByPerson(2);
+		assert(audits.size()==1);
+		
+		Audit audit2 = audits.get(0);
+		assert(audit2.getPersonId()==audit.getPersonId());
+		assert(audit2.getMasterId()==audit.getMasterId());
+		assert(audit2.getType()==audit.getType());
+		assert(audit2.getDescription().equals(audit.getDescription()));
+		assert(audit2.getLastUpdated().compareTo(audit.getLastUpdated())==0);
+	}
+
+	@Test
+	public void testCreateAndRead3() throws MpiException {
+		AuditManager am = new AuditManager();
+		
+		Audit audit = am.create(Audit.UKRDC_MERGE, 4, 1, "test");
+		List<Audit> audits = AuditDAO.findByPerson(4);
 		assert(audits.size()==1);
 		
 		Audit audit2 = audits.get(0);
