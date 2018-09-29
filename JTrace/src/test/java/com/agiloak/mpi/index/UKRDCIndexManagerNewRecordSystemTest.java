@@ -435,9 +435,17 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 		items = WorkItemDAO.findByPerson(person.getId());
 		assert(items.size()==1);
 		List<Audit> audits = AuditDAO.findByPerson(person.getId());
-		assert(audits.size()==1);
-		assert(audits.get(0).getType()==Audit.NO_MATCH_ASSIGN_NEW);
-		assert(audits.get(0).getMasterId()==allocatedMr.getId());
+		assert(audits.size()==2);
+		for (Audit audit : audits) {
+			if (audit.getType()==Audit.NO_MATCH_ASSIGN_NEW) {
+				assert(audit.getMasterId()==allocatedMr.getId());
+			} else if (audit.getType()==Audit.WORK_ITEM_CREATED) {
+				// OK
+			} else {
+				// shouldn't be any other types
+				assert(false);
+			}
+		}
 		
 	}	
 

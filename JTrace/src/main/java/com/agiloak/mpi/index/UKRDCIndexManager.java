@@ -5,7 +5,9 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
@@ -20,7 +22,6 @@ import com.agiloak.mpi.index.persistence.PersonDAO;
 import com.agiloak.mpi.normalization.NormalizationManager;
 import com.agiloak.mpi.workitem.WorkItem;
 import com.agiloak.mpi.workitem.WorkItemManager;
-import com.agiloak.mpi.workitem.persistence.WorkItemDAO;
 
 public class UKRDCIndexManager {
 	
@@ -306,8 +307,12 @@ public class UKRDCIndexManager {
 
 	public UKRDCIndexManagerResponse merge(int superceedingId, int supercededId) {
 		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
+		resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
+
 		try {
-			resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
+			// 0 - Get Details
+			MasterRecord superceeding = MasterRecordDAO.get(superceedingId);
+			MasterRecord superceded   = MasterRecordDAO.get(supercededId);
 			// 1 - LINK
 			// For every record linking to the superceeded record id
 			List<LinkRecord> links = LinkRecordDAO.findByMaster(supercededId);
@@ -318,13 +323,27 @@ public class UKRDCIndexManager {
 				LinkRecordDAO.create(newLink);
 
 				// 2 - AUDIT
+				Map<String,String> attr = new HashMap<String, String>();
+				attr.put("SuperceedingMaster", Integer.toString(superceedingId));
+				attr.put("SupercededMaster", Integer.toString(supercededId));
+				attr.put("SuperceedingUKRDC", superceeding.getNationalId());
+				attr.put("SupercededUKRDC", superceded.getNationalId());
 				AuditManager am = new AuditManager();
-				am.create(Audit.UKRDC_MERGE, link.getPersonId(), superceedingId, "Superceeding:"+superceedingId+", Superceded:"+supercededId);
-			}
+				am.create(Audit.UKRDC_MERGE, link.getPersonId(), superceedingId, "UKRDC Merge", attr);
 
-			// 3 - WORK ITEMS
-			WorkItemManager wim = new WorkItemManager();
-			wim.deleteByMaster(supercededId);
+//				// 3 - WORK ITEMS - Dissociated from Merge - will be done manually
+//				WorkItemManager wim = new WorkItemManager();
+//				
+//				List<WorkItem> items = wim.findByPerson(link.getPersonId());
+//				for (WorkItem item : items) {
+//					item.setStatus(WorkItem.STATUS_CLOSED);
+//					item.setLastUpdated(new Date());
+//					item.setUpdatedBy("SYSTEM");
+//					item.setUpdateDesc("UKRDC MERGE");
+//					wim.update(item);
+//				}
+				
+			}
 			
 			// 4- MASTER RECORD
 			MasterRecordDAO.delete(supercededId);
@@ -667,8 +686,11 @@ public class UKRDCIndexManager {
 									
 									// Audit the creation of the new UKRDC Number
 									AuditManager am = new AuditManager();
-									am.create(Audit.NEW_MATCH_THROUGH_NATIONAL_ID, person.getId(), ukrdcMaster.getId(), 
-												"Common NatID["+natId.getType()+":"+natId.getId()+"]");
+									Map<String,String> attr = new HashMap<String, String>();
+									attr.put("NationalIdType", natId.getType());
+									attr.put("NationalId", natId.getId());
+
+									am.create(Audit.NEW_MATCH_THROUGH_NATIONAL_ID, person.getId(), ukrdcMaster.getId(),"Matched By National Id", attr);
 
 									linked = true;
 									break; //Only want to link once
@@ -697,7 +719,11 @@ public class UKRDCIndexManager {
 
 				// Audit the creation of the new UKRDC Number
 				AuditManager am = new AuditManager();
-				am.create(Audit.NO_MATCH_ASSIGN_NEW, person.getId(), ukrdcMaster.getId(), "UKRDC Number Allocated");
+				Map<String,String> attr = new HashMap<String, String>();
+				attr.put("NationalIdType", NationalIdentity.UKRDC_TYPE);
+				attr.put("NationalId", ukrdcMaster.getNationalId());
+
+				am.create(Audit.NO_MATCH_ASSIGN_NEW, person.getId(), ukrdcMaster.getId(), "UKRDC Number Allocated", attr);
 
 				logger.debug("Linking to the new master record");
 				// and link this record to it

@@ -1,21 +1,67 @@
 package com.agiloak.mpi.audit;
 
+import java.lang.reflect.Type;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
+import com.agiloak.mpi.index.NationalIdentity;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 public class Audit {
 
+	// ALLOCATION AUDITS
 	public final static int NO_MATCH_ASSIGN_NEW = 1;
 	public final static int NEW_MATCH_THROUGH_NATIONAL_ID = 2;
-	public final static int UKRDC_MERGE = 3;
+	
+	// MERGE AUDITS
+	public final static int UKRDC_MERGE = 11;
+	
+	// WORK ITEM AUDITS
+	public final static int WORK_ITEM_CREATED = 21;
+	public final static int WORK_ITEM_UPDATED = 22;
 
-	public Audit(int type, int personId, int masterId, String desc) {
+	Gson gson = new Gson();
+
+	public Audit(int type, int personId, int masterId, String desc, Map<String,String> attributes) {
 		this.type = type;
 		this.personId = personId;
 		this.masterId = masterId;
 		this.description = desc;
 		this.lastUpdated = new Date();
+		this.attributes = attributes;
 	}
 	
+	public Audit(int type, int personId, int masterId, String desc, NationalIdentity mainNationalIdentity, Map<String,String>  attributes) {
+		this.type = type;
+		this.personId = personId;
+		this.masterId = masterId;
+		this.description = desc;
+		this.lastUpdated = new Date();
+		this.mainNationalIdentity = mainNationalIdentity;
+		this.attributes = attributes;
+	}
+	
+	public Audit(int type, int personId, int masterId, String desc, String natId, String natIdType, String attributes) {
+		this.type = type;
+		this.personId = personId;
+		this.masterId = masterId;
+		this.description = desc;
+		this.lastUpdated = new Date();
+		if (natId != null && natIdType != null) {
+			NationalIdentity ni = new NationalIdentity(natIdType, natId);
+			this.mainNationalIdentity = ni;
+		}
+	    if (attributes == null || attributes.equalsIgnoreCase("null")) {
+	    	this.attributes = new HashMap<String,String>();
+	    } else {
+			Type reqType = new TypeToken<Map<String,String>>() {}.getType();
+			Map<String,String> attrMap = gson.fromJson(attributes, reqType);
+			this.attributes = attrMap;
+	    }
+	}
+
 	private int id;
 	private Date lastUpdated;
 	private String description;
@@ -23,6 +69,8 @@ public class Audit {
 	private int masterId;
 	private int type;
 	private String updatedBy;
+	private Map<String,String> attributes;
+	private NationalIdentity mainNationalIdentity;
 	
 	public int getId() {
 		return id;
@@ -72,5 +120,21 @@ public class Audit {
 	public void setUpdatedBy(String updatedBy) {
 		this.updatedBy = updatedBy;
 	}
-	
+	public NationalIdentity getMainNationalIdentity() {
+		return mainNationalIdentity;
+	}
+	public void setMainNationalIdentity(NationalIdentity mainNationalIdentity) {
+		this.mainNationalIdentity = mainNationalIdentity;
+	}
+	public Map<String,String> getAttributes() {
+		return attributes;
+	}
+	public void setAttributes(Map<String,String> attributes) {
+		this.attributes = attributes;
+	}
+	public String getAttributesJson() {
+		Type respType = new TypeToken<Map<String,String>>() {}.getType();
+        String jsonResponse = gson.toJson(this.attributes, respType);
+		return jsonResponse;
+	}	
 }

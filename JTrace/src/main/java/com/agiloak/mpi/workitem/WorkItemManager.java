@@ -1,11 +1,15 @@
 package com.agiloak.mpi.workitem;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.agiloak.mpi.MpiException;
+import com.agiloak.mpi.audit.Audit;
+import com.agiloak.mpi.audit.AuditManager;
 import com.agiloak.mpi.workitem.persistence.WorkItemDAO;
 
 /*
@@ -34,6 +38,13 @@ public class WorkItemManager {
 		if (workItem == null) {
 			workItem = new WorkItem(type, personId, masterId, desc);
 			WorkItemDAO.create(workItem);
+			
+			// 2 - AUDIT
+			Map<String,String> attr = new HashMap<String, String>();
+			attr.put("Id", Integer.toString(workItem.getId()));
+			attr.put("Type", Integer.toString(workItem.getType()));
+			AuditManager am = new AuditManager();
+			am.create(Audit.WORK_ITEM_CREATED, personId, masterId, "WI CREATED", attr);
 		}
 			
 		return workItem;
@@ -72,6 +83,16 @@ public class WorkItemManager {
 			workItem.setUpdateDesc(item.getUpdateDesc());
 			
 			WorkItemDAO.update(workItem);
+			
+			// AUDIT
+			Map<String,String> attr = new HashMap<String, String>();
+			attr.put("Id", Integer.toString(workItem.getId()));
+			attr.put("Type", Integer.toString(workItem.getType()));
+			attr.put("Status", Integer.toString(workItem.getStatus()));
+			attr.put("UpdatedBy", workItem.getUpdatedBy());
+			attr.put("UpdateDesc", workItem.getUpdateDesc());
+			AuditManager am = new AuditManager();
+			am.create(Audit.WORK_ITEM_CREATED, item.getPersonId(), item.getMasterId(), "WI UPDATED", attr);
 		}
 		
 		return item;
