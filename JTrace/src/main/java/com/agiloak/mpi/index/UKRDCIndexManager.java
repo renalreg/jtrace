@@ -5,7 +5,9 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
@@ -18,8 +20,8 @@ import com.agiloak.mpi.index.persistence.LinkRecordDAO;
 import com.agiloak.mpi.index.persistence.MasterRecordDAO;
 import com.agiloak.mpi.index.persistence.PersonDAO;
 import com.agiloak.mpi.normalization.NormalizationManager;
-import com.agiloak.mpi.workitem.WorkItem;
 import com.agiloak.mpi.workitem.WorkItemManager;
+import com.agiloak.mpi.workitem.WorkItemType;
 
 public class UKRDCIndexManager {
 	
@@ -279,6 +281,80 @@ public class UKRDCIndexManager {
 		return resp;
 	}
 
+	public UKRDCIndexManagerResponse getUKRDCId(int masterId) {
+		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
+		try {
+			MasterRecord master = MasterRecordDAO.get(masterId);
+			if (master == null) {
+				resp.setStatus(UKRDCIndexManagerResponse.FAIL);
+				resp.setMessage("Master ID does not exist");
+			} else {
+				if (master.getNationalIdType().equals(NationalIdentity.UKRDC_TYPE)) {
+					resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
+					resp.setNationalIdentity(new NationalIdentity(master.getNationalIdType(), master.getNationalId()));
+				} else {
+					resp.setStatus(UKRDCIndexManagerResponse.FAIL);
+					resp.setMessage("Master ID is not a UKRDC ID");
+				}
+			}
+		} catch (Exception e) {
+			resp.setStatus(UKRDCIndexManagerResponse.FAIL);
+			resp.setMessage(e.getMessage());
+			resp.setStackTrace(ExceptionUtils.getStackTrace(e));
+		}
+		return resp;
+	}
+
+	public UKRDCIndexManagerResponse merge(int superceedingId, int supercededId) {
+		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
+		resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
+
+		try {
+			// 0 - Get Details
+			MasterRecord superceeding = MasterRecordDAO.get(superceedingId);
+			MasterRecord superceded   = MasterRecordDAO.get(supercededId);
+			// 1 - LINK
+			// For every record linking to the superceeded record id
+			List<LinkRecord> links = LinkRecordDAO.findByMaster(supercededId);
+			for (LinkRecord link : links) {
+				LinkRecordDAO.delete(link);
+
+				LinkRecord newLink = new LinkRecord(superceedingId, link.getPersonId());
+				LinkRecordDAO.create(newLink);
+
+				// 2 - AUDIT
+				Map<String,String> attr = new HashMap<String, String>();
+				attr.put("SuperceedingMaster", Integer.toString(superceedingId));
+				attr.put("SupercededMaster", Integer.toString(supercededId));
+				attr.put("SuperceedingUKRDC", superceeding.getNationalId());
+				attr.put("SupercededUKRDC", superceded.getNationalId());
+				AuditManager am = new AuditManager();
+				am.create(Audit.UKRDC_MERGE, link.getPersonId(), superceedingId, "UKRDC Merge", attr);
+
+//				// 3 - WORK ITEMS - Dissociated from Merge - will be done manually
+//				WorkItemManager wim = new WorkItemManager();
+//				
+//				List<WorkItem> items = wim.findByPerson(link.getPersonId());
+//				for (WorkItem item : items) {
+//					item.setStatus(WorkItem.STATUS_CLOSED);
+//					item.setLastUpdated(new Date());
+//					item.setUpdatedBy("SYSTEM");
+//					item.setUpdateDesc("UKRDC MERGE");
+//					wim.update(item);
+//				}
+				
+			}
+			
+			// 4- MASTER RECORD
+			MasterRecordDAO.delete(supercededId);
+			
+		} catch (Exception e) {
+			resp.setStatus(UKRDCIndexManagerResponse.FAIL);
+			resp.setMessage(e.getMessage());
+			resp.setStackTrace(ExceptionUtils.getStackTrace(e));
+		}
+		return resp;
+	}
 	public UKRDCIndexManagerResponse search(ProgrammeSearchRequest psr) {
 		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
 		try {
@@ -473,7 +549,7 @@ public class UKRDCIndexManager {
 							// TEST:UT2-5
 							logger.debug("Record no longer verifies with master");
 							WorkItemManager wim = new WorkItemManager();
-							wim.create(WorkItem.TYPE_STALE_DEMOGS_NOT_VERIFIED_PRIMARY, person.getId(), ukrdcMaster.getId(), "Stale Demographics Not Verified Against PrimaryId");
+							wim.create(WorkItemType.TYPE_STALE_DEMOGS_NOT_VERIFIED_PRIMARY, person.getId(), ukrdcMaster.getId(), "Stale Demographics Not Verified Against PrimaryId");
 
 							ukrdcMaster.setStatus(MasterRecord.INVESTIGATE);
 							MasterRecordDAO.update(ukrdcMaster);
@@ -543,7 +619,7 @@ public class UKRDCIndexManager {
 				} else {
 					logger.debug("Record not verified - creating work item, link and mark master for investigation");
 					WorkItemManager wim = new WorkItemManager();
-					wim.create(WorkItem.TYPE_CLAIMED_LINK_NOT_VERIFIED_PRIMARY, person.getId(), master.getId(), "Claimed Link to Primary Id Not Verified");
+					wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_PRIMARY, person.getId(), master.getId(), "Claimed Link to Primary Id Not Verified");
 
 					LinkRecord link = new LinkRecord(master.getId(), person.getId());
 					LinkRecordDAO.create(link);
@@ -610,15 +686,18 @@ public class UKRDCIndexManager {
 									
 									// Audit the creation of the new UKRDC Number
 									AuditManager am = new AuditManager();
-									am.create(Audit.NEW_MATCH_THROUGH_NATIONAL_ID, person.getId(), ukrdcMaster.getId(), 
-												"Common NatID["+natId.getType()+":"+natId.getId()+"]");
+									Map<String,String> attr = new HashMap<String, String>();
+									attr.put("NationalIdType", natId.getType());
+									attr.put("NationalId", natId.getId());
+
+									am.create(Audit.NEW_MATCH_THROUGH_NATIONAL_ID, person.getId(), ukrdcMaster.getId(),"Matched By National Id", attr);
 
 									linked = true;
 									break; //Only want to link once
 								} else {
 									logger.debug("Link to potential UKRDC Match not verified");
 									WorkItemManager wim = new WorkItemManager();
-									wim.create(WorkItem.TYPE_INFERRED_LINK_NOT_VERIFIED_PRIMARY, person.getId(), ukrdcMaster.getId(), "Link to Inferred PrimaryId not verified");
+									wim.create(WorkItemType.TYPE_INFERRED_LINK_NOT_VERIFIED_PRIMARY, person.getId(), ukrdcMaster.getId(), "Link to Inferred PrimaryId not verified");
 								}
 							}
 						}
@@ -640,7 +719,11 @@ public class UKRDCIndexManager {
 
 				// Audit the creation of the new UKRDC Number
 				AuditManager am = new AuditManager();
-				am.create(Audit.NO_MATCH_ASSIGN_NEW, person.getId(), ukrdcMaster.getId(), "UKRDC Number Allocated");
+				Map<String,String> attr = new HashMap<String, String>();
+				attr.put("NationalIdType", NationalIdentity.UKRDC_TYPE);
+				attr.put("NationalId", ukrdcMaster.getNationalId());
+
+				am.create(Audit.NO_MATCH_ASSIGN_NEW, person.getId(), ukrdcMaster.getId(), "UKRDC Number Allocated", attr);
 
 				logger.debug("Linking to the new master record");
 				// and link this record to it
@@ -681,7 +764,7 @@ public class UKRDCIndexManager {
 			if (!verifyMatch(person, master)) {
 				logger.debug("Record not verified - creating a work item and mark the master for invesigation");
 				WorkItemManager wim = new WorkItemManager();
-				wim.create(WorkItem.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, person.getId(), master.getId(), "Claimed Link to NationalId Not Verified");
+				wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, person.getId(), master.getId(), "Claimed Link to NationalId Not Verified");
 				master.setStatus(MasterRecord.INVESTIGATE);
 				MasterRecordDAO.update(master);
 			}
@@ -702,7 +785,7 @@ public class UKRDCIndexManager {
 					String warnMsg = "More than 1 record from Unit:"+person.getOriginator()+" linked to master:"+master.getId(); 
 					logger.debug(warnMsg);
 					WorkItemManager wim = new WorkItemManager();
-					wim.create(WorkItem.TYPE_MULTIPLE_NATID_LINKS_FROM_ORIGINATOR, person.getId(), master.getId(), warnMsg);
+					wim.create(WorkItemType.TYPE_MULTIPLE_NATID_LINKS_FROM_ORIGINATOR, person.getId(), master.getId(), warnMsg);
 					master.setStatus(MasterRecord.INVESTIGATE);
 					MasterRecordDAO.update(master);
 				}
@@ -757,7 +840,7 @@ public class UKRDCIndexManager {
 				// If the effective date is not later then just reverify this person against the master and raise a work item if required
 				if (!verifyMatch(person,master)) {
 					WorkItemManager wim = new WorkItemManager();
-					wim.create(WorkItem.TYPE_STALE_DEMOGS_NOT_VERIFIED_NATIONAL, person.getId(), master.getId(), "Stale Demographics Not Verified Against NationalId");
+					wim.create(WorkItemType.TYPE_STALE_DEMOGS_NOT_VERIFIED_NATIONAL, person.getId(), master.getId(), "Stale Demographics Not Verified Against NationalId");
 					
 					master.setStatus(MasterRecord.INVESTIGATE);
 					MasterRecordDAO.update(master);
@@ -791,10 +874,10 @@ public class UKRDCIndexManager {
 					int type;
 					String desc=null;
 					if (master.getNationalIdType().equals(NationalIdentity.UKRDC_TYPE)) {
-						type = WorkItem.TYPE_DEMOGS_NOT_VERIFIED_AFTER_PRIMARY_UPDATE;
+						type = WorkItemType.TYPE_DEMOGS_NOT_VERIFIED_AFTER_PRIMARY_UPDATE;
 						desc = "Demographics Not Verified Following Update of Primary Id";
 					} else {
-						type = WorkItem.TYPE_DEMOGS_NOT_VERIFIED_AFTER_NATIONAL_UPDATE;
+						type = WorkItemType.TYPE_DEMOGS_NOT_VERIFIED_AFTER_NATIONAL_UPDATE;
 						desc = "Demographics Not Verified Following Update of National Id";
 					}
 					WorkItemManager wim = new WorkItemManager();

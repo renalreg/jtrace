@@ -28,9 +28,16 @@ public class UKRDCIndexManagerBaseTest {
 	    
 	}
 
+	// convenience for legacy tests - should probably be updated over time
 	protected static void clear(String localId, String originator) throws MpiException {
 		
-		Person person = PersonDAO.findByLocalId("MR", localId, originator);
+		clear("MR", localId, originator);
+	
+	}
+
+	protected static void clear(String type, String localId, String originator) throws MpiException {
+		
+		Person person = PersonDAO.findByLocalId(type, localId, originator);
 		if (person != null) {
 			List<LinkRecord> links = LinkRecordDAO.findByPerson(person.getId());
 			for (LinkRecord link : links) {
@@ -46,7 +53,6 @@ public class UKRDCIndexManagerBaseTest {
 		}
 	
 	}
-
 	public UKRDCIndexManagerBaseTest() {
 		super();
 	}
