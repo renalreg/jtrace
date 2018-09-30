@@ -4,25 +4,18 @@ import java.util.Date;
 
 public class WorkItem {
 
-	public final static int STATUS_OPEN = 1;
-	public final static int STATUS_WIP = 2;
-	public final static int STATUS_CLOSED = 3;
-
-	public final static int TYPE_STALE_DEMOGS_NOT_VERIFIED_PRIMARY = 1;
-	public final static int TYPE_CLAIMED_LINK_NOT_VERIFIED_PRIMARY = 2;
-	public final static int TYPE_INFERRED_LINK_NOT_VERIFIED_PRIMARY = 3;
-	public final static int TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL = 4;
-	public final static int TYPE_STALE_DEMOGS_NOT_VERIFIED_NATIONAL = 5;
-	public final static int TYPE_DEMOGS_NOT_VERIFIED_AFTER_PRIMARY_UPDATE = 6;
-	public final static int TYPE_DEMOGS_NOT_VERIFIED_AFTER_NATIONAL_UPDATE = 7;
-	public final static int TYPE_MULTIPLE_NATID_LINKS_FROM_ORIGINATOR = 8;
-
+	/**
+	 * @param type The type of WorkItem {@link WorkItemType}
+	 * @param personId The id of the person record this refers to
+	 * @param masterId The masterId that this refers to
+	 * @param desc The description of the issue requiring resolution
+	 */
 	public WorkItem(int type, int personId, int masterId, String desc) {
 		this.type = type;
 		this.personId = personId;
 		this.masterId = masterId;
 		this.description = desc;
-		this.status = STATUS_OPEN;
+		this.status = WorkItemStatus.STATUS_OPEN;
 		this.lastUpdated = new Date();
 	}
 	

@@ -16,6 +16,7 @@ import com.agiloak.mpi.index.persistence.LinkRecordDAO;
 import com.agiloak.mpi.index.persistence.MasterRecordDAO;
 import com.agiloak.mpi.index.persistence.PersonDAO;
 import com.agiloak.mpi.workitem.WorkItem;
+import com.agiloak.mpi.workitem.WorkItemType;
 import com.agiloak.mpi.workitem.persistence.WorkItemDAO;
 
 public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseTest {
@@ -126,7 +127,7 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 		assert(links.get(0).getMasterId()==master.getId());
 		items = WorkItemDAO.findByPerson(person.getId());
 		assert(items.size()==1);
-		assert(items.get(0).getType()==WorkItem.TYPE_CLAIMED_LINK_NOT_VERIFIED_PRIMARY);
+		assert(items.get(0).getType()==WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_PRIMARY);
 
 	}
 
@@ -495,7 +496,7 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 		assert(links.get(1).getMasterId()==master1.getId()); 
 		items = WorkItemDAO.findByPerson(person.getId());
 		assert(items.size()==1);
-		assert(items.get(0).getType()==WorkItem.TYPE_MULTIPLE_NATID_LINKS_FROM_ORIGINATOR);
+		assert(items.get(0).getType()==WorkItemType.TYPE_MULTIPLE_NATID_LINKS_FROM_ORIGINATOR);
 		MasterRecord mr = MasterRecordDAO.get(master2.getId());
 		assert(mr.getStatus()==MasterRecord.INVESTIGATE);
 		
@@ -545,7 +546,7 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 		assert(natId2.getId().equals(ukrdcId));
 		items = WorkItemDAO.findByPerson(p2.getId());
 		assert(items.size()==1);
-		assert(items.get(0).getType()==WorkItem.TYPE_MULTIPLE_NATID_LINKS_FROM_ORIGINATOR);
+		assert(items.get(0).getType()==WorkItemType.TYPE_MULTIPLE_NATID_LINKS_FROM_ORIGINATOR);
 
 		// Test 2 - patient from same org with the same NHS Number, but this is a fake MRN using NHS Number and flagged as such - Warning should be suppressed
 		Person p3 = new Person().setDateOfBirth(d1).setSurname("WILLIAMS").setGivenName("JIM").setGender("1");
@@ -573,7 +574,7 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 		assert(natId4.getId().equals(ukrdcId));
 		items = WorkItemDAO.findByPerson(p4.getId());
 		assert(items.size()==1);
-		assert(items.get(0).getType()==WorkItem.TYPE_MULTIPLE_NATID_LINKS_FROM_ORIGINATOR);
+		assert(items.get(0).getType()==WorkItemType.TYPE_MULTIPLE_NATID_LINKS_FROM_ORIGINATOR);
 	}	
 	
 	@Test

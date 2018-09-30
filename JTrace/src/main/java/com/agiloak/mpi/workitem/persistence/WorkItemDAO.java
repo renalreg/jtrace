@@ -230,6 +230,76 @@ public class WorkItemDAO {
 
 	}	
 	
+	public static WorkItem get(int id) throws MpiException {
+
+		logger.debug("Starting");
+		
+		String findSQL = "select * from jtrace.workitem where id = ? ";
+		
+		PreparedStatement preparedStatement = null;
+		Connection conn = null;
+		ResultSet rs = null;
+		
+		WorkItem workItem = null;
+	
+		try {
+
+			conn = SimpleConnectionManager.getDBConnection();
+			
+			preparedStatement = conn.prepareStatement(findSQL);
+			preparedStatement.setInt(1, id);
+
+			rs = preparedStatement.executeQuery();
+			
+			if (rs.next()){
+				int pid = rs.getInt("personid");
+				int mid = rs.getInt("masterid");
+				int type = rs.getInt("type");
+				String desc = rs.getString("description");
+				workItem = new WorkItem(type, pid, mid, desc);
+				workItem.setStatus(rs.getInt("status"));
+				workItem.setId(rs.getInt("id"));
+				workItem.setLastUpdated(rs.getTimestamp("lastUpdated"));
+				workItem.setUpdatedBy(rs.getString("updatedby"));
+				workItem.setUpdateDesc(rs.getString("updatedesc"));
+			}
+			
+		} catch (Exception e) {
+			logger.error("Failure querying WorkItem.",e);
+			throw new MpiException("Failure querying WorkItem. "+e.getMessage());
+		} finally {
+
+			if (rs != null) {
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing resultset.",e);
+					throw new MpiException("Failure closing resultset. "+e.getMessage());
+				}
+			}
+			
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing prepared statement.",e);
+					throw new MpiException("Failure closing prepared statement. "+e.getMessage());
+				}
+			}
+			if(conn!= null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing Connection",e);
+					throw new MpiException("WorkItem read failed. "+e.getMessage());
+				}
+			}
+
+		}
+		
+		return workItem;
+
+	}		
 	public static List<WorkItem> findByPerson(int personId) throws MpiException {
 
 		logger.debug("Starting");

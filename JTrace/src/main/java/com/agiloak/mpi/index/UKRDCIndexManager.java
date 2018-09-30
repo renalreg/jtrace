@@ -20,8 +20,8 @@ import com.agiloak.mpi.index.persistence.LinkRecordDAO;
 import com.agiloak.mpi.index.persistence.MasterRecordDAO;
 import com.agiloak.mpi.index.persistence.PersonDAO;
 import com.agiloak.mpi.normalization.NormalizationManager;
-import com.agiloak.mpi.workitem.WorkItem;
 import com.agiloak.mpi.workitem.WorkItemManager;
+import com.agiloak.mpi.workitem.WorkItemType;
 
 public class UKRDCIndexManager {
 	
@@ -549,7 +549,7 @@ public class UKRDCIndexManager {
 							// TEST:UT2-5
 							logger.debug("Record no longer verifies with master");
 							WorkItemManager wim = new WorkItemManager();
-							wim.create(WorkItem.TYPE_STALE_DEMOGS_NOT_VERIFIED_PRIMARY, person.getId(), ukrdcMaster.getId(), "Stale Demographics Not Verified Against PrimaryId");
+							wim.create(WorkItemType.TYPE_STALE_DEMOGS_NOT_VERIFIED_PRIMARY, person.getId(), ukrdcMaster.getId(), "Stale Demographics Not Verified Against PrimaryId");
 
 							ukrdcMaster.setStatus(MasterRecord.INVESTIGATE);
 							MasterRecordDAO.update(ukrdcMaster);
@@ -619,7 +619,7 @@ public class UKRDCIndexManager {
 				} else {
 					logger.debug("Record not verified - creating work item, link and mark master for investigation");
 					WorkItemManager wim = new WorkItemManager();
-					wim.create(WorkItem.TYPE_CLAIMED_LINK_NOT_VERIFIED_PRIMARY, person.getId(), master.getId(), "Claimed Link to Primary Id Not Verified");
+					wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_PRIMARY, person.getId(), master.getId(), "Claimed Link to Primary Id Not Verified");
 
 					LinkRecord link = new LinkRecord(master.getId(), person.getId());
 					LinkRecordDAO.create(link);
@@ -697,7 +697,7 @@ public class UKRDCIndexManager {
 								} else {
 									logger.debug("Link to potential UKRDC Match not verified");
 									WorkItemManager wim = new WorkItemManager();
-									wim.create(WorkItem.TYPE_INFERRED_LINK_NOT_VERIFIED_PRIMARY, person.getId(), ukrdcMaster.getId(), "Link to Inferred PrimaryId not verified");
+									wim.create(WorkItemType.TYPE_INFERRED_LINK_NOT_VERIFIED_PRIMARY, person.getId(), ukrdcMaster.getId(), "Link to Inferred PrimaryId not verified");
 								}
 							}
 						}
@@ -764,7 +764,7 @@ public class UKRDCIndexManager {
 			if (!verifyMatch(person, master)) {
 				logger.debug("Record not verified - creating a work item and mark the master for invesigation");
 				WorkItemManager wim = new WorkItemManager();
-				wim.create(WorkItem.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, person.getId(), master.getId(), "Claimed Link to NationalId Not Verified");
+				wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, person.getId(), master.getId(), "Claimed Link to NationalId Not Verified");
 				master.setStatus(MasterRecord.INVESTIGATE);
 				MasterRecordDAO.update(master);
 			}
@@ -785,7 +785,7 @@ public class UKRDCIndexManager {
 					String warnMsg = "More than 1 record from Unit:"+person.getOriginator()+" linked to master:"+master.getId(); 
 					logger.debug(warnMsg);
 					WorkItemManager wim = new WorkItemManager();
-					wim.create(WorkItem.TYPE_MULTIPLE_NATID_LINKS_FROM_ORIGINATOR, person.getId(), master.getId(), warnMsg);
+					wim.create(WorkItemType.TYPE_MULTIPLE_NATID_LINKS_FROM_ORIGINATOR, person.getId(), master.getId(), warnMsg);
 					master.setStatus(MasterRecord.INVESTIGATE);
 					MasterRecordDAO.update(master);
 				}
@@ -840,7 +840,7 @@ public class UKRDCIndexManager {
 				// If the effective date is not later then just reverify this person against the master and raise a work item if required
 				if (!verifyMatch(person,master)) {
 					WorkItemManager wim = new WorkItemManager();
-					wim.create(WorkItem.TYPE_STALE_DEMOGS_NOT_VERIFIED_NATIONAL, person.getId(), master.getId(), "Stale Demographics Not Verified Against NationalId");
+					wim.create(WorkItemType.TYPE_STALE_DEMOGS_NOT_VERIFIED_NATIONAL, person.getId(), master.getId(), "Stale Demographics Not Verified Against NationalId");
 					
 					master.setStatus(MasterRecord.INVESTIGATE);
 					MasterRecordDAO.update(master);
@@ -874,10 +874,10 @@ public class UKRDCIndexManager {
 					int type;
 					String desc=null;
 					if (master.getNationalIdType().equals(NationalIdentity.UKRDC_TYPE)) {
-						type = WorkItem.TYPE_DEMOGS_NOT_VERIFIED_AFTER_PRIMARY_UPDATE;
+						type = WorkItemType.TYPE_DEMOGS_NOT_VERIFIED_AFTER_PRIMARY_UPDATE;
 						desc = "Demographics Not Verified Following Update of Primary Id";
 					} else {
-						type = WorkItem.TYPE_DEMOGS_NOT_VERIFIED_AFTER_NATIONAL_UPDATE;
+						type = WorkItemType.TYPE_DEMOGS_NOT_VERIFIED_AFTER_NATIONAL_UPDATE;
 						desc = "Demographics Not Verified Following Update of National Id";
 					}
 					WorkItemManager wim = new WorkItemManager();

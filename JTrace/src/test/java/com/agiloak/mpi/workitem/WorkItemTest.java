@@ -1,6 +1,5 @@
 package com.agiloak.mpi.workitem;
 
-import java.util.Date;
 import java.util.List;
 
 import org.junit.BeforeClass;
@@ -17,6 +16,8 @@ public class WorkItemTest {
 	@Rule
 	public final ExpectedException exception = ExpectedException.none();
 	
+	public static int testWorkItemId = 0;
+	
 	@BeforeClass
 	public static void setup()  throws MpiException {
 		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE");
@@ -25,12 +26,18 @@ public class WorkItemTest {
 		WorkItemDAO.deleteByPerson(200002);
 		WorkItemDAO.deleteByPerson(200003);
 		WorkItemDAO.deleteByPerson(200004);
+		WorkItemDAO.deleteByPerson(200005);
+		
+		WorkItemManager wim = new WorkItemManager();
+		WorkItem wi1 = wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200005, 1, "test");
+		testWorkItemId = wi1.getId();
+
 	}
 	
 	@Test
 	public void testCreate() throws MpiException {
 		WorkItemManager wim = new WorkItemManager();
-		WorkItem wi1 = wim.create(WorkItem.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200001, 1, "test");
+		WorkItem wi1 = wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200001, 1, "test");
 		assert(true);
 
 		List<WorkItem> workItems = wim.findByPerson(200001);
@@ -48,7 +55,7 @@ public class WorkItemTest {
 	@Test
 	public void testExplicitUpdate() throws MpiException {
 		WorkItemManager wim = new WorkItemManager();
-		WorkItem wi1 = wim.create(WorkItem.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200002, 1, "test");
+		WorkItem wi1 = wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200002, 1, "test");
 		assert(true);
 
 		List<WorkItem> workItems = wim.findByPerson(200002);
@@ -62,39 +69,60 @@ public class WorkItemTest {
 		assert(wi2.getDescription().equals(wi1.getDescription()));
 		assert(wi2.getLastUpdated().compareTo(wi1.getLastUpdated())==0);
 		
-		wi2.setStatus(WorkItem.STATUS_CLOSED);
-		wi2.setUpdatedBy("NJONES02");
-		wi2.setUpdateDesc("Not a match - do not try to resolve");
-		wi2.setLastUpdated(new Date());
-		wim.update(wi2);
+		wim.update(wi2.getId(), WorkItemStatus.STATUS_CLOSED, "Not a match - do not try to resolve", "NJONES02" );
+		
+		workItems = wim.findByPerson(200002);
+		assert(workItems.size()==1);
+		
+		wi2 = workItems.get(0);
+		assert(wi2.getId()==wi1.getId());
+		assert(wi2.getPersonId()==wi1.getPersonId());
+		assert(wi2.getType()==wi1.getType());
+		assert(wi2.getDescription().equals(wi1.getDescription()));
+
+		assert(wi2.getStatus()==WorkItemStatus.STATUS_CLOSED);
+		assert(wi2.getUpdateDesc().equals("Not a match - do not try to resolve"));
+		assert(wi2.getUpdatedBy().equals("NJONES02"));
+		assert(wi2.getLastUpdated().compareTo(wi1.getLastUpdated()) > 0);
+		
+	}
+
+	@Test
+	public void testUpdateNoId() throws MpiException {
+		WorkItemManager wim = new WorkItemManager();
+		exception.expect(MpiException.class);
+		wim.update(0, WorkItemStatus.STATUS_CLOSED, "Not a match - do not try to resolve", "NJONES02" );
+	}
+	@Test
+	public void testUpdateBadStatus1() throws MpiException {
+		WorkItemManager wim = new WorkItemManager();
+		exception.expect(MpiException.class);
+		wim.update(testWorkItemId, 0, "Not a match - do not try to resolve", "NJONES02" );
+	}
+	@Test
+	public void testUpdateBadStatus2() throws MpiException {
+		WorkItemManager wim = new WorkItemManager();
+		exception.expect(MpiException.class);
+		wim.update(testWorkItemId, 99, "Not a match - do not try to resolve", "NJONES02" );
 	}
 	@Test
 	public void testExplicitUpdateNoUser() throws MpiException {
 		WorkItemManager wim = new WorkItemManager();
-		WorkItem wi = new WorkItem(1,1,1,"DESC");
-		wi.setStatus(WorkItem.STATUS_CLOSED);
-		//wi.setUpdatedBy("NJONES02");
-		wi.setUpdateDesc("Not a match - do not try to resolve");
-		wi.setLastUpdated(new Date());
 		exception.expect(MpiException.class);
-		wim.update(wi);
+		wim.update(testWorkItemId, WorkItemStatus.STATUS_CLOSED, "Not a match - do not try to resolve", null );
 	}
+	
 	@Test
 	public void testExplicitUpdateNoUpdateDesc() throws MpiException {
 		WorkItemManager wim = new WorkItemManager();
-		WorkItem wi = new WorkItem(1,1,1,"DESC");
-		wi.setStatus(WorkItem.STATUS_CLOSED);
-		wi.setUpdatedBy("NJONES02");
-		//wi.setUpdateDesc("Not a match - do not try to resolve");
-		wi.setLastUpdated(new Date());
 		exception.expect(MpiException.class);
-		wim.update(wi);
+		wim.update(testWorkItemId, WorkItemStatus.STATUS_CLOSED,  null, "NJONES02" );
 	}
 
 	@Test
 	public void testUpdateIfExists() throws MpiException {
 		WorkItemManager wim = new WorkItemManager();
-		WorkItem wi1 = wim.create(WorkItem.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200003, 1, "test");
+		WorkItem wi1 = wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200003, 1, "test");
 		assert(true);
 
 		List<WorkItem> workItems = wim.findByPerson(200003);
@@ -108,15 +136,15 @@ public class WorkItemTest {
 		assert(wi2.getDescription().equals(wi1.getDescription()));
 		assert(wi2.getLastUpdated().compareTo(wi1.getLastUpdated())==0);
 
-		WorkItem wi3 = wim.create(WorkItem.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200003, 1, "test2");
+		WorkItem wi3 = wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200003, 1, "test2");
 		assert(wi3.getId()==wi1.getId());
 
 	}
 	@Test
 	public void testDelete() throws MpiException {
 		WorkItemManager wim = new WorkItemManager();
-		wim.create(WorkItem.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200004, 2, "test");
-		wim.create(WorkItem.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200004, 3, "test2");
+		wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200004, 2, "test");
+		wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200004, 3, "test2");
 		assert(true);
 		List<WorkItem> workItems = wim.findByPerson(200004);
 		assert(workItems.size()==2);
@@ -138,8 +166,8 @@ public class WorkItemTest {
 	@Test
 	public void testDeleteByMaster() throws MpiException {
 		WorkItemManager wim = new WorkItemManager();
-		wim.create(WorkItem.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200004, 2, "test");
-		wim.create(WorkItem.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200004, 3, "test2");
+		wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200004, 2, "test");
+		wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200004, 3, "test2");
 		assert(true);
 		List<WorkItem> workItems = wim.findByPerson(200004);
 		assert(workItems.size()==2);
@@ -160,26 +188,26 @@ public class WorkItemTest {
 	public void testCreateNoPerson() throws MpiException {
 		WorkItemManager wim = new WorkItemManager();
 		exception.expect(MpiException.class);
-		wim.create(WorkItem.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL,0,1,"test");
+		wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL,0,1,"test");
 	}
 
 	@Test
 	public void testCreateNoMaster() throws MpiException {
 		WorkItemManager wim = new WorkItemManager();
 		exception.expect(MpiException.class);
-		wim.create(WorkItem.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL,0,0,"test");
+		wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL,0,0,"test");
 	}
 	@Test
 	public void testCreateNullDesc() throws MpiException {
 		WorkItemManager wim = new WorkItemManager();
 		exception.expect(MpiException.class);
-		wim.create(WorkItem.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL,1,2,null);
+		wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL,1,2,null);
 	}
 
 	@Test
 	public void testCreateEmptyDesc() throws MpiException {
 		WorkItemManager wim = new WorkItemManager();
 		exception.expect(MpiException.class);
-		wim.create(WorkItem.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL,1,3,"");
+		wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL,1,3,"");
 	}
 }
