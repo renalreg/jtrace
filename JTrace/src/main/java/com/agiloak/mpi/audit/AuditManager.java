@@ -1,10 +1,18 @@
 package com.agiloak.mpi.audit;
 
+import java.util.List;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.agiloak.mpi.MpiException;
 import com.agiloak.mpi.audit.persistence.AuditDAO;
+import com.agiloak.mpi.index.LinkRecord;
+import com.agiloak.mpi.index.MasterRecord;
+import com.agiloak.mpi.index.NationalIdentity;
+import com.agiloak.mpi.index.persistence.LinkRecordDAO;
+import com.agiloak.mpi.index.persistence.MasterRecordDAO;
 
 /*
  * Simple manager to enforce business rules before saving the entity. 
@@ -17,7 +25,7 @@ public class AuditManager {
 	
 	private final static Logger logger = LoggerFactory.getLogger(AuditManager.class);
 	
-	public Audit create(int type, int personId, int masterId, String desc) throws MpiException {
+	public Audit create(int type, int personId, int masterId, String desc, Map<String,String> attributes) throws MpiException {
 
 		if ( personId==0 ) {
 			throw new MpiException("Person Id must be provided");
@@ -30,11 +38,54 @@ public class AuditManager {
 		}
 		logger.debug("New Work Item");
 		
-		Audit audit = new Audit(type, personId, masterId, desc);
+		NationalIdentity mainNationalId = getMainNationalIdentity(personId);
+		
+		Audit audit = new Audit(type, personId, masterId, desc, mainNationalId, attributes);
 		AuditDAO.create(audit);
 			
 		return audit;
 		
+	}
+	
+	// Convenience method when no attributes
+	public Audit create(int type, int personId, int masterId, String desc) throws MpiException {
+
+		return create(type, personId, masterId, desc, null);		
+	}
+	
+	private NationalIdentity getMainNationalIdentity(int personId) throws MpiException {
+		
+		NationalIdentity mainNationalIdentity = getMainNationalIdentity(personId, NationalIdentity.NHS_TYPE);
+		if (mainNationalIdentity==null) mainNationalIdentity = getMainNationalIdentity(personId, NationalIdentity.CHI_TYPE);
+		if (mainNationalIdentity==null) mainNationalIdentity = getMainNationalIdentity(personId, NationalIdentity.HSC_TYPE);
+		
+		// If none of the main ids are present, just get the first NI on the person
+		if (mainNationalIdentity==null) mainNationalIdentity = getFirstNationalIdentity(personId);
+		
+		return mainNationalIdentity;
+	}
+	
+	private NationalIdentity getMainNationalIdentity(int personId, String idType) throws MpiException {
+		
+		NationalIdentity mainNationalIdentity = null;
+		LinkRecord link = LinkRecordDAO.findByPersonAndType(personId, idType);
+		if (link != null) {
+			MasterRecord master = MasterRecordDAO.get(link.getMasterId());
+			mainNationalIdentity = new NationalIdentity(idType, master.getNationalId());
+		}
+		
+		return mainNationalIdentity;
+	}
+	private NationalIdentity getFirstNationalIdentity(int personId) throws MpiException {
+		
+		NationalIdentity mainNationalIdentity = null;
+		List<LinkRecord> links = LinkRecordDAO.findByPerson(personId);
+		if (links.size() > 0) {
+			MasterRecord master = MasterRecordDAO.get(links.get(0).getMasterId());
+			mainNationalIdentity = new NationalIdentity(master.getNationalIdType(), master.getNationalId());
+		}
+		
+		return mainNationalIdentity;
 	}
 
 }

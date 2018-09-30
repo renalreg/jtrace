@@ -25,8 +25,8 @@ public class AuditDAO {
 		logger.debug("Starting");
 		
 		String insertSQL = "Insert into jtrace.audit "+
-				"(personid, masterid, type, description, lastupdated, updatedby)"+ 
-				" values (?,?,?,?,?,?)";
+				"(personid, masterid, type, description, attributes, mainnationalid, mainnationalidtype, lastupdated, updatedby)"+ 
+				" values (?,?,?,?,?,?,?,?,?)";
 		
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;
@@ -40,8 +40,16 @@ public class AuditDAO {
 			preparedStatement.setInt(2, audit.getMasterId());
 			preparedStatement.setInt(3, audit.getType());
 			preparedStatement.setString(4, audit.getDescription());
-			preparedStatement.setTimestamp(5,new Timestamp(audit.getLastUpdated().getTime()));
-			preparedStatement.setString(6, audit.getUpdatedBy());
+			preparedStatement.setString(5, audit.getAttributesJson());
+			if (audit.getMainNationalIdentity()==null) {
+				preparedStatement.setString(6, null);
+				preparedStatement.setString(7, null);
+			} else {
+				preparedStatement.setString(6, audit.getMainNationalIdentity().getId());
+				preparedStatement.setString(7, audit.getMainNationalIdentity().getType());
+			}
+			preparedStatement.setTimestamp(8,new Timestamp(audit.getLastUpdated().getTime()));
+			preparedStatement.setString(9, audit.getUpdatedBy());
 
 			int affectedRows = preparedStatement.executeUpdate();
 			logger.debug("Affected Rows:"+affectedRows);
@@ -155,7 +163,10 @@ public class AuditDAO {
 				int mid = rs.getInt("masterid");
 				int type = rs.getInt("type");
 				String desc = rs.getString("description");
-				Audit audit = new Audit(type, pid, mid, desc);
+				String attributes = rs.getString("attributes");
+				String natId = rs.getString("mainnationalid");
+				String natIdType = rs.getString("mainnationalidtype");
+				Audit audit = new Audit(type, pid, mid, desc, natId, natIdType, attributes);
 				audit.setId(rs.getInt("id"));
 				audit.setLastUpdated(rs.getTimestamp("lastUpdated"));
 				audit.setUpdatedBy(rs.getString("updatedby"));

@@ -15,6 +15,7 @@ import com.agiloak.mpi.index.persistence.LinkRecordDAO;
 import com.agiloak.mpi.index.persistence.MasterRecordDAO;
 import com.agiloak.mpi.index.persistence.PersonDAO;
 import com.agiloak.mpi.workitem.WorkItem;
+import com.agiloak.mpi.workitem.WorkItemType;
 import com.agiloak.mpi.workitem.persistence.WorkItemDAO;
 
 public class UKRDCIndexManagerUpdateRecordSystemTest extends UKRDCIndexManagerBaseTest {
@@ -229,7 +230,7 @@ public class UKRDCIndexManagerUpdateRecordSystemTest extends UKRDCIndexManagerBa
 		assert(links.get(0).getMasterId()==master.getId());
 		items = WorkItemDAO.findByPerson(person.getId());
 		assert(items.size()==1);
-		assert(items.get(0).getType()==(WorkItem.TYPE_STALE_DEMOGS_NOT_VERIFIED_PRIMARY));
+		assert(items.get(0).getType()==(WorkItemType.TYPE_STALE_DEMOGS_NOT_VERIFIED_PRIMARY));
 
 	}
 	
