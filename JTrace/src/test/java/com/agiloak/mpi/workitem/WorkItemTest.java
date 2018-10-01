@@ -69,7 +69,10 @@ public class WorkItemTest {
 		assert(wi2.getDescription().equals(wi1.getDescription()));
 		assert(wi2.getLastUpdated().compareTo(wi1.getLastUpdated())==0);
 		
-		wim.update(wi2.getId(), WorkItemStatus.STATUS_CLOSED, "Not a match - do not try to resolve", "NJONES02" );
+		WorkItemManagerResponse resp = wim.update(Integer.toString(wi2.getId()), Integer.toString(WorkItemStatus.STATUS_CLOSED), "Not a match - do not try to resolve", "NJONES02" );
+		assert(resp.getStatus()==WorkItemManagerResponse.SUCCESS);
+		assert(resp.getWorkItem()!=null);
+		assert(resp.getWorkItem().getId()==wi2.getId());
 		
 		workItems = wim.findByPerson(200002);
 		assert(workItems.size()==1);
@@ -90,33 +93,49 @@ public class WorkItemTest {
 	@Test
 	public void testUpdateNoId() throws MpiException {
 		WorkItemManager wim = new WorkItemManager();
-		exception.expect(MpiException.class);
-		wim.update(0, WorkItemStatus.STATUS_CLOSED, "Not a match - do not try to resolve", "NJONES02" );
+		//wim.update(0, WorkItemStatus.STATUS_CLOSED, "Not a match - do not try to resolve", "NJONES02" );
+		WorkItemManagerResponse resp = wim.update("0", Integer.toString(WorkItemStatus.STATUS_CLOSED), "Not a match - do not try to resolve", "NJONES02" );
+		assert(resp.getStatus()==WorkItemManagerResponse.FAIL);
 	}
+
 	@Test
 	public void testUpdateBadStatus1() throws MpiException {
 		WorkItemManager wim = new WorkItemManager();
-		exception.expect(MpiException.class);
-		wim.update(testWorkItemId, 0, "Not a match - do not try to resolve", "NJONES02" );
+		//wim.update(testWorkItemId, 0, "Not a match - do not try to resolve", "NJONES02" );
+		WorkItemManagerResponse resp = wim.update(Integer.toString(testWorkItemId), "0", "Not a match - do not try to resolve", "NJONES02" );
+		assert(resp.getStatus()==WorkItemManagerResponse.FAIL);
 	}
+
 	@Test
 	public void testUpdateBadStatus2() throws MpiException {
 		WorkItemManager wim = new WorkItemManager();
-		exception.expect(MpiException.class);
-		wim.update(testWorkItemId, 99, "Not a match - do not try to resolve", "NJONES02" );
+		//wim.update(testWorkItemId, 99, "Not a match - do not try to resolve", "NJONES02" );
+		WorkItemManagerResponse resp = wim.update(Integer.toString(testWorkItemId), "99", "Not a match - do not try to resolve", "NJONES02" );
+		assert(resp.getStatus()==WorkItemManagerResponse.FAIL);
 	}
+
+	@Test
+	public void testUpdateBadStatus3() throws MpiException {
+		WorkItemManager wim = new WorkItemManager();
+		//wim.update(testWorkItemId, 99, "Not a match - do not try to resolve", "NJONES02" );
+		WorkItemManagerResponse resp = wim.update(Integer.toString(testWorkItemId), "B", "Not a match - do not try to resolve", "NJONES02" );
+		assert(resp.getStatus()==WorkItemManagerResponse.FAIL);
+	}
+
 	@Test
 	public void testExplicitUpdateNoUser() throws MpiException {
 		WorkItemManager wim = new WorkItemManager();
-		exception.expect(MpiException.class);
-		wim.update(testWorkItemId, WorkItemStatus.STATUS_CLOSED, "Not a match - do not try to resolve", null );
+		//wim.update(testWorkItemId, WorkItemStatus.STATUS_CLOSED, "Not a match - do not try to resolve", null );
+		WorkItemManagerResponse resp = wim.update(Integer.toString(testWorkItemId), Integer.toString(WorkItemStatus.STATUS_CLOSED), "Not a match - do not try to resolve", null );
+		assert(resp.getStatus()==WorkItemManagerResponse.FAIL);
 	}
 	
 	@Test
 	public void testExplicitUpdateNoUpdateDesc() throws MpiException {
 		WorkItemManager wim = new WorkItemManager();
-		exception.expect(MpiException.class);
-		wim.update(testWorkItemId, WorkItemStatus.STATUS_CLOSED,  null, "NJONES02" );
+		//wim.update(testWorkItemId, WorkItemStatus.STATUS_CLOSED,  null, "NJONES02" );
+		WorkItemManagerResponse resp = wim.update(Integer.toString(testWorkItemId), Integer.toString(WorkItemStatus.STATUS_CLOSED), null, "NJONES02" );
+		assert(resp.getStatus()==WorkItemManagerResponse.FAIL);
 	}
 
 	@Test

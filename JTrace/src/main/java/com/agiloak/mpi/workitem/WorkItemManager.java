@@ -5,12 +5,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.agiloak.mpi.MpiException;
 import com.agiloak.mpi.audit.Audit;
 import com.agiloak.mpi.audit.AuditManager;
+import com.agiloak.mpi.index.NationalIdentity;
+import com.agiloak.mpi.index.Person;
+import com.agiloak.mpi.index.UKRDCIndexManagerResponse;
 import com.agiloak.mpi.workitem.persistence.WorkItemDAO;
 
 /*
@@ -66,14 +70,28 @@ public class WorkItemManager {
 	 * Update the Work Item using the id as the key. Certain values are not updateable as they are intrinsic
 	 * to the WorkItem (personId, masterId, type). Last updated date will automatically be updated
 	 *
-	 * @param workItemId - REQUIRED - The id of the WorkItem being updated. This must exist
-	 * @param status - REQUIRED - The new status of the WorkItem {@link WorkItemStatus}
-	 * @param updateDesc - REQUIRED - Description of the work item update
-	 * @param updatedBy - REQUIRED - Who is updating the item
-	 * @return The WorkItem following the update
-	 * @throws MpiException For any exception encountered. 
+	 * @param workItemId REQUIRED - The id of the WorkItem being updated. This must be a valid integer and must exist in the database.
+	 * @param status REQUIRED - The new status of the WorkItem {@link WorkItemStatus} - must be a valid status
+	 * @param updateDesc REQUIRED - Description of the work item update
+	 * @param updatedBy REQUIRED - Who is updating the item
+	 * @return The WorkItemManagerResponse containing status information and the WorkItem following the update
 	 */
-	public WorkItem update(int workItemId, int status, String updateDesc, String updatedBy) throws MpiException {
+	public WorkItemManagerResponse update(String workItemId, String status, String updateDesc, String updatedBy) {
+
+		WorkItemManagerResponse resp = new WorkItemManagerResponse();
+		try {
+			WorkItem workItem = updateInternal(Integer.parseInt(workItemId), Integer.parseInt(status), updateDesc, updatedBy);
+			resp.setStatus(WorkItemManagerResponse.SUCCESS);
+			resp.setWorkItem(workItem);
+		} catch (Exception e) {
+			resp.setStatus(WorkItemManagerResponse.FAIL);
+			resp.setMessage(e.getMessage());
+			resp.setStackTrace(ExceptionUtils.getStackTrace(e));
+		}
+		return resp;
+	}
+	
+	private WorkItem updateInternal(int workItemId, int status, String updateDesc, String updatedBy) throws MpiException {
 
 		logger.debug("Updating Work Item");
 
