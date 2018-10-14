@@ -8,7 +8,7 @@ CREATE TABLE jtrace.pidxref
   pid character varying(10) NOT NULL,
   sendingfacility character varying(7) NOT NULL,
   sendingextract character varying(6) NOT NULL,
-  localpatientid character varying(17) NOT NULL
+  localid character varying(17) NOT NULL
 )
 WITH (
   OIDS=FALSE

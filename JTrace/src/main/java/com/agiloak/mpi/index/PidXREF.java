@@ -2,19 +2,20 @@ package com.agiloak.mpi.index;
 
 public class PidXREF {
 	
-	public PidXREF(String sendingFacility, String sendingExtract, String localPatientId) {
+	public PidXREF(String sendingFacility, String sendingExtract, String localId) {
 		this.sendingFacility = sendingFacility;
 		this.sendingExtract  = sendingExtract;
-		this.localPatientId = localPatientId;
+		this.localId = localId;
+	}
+	public PidXREF() {
 	}
 	
 	private int id;
 	
 	private String pid;
-
 	private String sendingFacility;
 	private String sendingExtract;
-	private String localPatientId;
+	private String localId;
 	
 	public int getId() {
 		return id;
@@ -52,12 +53,12 @@ public class PidXREF {
 		return this;
 	}
 	
-	public String getLocalPatientId() {
-		return localPatientId;
+	public String getLocalId() {
+		return localId;
 	}
 
-	public PidXREF setLocalPatientId(String localPatientId) {
-		this.localPatientId = localPatientId;
+	public PidXREF setLocalId(String localId) {
+		this.localId = localId;
 		return this;
 	}
 
