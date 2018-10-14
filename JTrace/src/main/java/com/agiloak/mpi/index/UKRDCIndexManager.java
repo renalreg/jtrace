@@ -382,6 +382,18 @@ public class UKRDCIndexManager {
 		}
 		return resp;
 	}
+	public UKRDCIndexManagerResponse getLocalPID(int personId, int masterId, String user, int linkCode, String linkDesc) {
+		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
+		try {
+			linkInternal(personId, masterId, user, linkCode, linkDesc);
+			resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
+		} catch (Exception e) {
+			resp.setStatus(UKRDCIndexManagerResponse.FAIL);
+			resp.setMessage(e.getMessage());
+			resp.setStackTrace(ExceptionUtils.getStackTrace(e));
+		}
+		return resp;
+	}
 	
 	
 	/**
