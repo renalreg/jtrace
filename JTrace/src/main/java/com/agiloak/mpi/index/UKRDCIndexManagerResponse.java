@@ -9,7 +9,14 @@ public class UKRDCIndexManagerResponse {
 	protected String message = "";
 	protected String stackTrace = "";
 	protected NationalIdentity nationalIdentity;
+	protected String pid;
 	
+	public String getPid() {
+		return pid;
+	}
+	public void setPid(String pid) {
+		this.pid = pid;
+	}
 	public int getStatus() {
 		return status;
 	}

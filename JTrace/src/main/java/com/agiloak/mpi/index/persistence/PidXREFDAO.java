@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import com.agiloak.mpi.MpiException;
 import com.agiloak.mpi.SimpleConnectionManager;
+import com.agiloak.mpi.index.MasterRecord;
 import com.agiloak.mpi.index.PidXREF;
 
 /**
@@ -149,6 +150,70 @@ public class PidXREFDAO extends NumberAllocatingDAO {
 			}
 
 		}
+
+	}
+
+	public static PidXREF findByLocalId(String sendingFacility, String sendingExtract, String localId) throws MpiException {
+		
+		logger.debug("Starting");
+
+		String findSQL = "select * from jtrace.pidxref where sendingFacility = ? and sendingExtract = ? and localId = ? ";
+		
+		PreparedStatement preparedStatement = null;
+		Connection conn = null;
+		ResultSet rs = null;
+		
+		PidXREF xref = null;
+		
+		try {
+
+			conn = SimpleConnectionManager.getDBConnection();
+			
+			preparedStatement = conn.prepareStatement(findSQL);
+			preparedStatement.setString(1, sendingFacility);
+			preparedStatement.setString(2, sendingExtract);
+			preparedStatement.setString(3, localId);
+
+			rs = preparedStatement.executeQuery();
+			
+			if (rs.next()){
+				xref = buildRecord(rs);
+			}
+			
+		} catch (Exception e) {
+			logger.error("Failure querying PidXREF.",e);
+			throw new MpiException("Failure querying PidXREF. "+e.getMessage());
+		} finally {
+
+			if (rs != null) {
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing resultset.",e);
+					throw new MpiException("Failure closing resultset. "+e.getMessage());
+				}
+			}
+			
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing prepared statement.",e);
+					throw new MpiException("Failure closing prepared statement. "+e.getMessage());
+				}
+			}
+			if(conn!= null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing Connection",e);
+					throw new MpiException("PidXREF read failed. "+e.getMessage());
+				}
+			}
+
+		}
+		
+		return xref;
 
 	}
 	

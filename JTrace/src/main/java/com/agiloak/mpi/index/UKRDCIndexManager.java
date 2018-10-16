@@ -19,6 +19,7 @@ import com.agiloak.mpi.audit.AuditManager;
 import com.agiloak.mpi.index.persistence.LinkRecordDAO;
 import com.agiloak.mpi.index.persistence.MasterRecordDAO;
 import com.agiloak.mpi.index.persistence.PersonDAO;
+import com.agiloak.mpi.index.persistence.PidXREFDAO;
 import com.agiloak.mpi.normalization.NormalizationManager;
 import com.agiloak.mpi.workitem.WorkItemManager;
 import com.agiloak.mpi.workitem.WorkItemType;
@@ -382,11 +383,12 @@ public class UKRDCIndexManager {
 		}
 		return resp;
 	}
-	public UKRDCIndexManagerResponse getLocalPID(int personId, int masterId, String user, int linkCode, String linkDesc) {
+	public UKRDCIndexManagerResponse getLocalPID(Person person, String sendingFacility, String sendingExtract) {
 		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
 		try {
-			linkInternal(personId, masterId, user, linkCode, linkDesc);
+			String outcome = getLocalPIDInternal(person, sendingFacility, sendingExtract);
 			resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
+			resp.setPid(outcome); // TODO: Work through how this needs to change?
 		} catch (Exception e) {
 			resp.setStatus(UKRDCIndexManagerResponse.FAIL);
 			resp.setMessage(e.getMessage());
@@ -395,6 +397,39 @@ public class UKRDCIndexManager {
 		return resp;
 	}
 	
+	private String getLocalPIDInternal(Person person, String sendingFacility, String sendingExtract) throws MpiException {
+		String outcome = "NEW";
+		boolean matchFound = false;
+		
+		PidXREF xref = PidXREFDAO.findByLocalId(sendingFacility, sendingExtract, person.getLocalId());
+		if (xref!=null) {
+			return xref.getPid();
+		}
+		
+		for (NationalIdentity nid : person.getNationalIds()) {
+
+			// TODO: Look for NI linked to a local id for this SF AND SE - looking for situations where only the number has changed.
+			//       Person joined to LR joined to MR identified by NI and joined to XREF with this SF and SE. New code in LinkRecordDAO
+			
+			//for (Person person : personList) { 
+				// TODO: Verify full demographics
+				//       Look for 100% match with inbound record on GENDER, DOB, SURNAME, FORENAME 
+				
+				// TODO: If matched - This record has not been seen by the EMPI before but it will link to another local record. set outcome = PID and return immediately
+				
+				// TODO: Else - This record has not been seen by the EMPI before but it is related by NI to another local record with different demographics. 
+				//       Set outcome to "REJECT", but carry on looking
+				
+			//}
+			
+		}
+		// If no match found, this record has not been seen by the EMPI before and no local link is found so it will be allocated a new PID on update
+		if (!matchFound) {
+			outcome = "NEW";
+		}
+		
+		return outcome;
+	}
 	
 	/**
 	 *  Created for the UKRDC this is a combined createOrUpdate. This method updates the person, the master (as appropriate) and the link records ( as appropriate)

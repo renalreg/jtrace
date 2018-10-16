@@ -1,5 +1,7 @@
 package com.agiloak.mpi.index.persistence;
 
+import java.util.List;
+
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
@@ -7,6 +9,8 @@ import org.junit.rules.ExpectedException;
 
 import com.agiloak.mpi.MpiException;
 import com.agiloak.mpi.SimpleConnectionManager;
+import com.agiloak.mpi.index.MasterRecord;
+import com.agiloak.mpi.index.Person;
 import com.agiloak.mpi.index.PidXREF;
 
 public class PidXREFTest {
@@ -20,6 +24,7 @@ public class PidXREFTest {
 	public final static String TEST_LOCALID_2  = "1000000002";
 	public final static String TEST_LOCALID_3  = "1000000003";
 	public final static String TEST_LOCALID_4  = "1000000004";
+	public final static String TEST_LOCALID_5  = "1000000005";
 	
 	
 	@BeforeClass
@@ -30,7 +35,7 @@ public class PidXREFTest {
 		PidXREFDAO.deleteByLocalId(TEST_FACILITY_1,TEST_EXTRACT, TEST_LOCALID_2);
 		PidXREFDAO.deleteByLocalId(TEST_FACILITY_1,TEST_EXTRACT, TEST_LOCALID_3);
 		PidXREFDAO.deleteByLocalId(TEST_FACILITY_1,TEST_EXTRACT, TEST_LOCALID_4);
-		
+		PidXREFDAO.deleteByLocalId(TEST_FACILITY_1,TEST_EXTRACT, TEST_LOCALID_5);
 	}
 	
 	@Test
@@ -87,6 +92,21 @@ public class PidXREFTest {
 		PidXREFDAO.create(pidx2);
 		assert(pidx2.getId()!=(pidx.getId()));
 		assert(!pidx2.getPid().equals(pidx.getPid()));
+		assert(pidx2.getSendingFacility().equals(pidx.getSendingFacility()));
+		assert(pidx2.getSendingExtract().equals(pidx.getSendingExtract()));
+		assert(pidx2.getLocalId().equals(pidx.getLocalId()));
+
+	}
+	@Test
+	public void testFindByLocalId() throws MpiException {
+		
+		PidXREF pidx = new PidXREF(TEST_FACILITY_1, TEST_EXTRACT, TEST_LOCALID_5);
+		PidXREFDAO.create(pidx);
+		assert(pidx.getId()>0);
+		
+		PidXREF pidx2 = PidXREFDAO.findByLocalId(TEST_FACILITY_1, TEST_EXTRACT, TEST_LOCALID_5);
+		assert(pidx2.getId()==(pidx.getId()));
+		assert(pidx2.getPid().equals(pidx.getPid()));
 		assert(pidx2.getSendingFacility().equals(pidx.getSendingFacility()));
 		assert(pidx2.getSendingExtract().equals(pidx.getSendingExtract()));
 		assert(pidx2.getLocalId().equals(pidx.getLocalId()));
