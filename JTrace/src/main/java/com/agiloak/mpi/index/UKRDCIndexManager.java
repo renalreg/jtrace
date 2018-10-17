@@ -397,9 +397,16 @@ public class UKRDCIndexManager {
 		return resp;
 	}
 	
+	/**
+	 * @param person
+	 * @param sendingFacility
+	 * @param sendingExtract
+	 * @return
+	 * @throws MpiException
+	 */
 	private String getLocalPIDInternal(Person person, String sendingFacility, String sendingExtract) throws MpiException {
 		String outcome = "NEW";
-		boolean matchFound = false;
+		boolean matchesFound = false;
 		
 		PidXREF xref = PidXREFDAO.findByLocalId(sendingFacility, sendingExtract, person.getLocalId());
 		if (xref!=null) {
@@ -407,24 +414,45 @@ public class UKRDCIndexManager {
 		}
 		
 		for (NationalIdentity nid : person.getNationalIds()) {
+			/**
+			select * from  jtrace.pidxref px, jtrace.person p
+			,jtrace.linkrecord lr, jtrace.masterrecord mr
+			where
+			    px.sendingExtract = 'TEST' and px.sendingFacility = 'RZZ01'
+			and px.pid = p.localId
+			and p.id = lr.personid
+			and lr.masterId = mr.id 
+			and mr.nationalIdType = 'NHS' and mr.nationalId = 'NHS0000001'
+			**/
+			
+			List<Person> matchPersons = PidXREFDAO.FindByNationalIdAndFacility(sendingFacility, sendingExtract, nid.getType(), nid.getId());
 
 			// TODO: Look for NI linked to a local id for this SF AND SE - looking for situations where only the number has changed.
 			//       Person joined to LR joined to MR identified by NI and joined to XREF with this SF and SE. New code in LinkRecordDAO
 			
-			//for (Person person : personList) { 
+			for (Person potentialMatch : matchPersons) { 
+				matchesFound = true;
 				// TODO: Verify full demographics
-				//       Look for 100% match with inbound record on GENDER, DOB, SURNAME, FORENAME 
+				//       Look for 100% match with inbound record on GENDER, DOB, SURNAME, FORENAME
+				boolean matched = person.getGender().equals(potentialMatch.getGender()) &&
+						(person.getDateOfBirth().compareTo(potentialMatch.getDateOfBirth())==0) &&
+						person.getSurname().equals(potentialMatch.getSurname()) &&
+						person.getGivenName().equals(potentialMatch.getGivenName()) ;
 				
-				// TODO: If matched - This record has not been seen by the EMPI before but it will link to another local record. set outcome = PID and return immediately
+				// If matched - This record has not been seen by the EMPI before but it will link to another local record. set outcome = PID and return immediately
+				if (matched) {
+					return person.getLocalId();
+				} else {
+					// This record has not been seen by the EMPI before but it is related by NI to another local record with different demographics. 
+					// Set outcome to "REJECT", but carry on looking
+					outcome = "REJECT";
+				}
 				
-				// TODO: Else - This record has not been seen by the EMPI before but it is related by NI to another local record with different demographics. 
-				//       Set outcome to "REJECT", but carry on looking
-				
-			//}
+			}
 			
 		}
-		// If no match found, this record has not been seen by the EMPI before and no local link is found so it will be allocated a new PID on update
-		if (!matchFound) {
+		// If no matches found, this record has not been seen by the EMPI before and no local link is found so it will be allocated a new PID on update
+		if (!matchesFound) {
 			outcome = "NEW";
 		}
 		

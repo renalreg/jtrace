@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import com.agiloak.mpi.MpiException;
 import com.agiloak.mpi.SimpleConnectionManager;
 import com.agiloak.mpi.index.MasterRecord;
+import com.agiloak.mpi.index.Person;
 import com.agiloak.mpi.index.PidXREF;
 
 /**
@@ -215,6 +217,12 @@ public class PidXREFDAO extends NumberAllocatingDAO {
 		
 		return xref;
 
+	}
+	public static List<Person> FindByNationalIdAndFacility(String sendingFacility, String sendingExtract, String nationalIdType, String nationalId) throws MpiException {
+
+		//TODO
+		return null;
+		
 	}
 	
 	public static String allocate() throws MpiException {

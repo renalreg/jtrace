@@ -1,7 +1,5 @@
 package com.agiloak.mpi.index.persistence;
 
-import java.util.List;
-
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
@@ -9,11 +7,12 @@ import org.junit.rules.ExpectedException;
 
 import com.agiloak.mpi.MpiException;
 import com.agiloak.mpi.SimpleConnectionManager;
+import com.agiloak.mpi.index.LinkRecord;
 import com.agiloak.mpi.index.MasterRecord;
 import com.agiloak.mpi.index.Person;
 import com.agiloak.mpi.index.PidXREF;
 
-public class PidXREFTest {
+public class PidXREFTest extends JTraceTest {
 	
 	@Rule
 	public final ExpectedException exception = ExpectedException.none();
@@ -25,6 +24,7 @@ public class PidXREFTest {
 	public final static String TEST_LOCALID_3  = "1000000003";
 	public final static String TEST_LOCALID_4  = "1000000004";
 	public final static String TEST_LOCALID_5  = "1000000005";
+	public final static String TEST_LOCALID_6  = "1000000006";
 	
 	
 	@BeforeClass
@@ -36,6 +36,7 @@ public class PidXREFTest {
 		PidXREFDAO.deleteByLocalId(TEST_FACILITY_1,TEST_EXTRACT, TEST_LOCALID_3);
 		PidXREFDAO.deleteByLocalId(TEST_FACILITY_1,TEST_EXTRACT, TEST_LOCALID_4);
 		PidXREFDAO.deleteByLocalId(TEST_FACILITY_1,TEST_EXTRACT, TEST_LOCALID_5);
+		PidXREFDAO.deleteByLocalId(TEST_FACILITY_1,TEST_EXTRACT, TEST_LOCALID_6);
 	}
 	
 	@Test
@@ -112,6 +113,38 @@ public class PidXREFTest {
 		assert(pidx2.getLocalId().equals(pidx.getLocalId()));
 
 	}
-	
+
+	@Test
+	public void testFindMatches() throws MpiException {
+		
+		PidXREF pidx = new PidXREF(TEST_FACILITY_1, TEST_EXTRACT, TEST_LOCALID_6);
+		PidXREFDAO.create(pidx);
+		assert(pidx.getId()>0);
+
+		Person person = new Person();
+		person.setOriginator(TEST_FACILITY_1).setLocalId(pidx.getPid()).setLocalIdType("MR");
+		person.setPrimaryIdType("NHS").setPrimaryId("NHS0000001");
+		person.setTitle("MR").setGivenName("Nick").setOtherGivenNames("Ioan").setSurname("JONES");
+		person.setDateOfBirth(getDate("1962-08-31"));
+		person.setGender("1");
+		person.setPostcode("CH1 6LB").setStreet("Oakdene, Townfield Lane");
+		PersonDAO.create(person);
+
+		MasterRecord mr = new MasterRecord();
+		mr.setDateOfBirth(getDate("1962-08-31")).setGender("M");
+		mr.setGivenName("Nick").setSurname("Jones");
+		mr.setNationalId("NHS0000001").setNationalIdType("NHS");
+		mr.setEffectiveDate(getDate("2017-08-22"));
+		MasterRecordDAO.create(mr);
+		
+		LinkRecord lr = new LinkRecord(mr.getId(), person.getId());
+		lr.setUpdatedBy("Nick");
+		lr.setLinkCode(1);
+		lr.setLinkType(2);
+		lr.setLinkDesc("XYZ uses preferred name of patient");
+		LinkRecordDAO.create(lr);
+
+	}
+
 	
 }
