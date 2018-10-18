@@ -414,34 +414,30 @@ public class UKRDCIndexManager {
 		}
 		
 		for (NationalIdentity nid : person.getNationalIds()) {
-			/**
-			select * from  jtrace.pidxref px, jtrace.person p
-			,jtrace.linkrecord lr, jtrace.masterrecord mr
-			where
-			    px.sendingExtract = 'TEST' and px.sendingFacility = 'RZZ01'
-			and px.pid = p.localId
-			and p.id = lr.personid
-			and lr.masterId = mr.id 
-			and mr.nationalIdType = 'NHS' and mr.nationalId = 'NHS0000001'
-			**/
+
+			//  Look for this NI linked to a local id for this SF AND SE - looking for situations where only the number has changed.
+			//  Person joined to LR joined to MR identified by NI and joined to XREF with this SF and SE. New code in LinkRecordDAO
 			
 			List<Person> matchPersons = PidXREFDAO.FindByNationalIdAndFacility(sendingFacility, sendingExtract, nid.getType(), nid.getId());
-
-			// TODO: Look for NI linked to a local id for this SF AND SE - looking for situations where only the number has changed.
-			//       Person joined to LR joined to MR identified by NI and joined to XREF with this SF and SE. New code in LinkRecordDAO
 			
 			for (Person potentialMatch : matchPersons) { 
 				matchesFound = true;
-				// TODO: Verify full demographics
-				//       Look for 100% match with inbound record on GENDER, DOB, SURNAME, FORENAME
+				
+				// Verify full demographics - Look for 100% match with inbound record on GENDER, DOB, SURNAME, FORENAME
+				
 				boolean matched = person.getGender().equals(potentialMatch.getGender()) &&
 						(person.getDateOfBirth().compareTo(potentialMatch.getDateOfBirth())==0) &&
 						person.getSurname().equals(potentialMatch.getSurname()) &&
 						person.getGivenName().equals(potentialMatch.getGivenName()) ;
 				
-				// If matched - This record has not been seen by the EMPI before but it will link to another local record. set outcome = PID and return immediately
 				if (matched) {
-					return person.getLocalId();
+					// If matched - This record has not been seen by the EMPI before but it will link to another local record. set outcome = PID and return immediately
+					
+					// Inefficient, but functionally correct to get the pid from the matched local record. Avoids the rather messy alternative of adding pid to the person or creating a new type to return from the PidXREFDAO for this search.
+					PidXREF xref2 = PidXREFDAO.findByLocalId(sendingFacility, sendingExtract, potentialMatch.getLocalId());
+					if (xref2==null) return "REJECT";
+					return xref2.getPid();
+
 				} else {
 					// This record has not been seen by the EMPI before but it is related by NI to another local record with different demographics. 
 					// Set outcome to "REJECT", but carry on looking

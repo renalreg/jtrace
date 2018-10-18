@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -218,12 +219,106 @@ public class PidXREFDAO extends NumberAllocatingDAO {
 		return xref;
 
 	}
+	
 	public static List<Person> FindByNationalIdAndFacility(String sendingFacility, String sendingExtract, String nationalIdType, String nationalId) throws MpiException {
 
-		//TODO
-		return null;
+		logger.debug("Starting");
+
+		//String findSQL = "select * from jtrace.person p, jtrace.linkrecord lr where lr.masterid = ? and p.id = lr.personid ";
+		String findSQL = "select * from  jtrace.pidxref px, jtrace.person p, jtrace.linkrecord lr, jtrace.masterrecord mr "+
+					     "where px.sendingFacility = ? and px.sendingExtract = ? and px.pid = p.localId and p.id = lr.personid "+
+					     "and lr.masterId = mr.id and mr.nationalIdType = ? and mr.nationalId = ? ";
+
 		
+		PreparedStatement preparedStatement = null;
+		Connection conn = null;
+		ResultSet rs = null;
+		
+		List<Person> personList = new ArrayList<Person>();
+		
+		try {
+
+			conn = SimpleConnectionManager.getDBConnection();
+			
+			preparedStatement = conn.prepareStatement(findSQL);
+			preparedStatement.setString(1, sendingFacility);
+			preparedStatement.setString(2, sendingExtract);
+			preparedStatement.setString(3, nationalIdType);
+			preparedStatement.setString(4, nationalId);
+
+			rs = preparedStatement.executeQuery();
+			
+			while  (rs.next()){
+				Person person = new Person();
+				person.setId(rs.getInt("id"));
+				person.setOriginator(rs.getString("originator"));
+				person.setLocalId(rs.getString("localid"));
+				person.setLocalIdType(rs.getString("localidtype"));
+
+				person.setPrimaryId(rs.getString("nationalid"));
+				person.setPrimaryIdType(rs.getString("nationalidtype"));
+
+				person.setDateOfBirth(rs.getTimestamp("dateofbirth"));
+				person.setGender(rs.getString("gender"));
+				person.setDateOfDeath(rs.getTimestamp("dateofdeath"));
+
+				person.setGivenName(rs.getString("givenname"));
+				person.setOtherGivenNames(rs.getString("othergivennames"));
+				person.setSurname(rs.getString("surname"));
+				person.setPrevSurname(rs.getString("prevsurname"));
+				person.setTitle(rs.getString("title"));
+
+				person.setPostcode(rs.getString("postcode"));
+				person.setStreet(rs.getString("street"));
+
+				person.setStdSurname(rs.getString("stdsurname"));
+				person.setStdGivenName(rs.getString("stdgivenname"));
+				person.setStdPrevSurname(rs.getString("stdprevsurname"));
+				person.setStdPostcode(rs.getString("stdpostcode"));
+				
+				person.setSkipDuplicateCheck(rs.getBoolean("skipduplicatecheck"));
+				
+				personList.add(person);
+				
+			}
+			
+		} catch (Exception e) {
+			logger.error("Failure querying Person.",e);
+			throw new MpiException("Person read failed. "+e.getMessage());
+		} finally {
+
+			if (rs != null) {
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing resultset.",e);
+					throw new MpiException("Person read failed. "+e.getMessage());
+				}
+			}
+			
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing prepared statement.",e);
+					throw new MpiException("Person read failed. "+e.getMessage());
+				}
+			}
+
+			if(conn!= null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing connection.",e);
+					throw new MpiException("Person read failed. "+e.getMessage());
+				}
+			}
+		}
+		
+		return personList;
+
 	}
+
 	
 	public static String allocate() throws MpiException {
 
