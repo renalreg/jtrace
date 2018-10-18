@@ -16,13 +16,16 @@ import org.slf4j.LoggerFactory;
 import com.agiloak.mpi.MpiException;
 import com.agiloak.mpi.audit.Audit;
 import com.agiloak.mpi.audit.AuditManager;
+import com.agiloak.mpi.audit.persistence.AuditDAO;
 import com.agiloak.mpi.index.persistence.LinkRecordDAO;
 import com.agiloak.mpi.index.persistence.MasterRecordDAO;
 import com.agiloak.mpi.index.persistence.PersonDAO;
 import com.agiloak.mpi.index.persistence.PidXREFDAO;
 import com.agiloak.mpi.normalization.NormalizationManager;
+import com.agiloak.mpi.workitem.WorkItem;
 import com.agiloak.mpi.workitem.WorkItemManager;
 import com.agiloak.mpi.workitem.WorkItemType;
+import com.agiloak.mpi.workitem.persistence.WorkItemDAO;
 
 public class UKRDCIndexManager {
 	
@@ -383,6 +386,88 @@ public class UKRDCIndexManager {
 		}
 		return resp;
 	}
+	public UKRDCIndexManagerResponse setLocalPID(Person person, String sendingFacility, String sendingExtract) {
+		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
+		try {
+			String outcome = setLocalPIDInternal(person, sendingFacility, sendingExtract);
+			resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
+			resp.setPid(outcome);
+		} catch (Exception e) {
+			resp.setStatus(UKRDCIndexManagerResponse.FAIL);
+			resp.setMessage(e.getMessage());
+			resp.setStackTrace(ExceptionUtils.getStackTrace(e));
+		}
+		return resp;
+	}
+
+	private String setLocalPIDInternal(Person person, String sendingFacility, String sendingExtract) throws MpiException {
+		String outcome = "NEW";
+		boolean matchesFound = false;
+		
+		PidXREF xref = PidXREFDAO.findByLocalId(sendingFacility, sendingExtract, person.getLocalId());
+		if (xref!=null) {
+			// TODO: Consider checking for change before updating. Optimize only if required
+			PersonDAO.update(person);
+			return xref.getPid();
+		}
+		
+		for (NationalIdentity nid : person.getNationalIds()) {
+
+			//  Look for this NI linked to a local id for this SF AND SE - looking for situations where only the number has changed.
+			//  Person joined to LR joined to MR identified by NI and joined to XREF with this SF and SE. New code in LinkRecordDAO
+			
+			List<Person> matchPersons = PidXREFDAO.FindByNationalIdAndFacility(sendingFacility, sendingExtract, nid.getType(), nid.getId());
+			
+			for (Person potentialMatch : matchPersons) { 
+				matchesFound = true;
+				
+				// Verify full demographics - Look for 100% match with inbound record on GENDER, DOB, SURNAME, FORENAME
+				
+				boolean matched = person.getGender().equals(potentialMatch.getGender()) &&
+						(person.getDateOfBirth().compareTo(potentialMatch.getDateOfBirth())==0) &&
+						person.getSurname().equals(potentialMatch.getSurname()) &&
+						person.getGivenName().equals(potentialMatch.getGivenName()) ;
+				
+				// Inefficient, but functionally correct to get the pid from the matched local record. Avoids the rather messy alternative of adding pid to the person or creating a new type to return from the PidXREFDAO for this search.
+				PidXREF matchedXref = PidXREFDAO.findByLocalId(sendingFacility, sendingExtract, potentialMatch.getLocalId());
+				// Inefficient 2 - get the master id that has facilitated the match
+				MasterRecord matchedMaster = MasterRecordDAO.findByNationalId(nid.getType(), nid.getId());
+
+				if (matched) {
+					
+					// Insert the PIDXREF
+					PidXREF newXref = new PidXREF(sendingFacility, sendingExtract, person.getLocalId()); 
+					newXref.setPid(matchedXref.getPid());
+					PidXREFDAO.create(newXref);
+					
+					// Audit the Match
+					Audit audit = new Audit(Audit.NEW_PIDXREF, person.getId(), matchedMaster.getId(), "PIDXREF Match", null);
+					AuditDAO.create(audit);
+					
+					return newXref.getPid();
+
+				} else {
+					// TODO - Log the degree of match
+					WorkItem wi = new WorkItem(WorkItemType.TYPE_XREF_MATCHED_NOT_VERIFIED, person.getId(), matchedMaster.getId(), "Person matched by facility, extract and national id - not matched by demographics");
+					WorkItemDAO.create(wi);
+					outcome = "REJECT";
+				}
+				
+			}
+			
+		}
+
+		// If no matches found, this record has not been seen by the EMPI before and no local link is found so it will be allocated a new PID and linked to it
+		if (!matchesFound) {
+			outcome = PidXREFDAO.allocate();
+			PidXREF newXref = new PidXREF(sendingFacility, sendingExtract, person.getLocalId()); 
+			newXref.setPid(outcome);
+			PidXREFDAO.create(newXref);
+		}
+		
+		return outcome;
+	}
+	
 	public UKRDCIndexManagerResponse getLocalPID(Person person, String sendingFacility, String sendingExtract) {
 		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
 		try {

@@ -22,6 +22,9 @@ public class Audit {
 	public final static int WORK_ITEM_CREATED = 21;
 	public final static int WORK_ITEM_UPDATED = 22;
 
+	// PIDXREF
+	public final static int NEW_PIDXREF = 31;
+
 	Gson gson = new Gson();
 
 	public Audit(int type, int personId, int masterId, String desc, Map<String,String> attributes) {
