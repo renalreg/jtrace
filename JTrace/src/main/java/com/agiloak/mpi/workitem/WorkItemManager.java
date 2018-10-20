@@ -21,7 +21,7 @@ import com.agiloak.mpi.workitem.persistence.WorkItemDAO;
 public class WorkItemManager {
 	
 	private final static Logger logger = LoggerFactory.getLogger(WorkItemManager.class);
-
+	
 	/**
 	 * Create a new Work Item 
 	 *
@@ -33,6 +33,23 @@ public class WorkItemManager {
 	 * @throws MpiException For any exception encountered. 
 	 */
 	public WorkItem create(int type, int personId, int masterId, String desc) throws MpiException {
+		
+		return create(type, personId, masterId, desc, new HashMap<String,String>());
+
+	}
+
+	/**
+	 * Create a new Work Item 
+	 *
+	 * @param type The type of WorkItem {@link WorkItemType}
+	 * @param personId The id of the person record this refers to
+	 * @param masterId The masterId that this refers to
+	 * @param desc The description of the issue requiring resolution
+	 * @param attributes The additional attributes which vary by event
+	 * @return The WorkItem following creation.
+	 * @throws MpiException For any exception encountered. 
+	 */
+	public WorkItem create(int type, int personId, int masterId, String desc, Map<String,String> attributes) throws MpiException {
 
 		if ( personId==0 ) {
 			throw new MpiException("Person Id must be provided");
@@ -47,7 +64,7 @@ public class WorkItemManager {
 		
 		WorkItem workItem = WorkItemDAO.findByPersonAndMaster(personId, masterId);
 		if (workItem == null) {
-			workItem = new WorkItem(type, personId, masterId, desc);
+			workItem = new WorkItem(type, personId, masterId, desc, attributes);
 			WorkItemDAO.create(workItem);
 			
 			// 2 - AUDIT
@@ -55,7 +72,7 @@ public class WorkItemManager {
 			attr.put("Id", Integer.toString(workItem.getId()));
 			attr.put("Type", Integer.toString(workItem.getType()));
 			AuditManager am = new AuditManager();
-			am.create(Audit.WORK_ITEM_CREATED, personId, masterId, "WI CREATED", attr);
+			//am.create(Audit.WORK_ITEM_CREATED, personId, masterId, "WI CREATED", attr);
 		}
 			
 		return workItem;

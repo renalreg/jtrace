@@ -9,6 +9,7 @@ CREATE TABLE jtrace.workitem
     masterid integer NOT NULL,
     type integer NOT NULL,
     description character varying(100) NOT NULL,
+    attributes character varying(1024),
     status integer NOT NULL,
     lastupdated timestamp NOT NULL,
     updatedBy character varying(20) ,

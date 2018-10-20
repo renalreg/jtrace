@@ -1,6 +1,5 @@
 package com.agiloak.mpi.audit;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,11 +12,6 @@ import org.junit.rules.ExpectedException;
 import com.agiloak.mpi.MpiException;
 import com.agiloak.mpi.SimpleConnectionManager;
 import com.agiloak.mpi.audit.persistence.AuditDAO;
-import com.agiloak.mpi.index.NationalIdentity;
-import com.agiloak.mpi.index.Person;
-import com.agiloak.mpi.index.UKRDCIndexManager;
-import com.agiloak.mpi.index.UKRDCIndexManagerBaseTest;
-import com.agiloak.mpi.index.UKRDCIndexManagerResponse;
 
 public class AuditTest {
 

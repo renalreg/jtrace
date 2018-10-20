@@ -22,15 +22,13 @@ import com.agiloak.mpi.index.persistence.MasterRecordDAO;
 import com.agiloak.mpi.index.persistence.PersonDAO;
 import com.agiloak.mpi.index.persistence.PidXREFDAO;
 import com.agiloak.mpi.normalization.NormalizationManager;
-import com.agiloak.mpi.workitem.WorkItem;
 import com.agiloak.mpi.workitem.WorkItemManager;
 import com.agiloak.mpi.workitem.WorkItemType;
-import com.agiloak.mpi.workitem.persistence.WorkItemDAO;
 
 public class UKRDCIndexManager {
 	
 	private final static Logger logger = LoggerFactory.getLogger(UKRDCIndexManager.class);
-	public static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+	public static SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd");
 	
 	/**
 	 * Allow manual linking of records
@@ -106,7 +104,7 @@ public class UKRDCIndexManager {
 
 		Date dob;
 	    try {
-		   dob = formatter.parse(psr.getDateOfBirth());
+		   dob = dateFormatter.parse(psr.getDateOfBirth());
 		} catch (ParseException e) {
 			logger.error("Invalid Date Of Birth Format");
 			throw new MpiException("Invalid Date Of Birth Format");
@@ -389,9 +387,16 @@ public class UKRDCIndexManager {
 	public UKRDCIndexManagerResponse setLocalPID(Person person, String sendingFacility, String sendingExtract) {
 		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
 		try {
-			String outcome = setLocalPIDInternal(person, sendingFacility, sendingExtract);
-			resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
-			resp.setPid(outcome);
+			String pid = setLocalPIDInternal(person, sendingFacility, sendingExtract);
+			
+			if (pid==null) {
+				resp.setStatus(UKRDCIndexManagerResponse.FAIL);
+				resp.setMessage("FAILED TO MATCH - SEE WORK ITEMS");
+			} else {
+				resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
+				resp.setPid(pid);
+			}
+			
 		} catch (Exception e) {
 			resp.setStatus(UKRDCIndexManagerResponse.FAIL);
 			resp.setMessage(e.getMessage());
@@ -401,13 +406,11 @@ public class UKRDCIndexManager {
 	}
 
 	private String setLocalPIDInternal(Person person, String sendingFacility, String sendingExtract) throws MpiException {
-		String outcome = "NEW";
+		String pid = null;
 		boolean matchesFound = false;
 		
 		PidXREF xref = PidXREFDAO.findByLocalId(sendingFacility, sendingExtract, person.getLocalId());
 		if (xref!=null) {
-			// TODO: Consider checking for change before updating. Optimize only if required
-			PersonDAO.update(person);
 			return xref.getPid();
 		}
 		
@@ -431,7 +434,13 @@ public class UKRDCIndexManager {
 				// Inefficient, but functionally correct to get the pid from the matched local record. Avoids the rather messy alternative of adding pid to the person or creating a new type to return from the PidXREFDAO for this search.
 				PidXREF matchedXref = PidXREFDAO.findByLocalId(sendingFacility, sendingExtract, potentialMatch.getLocalId());
 				// Inefficient 2 - get the master id that has facilitated the match
-				MasterRecord matchedMaster = MasterRecordDAO.findByNationalId(nid.getType(), nid.getId());
+				MasterRecord matchedMaster = MasterRecordDAO.findByNationalId(nid.getId(), nid.getType());
+
+				// Set up attributes for either the 
+				Map<String,String> attributes = new HashMap<String, String>();
+				attributes.put("SF", sendingFacility);
+				attributes.put("SE", sendingExtract);
+				attributes.put("MRN", person.getLocalId());
 
 				if (matched) {
 					
@@ -441,16 +450,21 @@ public class UKRDCIndexManager {
 					PidXREFDAO.create(newXref);
 					
 					// Audit the Match
-					Audit audit = new Audit(Audit.NEW_PIDXREF, person.getId(), matchedMaster.getId(), "PIDXREF Match", null);
+					Audit audit = new Audit(Audit.NEW_PIDXREF, potentialMatch.getId(), matchedMaster.getId(), "PIDXREF Match", attributes);
 					AuditDAO.create(audit);
-					
-					return newXref.getPid();
+					pid = newXref.getPid();
+					continue;
 
 				} else {
-					// TODO - Log the degree of match
-					WorkItem wi = new WorkItem(WorkItemType.TYPE_XREF_MATCHED_NOT_VERIFIED, person.getId(), matchedMaster.getId(), "Person matched by facility, extract and national id - not matched by demographics");
-					WorkItemDAO.create(wi);
-					outcome = "REJECT";
+					if ( !person.getGender().equals(potentialMatch.getGender()) ) attributes.put("Gender", person.getGender()+":"+potentialMatch.getGender());
+					if ( !person.getSurname().equals(potentialMatch.getSurname()) ) attributes.put("Surname", person.getSurname()+":"+potentialMatch.getSurname());
+					if ( !person.getGivenName().equals(potentialMatch.getGivenName()) ) attributes.put("GivenName", person.getGivenName()+":"+potentialMatch.getGivenName());
+					if ( person.getDateOfBirth().compareTo(potentialMatch.getDateOfBirth()) != 0 ) attributes.put("DOB", dateFormatter.format(person.getDateOfBirth()) + ":" + dateFormatter.format(potentialMatch.getDateOfBirth()));
+
+					WorkItemManager wim = new WorkItemManager();
+					int personToLog = person.getId();
+					if (personToLog==0) personToLog = 999999999; // Person is not known at this point
+					wim.create(WorkItemType.TYPE_XREF_MATCHED_NOT_VERIFIED, personToLog, matchedMaster.getId(), "Person matched by facility, extract and national id - not matched by demographics", attributes);
 				}
 				
 			}
@@ -459,13 +473,12 @@ public class UKRDCIndexManager {
 
 		// If no matches found, this record has not been seen by the EMPI before and no local link is found so it will be allocated a new PID and linked to it
 		if (!matchesFound) {
-			outcome = PidXREFDAO.allocate();
 			PidXREF newXref = new PidXREF(sendingFacility, sendingExtract, person.getLocalId()); 
-			newXref.setPid(outcome);
 			PidXREFDAO.create(newXref);
+			pid = newXref.getPid();
 		}
 		
-		return outcome;
+		return pid;
 	}
 	
 	public UKRDCIndexManagerResponse getLocalPID(Person person, String sendingFacility, String sendingExtract) {

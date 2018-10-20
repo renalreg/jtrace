@@ -1,8 +1,32 @@
 package com.agiloak.mpi.workitem;
 
+import java.lang.reflect.Type;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 public class WorkItem {
+
+	Gson gson = new Gson();
+
+	/**
+	 * @param type The type of WorkItem {@link WorkItemType}
+	 * @param personId The id of the person record this refers to
+	 * @param masterId The masterId that this refers to
+	 * @param desc The description of the issue requiring resolution
+	 */
+	public WorkItem(int type, int personId, int masterId, String desc, Map<String, String> attributes) {
+		this.type = type;
+		this.personId = personId;
+		this.masterId = masterId;
+		this.description = desc;
+		this.attributes = attributes;
+		this.status = WorkItemStatus.STATUS_OPEN;
+		this.lastUpdated = new Date();
+	}
 
 	/**
 	 * @param type The type of WorkItem {@link WorkItemType}
@@ -19,6 +43,27 @@ public class WorkItem {
 		this.lastUpdated = new Date();
 	}
 	
+	/**
+	 * @param type The type of WorkItem {@link WorkItemType}
+	 * @param personId The id of the person record this refers to
+	 * @param masterId The masterId that this refers to
+	 * @param desc The description of the issue requiring resolution
+	 * @param attributes The attributes of the work item which vary with the circumstance
+	 */
+	public WorkItem(int type, int personId, int masterId, String desc, String attributes) {
+		this.type = type;
+		this.personId = personId;
+		this.masterId = masterId;
+		this.description = desc;
+	    if (attributes == null || attributes.equalsIgnoreCase("null")) {
+	    	this.attributes = new HashMap<String,String>();
+	    } else {
+			Type reqType = new TypeToken<Map<String,String>>() {}.getType();
+			Map<String,String> attrMap = gson.fromJson(attributes, reqType);
+			this.attributes = attrMap;
+	    }
+	}
+
 	private int id;
 	private Date lastUpdated;
 	private String description;
@@ -28,7 +73,8 @@ public class WorkItem {
 	private int type;
 	private String updatedBy;
 	private String updateDesc;
-	
+	private Map<String,String> attributes;
+
 	public int getId() {
 		return id;
 	}
@@ -91,5 +137,16 @@ public class WorkItem {
 		this.updateDesc = updateDesc;
 	}
 
+	public Map<String,String> getAttributes() {
+		return attributes;
+	}
+	public void setAttributes(Map<String,String> attributes) {
+		this.attributes = attributes;
+	}
+	public String getAttributesJson() {
+		Type respType = new TypeToken<Map<String,String>>() {}.getType();
+        String jsonResponse = gson.toJson(this.attributes, respType);
+		return jsonResponse;
+	}	
 	
 }

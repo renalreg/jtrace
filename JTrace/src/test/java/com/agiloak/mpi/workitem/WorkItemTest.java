@@ -1,6 +1,8 @@
 package com.agiloak.mpi.workitem;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -27,13 +29,14 @@ public class WorkItemTest {
 		WorkItemDAO.deleteByPerson(200003);
 		WorkItemDAO.deleteByPerson(200004);
 		WorkItemDAO.deleteByPerson(200005);
+		WorkItemDAO.deleteByPerson(200006);
 		
 		WorkItemManager wim = new WorkItemManager();
 		WorkItem wi1 = wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200005, 1, "test");
 		testWorkItemId = wi1.getId();
 
 	}
-	
+
 	@Test
 	public void testCreate() throws MpiException {
 		WorkItemManager wim = new WorkItemManager();
@@ -210,4 +213,30 @@ public class WorkItemTest {
 		exception.expect(MpiException.class);
 		wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL,1,3,"");
 	}
+	@Test
+	public void testCreateWithAttributes() throws MpiException {
+		WorkItemManager wim = new WorkItemManager();
+		Map<String,String> attr = new HashMap<String, String>();
+		attr.put("TestK1", "TestV1");
+		attr.put("TestK2", "TestV2");
+		WorkItem wi1 = wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200006, 1, "test", attr);
+		assert(true);
+
+		List<WorkItem> workItems = wim.findByPerson(200006);
+		assert(workItems.size()==1);
+		
+		WorkItem wi2 = workItems.get(0);
+		assert(wi2.getId()==wi1.getId());
+		assert(wi2.getPersonId()==wi1.getPersonId());
+		assert(wi2.getStatus()==wi1.getStatus());
+		assert(wi2.getType()==wi1.getType());
+		assert(wi2.getDescription().equals(wi1.getDescription()));
+		assert(wi2.getLastUpdated().compareTo(wi1.getLastUpdated())==0);
+		assert(wi2.getAttributes().size()==2);
+		assert(wi2.getAttributes().get("TestK1").equals("TestV1"));
+		assert(wi2.getAttributes().get("TestK2").equals("TestV2"));
+		
+	}
+	
+	
 }

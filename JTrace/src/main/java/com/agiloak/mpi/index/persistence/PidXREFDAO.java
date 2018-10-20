@@ -94,8 +94,10 @@ public class PidXREFDAO extends NumberAllocatingDAO {
 
 		logger.debug("Starting");
 		
-		String pid = allocate();
-		xref.setPid(pid);
+		if (xref.getPid()==null) {
+			String pid = allocate();
+			xref.setPid(pid);
+		}
 
 		String insertSQL = "Insert into jtrace.pidxref "+
 				"(pid, sendingFacility, sendingExtract, localId)"+

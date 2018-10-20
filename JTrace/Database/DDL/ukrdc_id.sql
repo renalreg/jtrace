@@ -1,3 +1,4 @@
+DROP SEQUENCE IF EXISTS jtrace.ukrdc_id;
 CREATE SEQUENCE jtrace.ukrdc_id
     INCREMENT 1
     START 100000000
