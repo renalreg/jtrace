@@ -391,7 +391,7 @@ public class UKRDCIndexManager {
 			
 			if (pid==null) {
 				resp.setStatus(UKRDCIndexManagerResponse.FAIL);
-				resp.setMessage("FAILED TO MATCH - SEE WORK ITEMS");
+				resp.setMessage("FAILED TO MATCH DURING UPDATE - SEE WORK ITEMS");
 			} else {
 				resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
 				resp.setPid(pid);
@@ -454,7 +454,9 @@ public class UKRDCIndexManager {
 					Audit audit = new Audit(Audit.NEW_PIDXREF, potentialMatch.getId(), matchedMaster.getId(), "PIDXREF Match", attributes);
 					AuditDAO.create(audit);
 					pid = newXref.getPid();
-					continue;
+					
+					// Don't process any more potential matches or we will get multiple links to the same PID
+					break;
 
 				} else {
 					if ( !person.getGender().equals(potentialMatch.getGender()) ) attributes.put("Gender", person.getGender()+":"+potentialMatch.getGender());
@@ -488,10 +490,10 @@ public class UKRDCIndexManager {
 			String outcome = getLocalPIDInternal(person, sendingFacility, sendingExtract);
 			if (outcome.equals("REJECT")) {
 				resp.setStatus(UKRDCIndexManagerResponse.FAIL);
-				resp.setPid("Rejected - See Work Item"); 
+				resp.setMessage("FAILED TO MATCH DURING VALIDATION - SEE WORK ITEMS");
 			} else {
 				resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
-				resp.setPid(outcome); // TODO: Work through how this needs to change?
+				resp.setPid(outcome); 
 			}
 		} catch (Exception e) {
 			resp.setStatus(UKRDCIndexManagerResponse.FAIL);
