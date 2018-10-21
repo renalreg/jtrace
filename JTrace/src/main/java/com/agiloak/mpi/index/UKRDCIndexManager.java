@@ -426,8 +426,9 @@ public class UKRDCIndexManager {
 				
 				// Verify full demographics - Look for 100% match with inbound record on GENDER, DOB, SURNAME, FORENAME
 				
+				int dobMatch = matchDobParts(person.getDateOfBirth(), potentialMatch.getDateOfBirth());
 				boolean matched = person.getGender().equals(potentialMatch.getGender()) &&
-						(person.getDateOfBirth().compareTo(potentialMatch.getDateOfBirth())==0) &&
+						(dobMatch==3) &&
 						person.getSurname().equals(potentialMatch.getSurname()) &&
 						person.getGivenName().equals(potentialMatch.getGivenName()) ;
 				
@@ -436,7 +437,7 @@ public class UKRDCIndexManager {
 				// Inefficient 2 - get the master id that has facilitated the match
 				MasterRecord matchedMaster = MasterRecordDAO.findByNationalId(nid.getId(), nid.getType());
 
-				// Set up attributes for either the 
+				// Set up attributes for either the Audit or the WorkItem
 				Map<String,String> attributes = new HashMap<String, String>();
 				attributes.put("SF", sendingFacility);
 				attributes.put("SE", sendingExtract);
@@ -459,7 +460,7 @@ public class UKRDCIndexManager {
 					if ( !person.getGender().equals(potentialMatch.getGender()) ) attributes.put("Gender", person.getGender()+":"+potentialMatch.getGender());
 					if ( !person.getSurname().equals(potentialMatch.getSurname()) ) attributes.put("Surname", person.getSurname()+":"+potentialMatch.getSurname());
 					if ( !person.getGivenName().equals(potentialMatch.getGivenName()) ) attributes.put("GivenName", person.getGivenName()+":"+potentialMatch.getGivenName());
-					if ( person.getDateOfBirth().compareTo(potentialMatch.getDateOfBirth()) != 0 ) attributes.put("DOB", dateFormatter.format(person.getDateOfBirth()) + ":" + dateFormatter.format(potentialMatch.getDateOfBirth()));
+					if ( dobMatch < 3 ) attributes.put("DOB", dateFormatter.format(person.getDateOfBirth()) + ":" + dateFormatter.format(potentialMatch.getDateOfBirth()));
 
 					WorkItemManager wim = new WorkItemManager();
 					int personToLog = person.getId();
@@ -485,8 +486,13 @@ public class UKRDCIndexManager {
 		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
 		try {
 			String outcome = getLocalPIDInternal(person, sendingFacility, sendingExtract);
-			resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
-			resp.setPid(outcome); // TODO: Work through how this needs to change?
+			if (outcome.equals("REJECT")) {
+				resp.setStatus(UKRDCIndexManagerResponse.FAIL);
+				resp.setPid("Rejected - See Work Item"); 
+			} else {
+				resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
+				resp.setPid(outcome); // TODO: Work through how this needs to change?
+			}
 		} catch (Exception e) {
 			resp.setStatus(UKRDCIndexManagerResponse.FAIL);
 			resp.setMessage(e.getMessage());
@@ -523,22 +529,40 @@ public class UKRDCIndexManager {
 				
 				// Verify full demographics - Look for 100% match with inbound record on GENDER, DOB, SURNAME, FORENAME
 				
+				int dobMatch = matchDobParts(person.getDateOfBirth(), potentialMatch.getDateOfBirth());
 				boolean matched = person.getGender().equals(potentialMatch.getGender()) &&
-						(person.getDateOfBirth().compareTo(potentialMatch.getDateOfBirth())==0) &&
+						(dobMatch==3) &&
 						person.getSurname().equals(potentialMatch.getSurname()) &&
 						person.getGivenName().equals(potentialMatch.getGivenName()) ;
 				
 				if (matched) {
 					// If matched - This record has not been seen by the EMPI before but it will link to another local record. set outcome = PID and return immediately
-					
-					// Inefficient, but functionally correct to get the pid from the matched local record. Avoids the rather messy alternative of adding pid to the person or creating a new type to return from the PidXREFDAO for this search.
-					PidXREF xref2 = PidXREFDAO.findByLocalId(sendingFacility, sendingExtract, potentialMatch.getLocalId());
-					if (xref2==null) return "REJECT";
-					return xref2.getPid();
+					// This is the validation cycle so don't allocate the PID until the update call
+					//PidXREF xref2 = PidXREFDAO.findByLocalId(sendingFacility, sendingExtract, potentialMatch.getLocalId());
+					//return xref2.getPid();
+					return "NEW";
 
 				} else {
 					// This record has not been seen by the EMPI before but it is related by NI to another local record with different demographics. 
 					// Set outcome to "REJECT", but carry on looking
+					// Set up attributes for either the 
+
+					// Inefficient - get the master id that has facilitated the match
+					MasterRecord matchedMaster = MasterRecordDAO.findByNationalId(nid.getId(), nid.getType());
+					Map<String,String> attributes = new HashMap<String, String>();
+					attributes.put("SF", sendingFacility);
+					attributes.put("SE", sendingExtract);
+					attributes.put("MRN", person.getLocalId());
+					if ( !person.getGender().equals(potentialMatch.getGender()) ) attributes.put("Gender", person.getGender()+":"+potentialMatch.getGender());
+					if ( !person.getSurname().equals(potentialMatch.getSurname()) ) attributes.put("Surname", person.getSurname()+":"+potentialMatch.getSurname());
+					if ( !person.getGivenName().equals(potentialMatch.getGivenName()) ) attributes.put("GivenName", person.getGivenName()+":"+potentialMatch.getGivenName());
+					if ( dobMatch < 3 ) attributes.put("DOB", dateFormatter.format(person.getDateOfBirth()) + ":" + dateFormatter.format(potentialMatch.getDateOfBirth()));
+
+					WorkItemManager wim = new WorkItemManager();
+					int personToLog = person.getId();
+					if (personToLog==0) personToLog = 999999999; // Person is not known at this point
+					wim.create(WorkItemType.TYPE_XREF_MATCHED_NOT_VERIFIED, personToLog, matchedMaster.getId(), "Person matched by facility, extract and national id - not matched by demographics", attributes);
+
 					outcome = "REJECT";
 				}
 				

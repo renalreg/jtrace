@@ -139,8 +139,7 @@ public class UKRDCIndexManagerGetLocalPidUnitTest extends JTraceTest {
 		
 		UKRDCIndexManager im = new UKRDCIndexManager();
 		UKRDCIndexManagerResponse resp = im.getLocalPID(person2, TEST_FACILITY_1, TEST_EXTRACT);
-		assert(resp.getStatus()==UKRDCIndexManagerResponse.SUCCESS);
-		assert(resp.getPid().equals("REJECT"));
+		assert(resp.getStatus()==UKRDCIndexManagerResponse.FAIL);
 		
 	}
 
@@ -184,7 +183,7 @@ public class UKRDCIndexManagerGetLocalPidUnitTest extends JTraceTest {
 		UKRDCIndexManager im = new UKRDCIndexManager();
 		UKRDCIndexManagerResponse resp = im.getLocalPID(person2, TEST_FACILITY_1, TEST_EXTRACT);
 		assert(resp.getStatus()==UKRDCIndexManagerResponse.SUCCESS);
-		assert(resp.getPid().equals(pidx.getPid()));
+		assert(resp.getPid().equals("NEW"));
 		
 	}
 
