@@ -94,7 +94,7 @@ public class UKRDCIndexManagerMergeSystemTest extends UKRDCIndexManagerBaseTest 
 		
 		// Check that audit has been created
 		List<Audit> audits = AuditDAO.findByPerson(p2.getId());
-		assert(audits.size()==4);
+		assert(audits.size()==2);
 		for (Audit audit : audits) {
 			assert((audit.getType()==Audit.UKRDC_MERGE) || (audit.getType()==Audit.NO_MATCH_ASSIGN_NEW)  || (audit.getType()==Audit.WORK_ITEM_CREATED));
 		}

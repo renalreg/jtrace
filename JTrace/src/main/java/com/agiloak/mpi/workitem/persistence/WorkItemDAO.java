@@ -25,8 +25,8 @@ public class WorkItemDAO {
 		logger.debug("Starting");
 		
 		String insertSQL = "Insert into jtrace.workitem "+
-				"(personid, masterid, type, description, status, lastupdated, updatedby, updatedesc)"+ 
-				" values (?,?,?,?,?,?,?,?)";
+				"(personid, masterid, type, description, attributes, status, lastupdated, updatedby, updatedesc)"+ 
+				" values (?,?,?,?,?,?,?,?,?)";
 		
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;
@@ -40,10 +40,12 @@ public class WorkItemDAO {
 			preparedStatement.setInt(2, workItem.getMasterId());
 			preparedStatement.setInt(3, workItem.getType());
 			preparedStatement.setString(4, workItem.getDescription());
-			preparedStatement.setInt(5, workItem.getStatus());
-			preparedStatement.setTimestamp(6,new Timestamp(workItem.getLastUpdated().getTime()));
-			preparedStatement.setString(7, workItem.getUpdatedBy());
-			preparedStatement.setString(8, workItem.getUpdateDesc());
+			preparedStatement.setString(5, workItem.getAttributesJson());
+			
+			preparedStatement.setInt(6, workItem.getStatus());
+			preparedStatement.setTimestamp(7,new Timestamp(workItem.getLastUpdated().getTime()));
+			preparedStatement.setString(8, workItem.getUpdatedBy());
+			preparedStatement.setString(9, workItem.getUpdateDesc());
 
 			int affectedRows = preparedStatement.executeUpdate();
 			logger.debug("Affected Rows:"+affectedRows);
@@ -256,7 +258,8 @@ public class WorkItemDAO {
 				int mid = rs.getInt("masterid");
 				int type = rs.getInt("type");
 				String desc = rs.getString("description");
-				workItem = new WorkItem(type, pid, mid, desc);
+				String attributes = rs.getString("attributes");
+				workItem = new WorkItem(type, pid, mid, desc, attributes);
 				workItem.setStatus(rs.getInt("status"));
 				workItem.setId(rs.getInt("id"));
 				workItem.setLastUpdated(rs.getTimestamp("lastUpdated"));
@@ -326,7 +329,8 @@ public class WorkItemDAO {
 				int mid = rs.getInt("masterid");
 				int type = rs.getInt("type");
 				String desc = rs.getString("description");
-				WorkItem item = new WorkItem(type, pid, mid, desc);
+				String attributes = rs.getString("attributes");
+				WorkItem item  = new WorkItem(type, pid, mid, desc, attributes);
 				item.setStatus(rs.getInt("status"));
 				item.setId(rs.getInt("id"));
 				item.setLastUpdated(rs.getTimestamp("lastUpdated"));
@@ -399,7 +403,8 @@ public class WorkItemDAO {
 				int mid = rs.getInt("masterid");
 				int type = rs.getInt("type");
 				String desc = rs.getString("description");
-				workItem = new WorkItem(type, pid, mid, desc);
+				String attributes = rs.getString("attributes");
+				workItem = new WorkItem(type, pid, mid, desc, attributes);
 				workItem.setStatus(rs.getInt("status"));
 				workItem.setId(rs.getInt("id"));
 				workItem.setLastUpdated(rs.getTimestamp("lastUpdated"));

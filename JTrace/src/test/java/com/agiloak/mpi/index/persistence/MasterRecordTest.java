@@ -1,6 +1,5 @@
 package com.agiloak.mpi.index.persistence;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
@@ -14,10 +13,8 @@ import com.agiloak.mpi.SimpleConnectionManager;
 import com.agiloak.mpi.index.MasterRecord;
 import com.agiloak.mpi.index.Person;
 
-public class MasterRecordTest {
+public class MasterRecordTest extends JTraceTest {
 	
-	public static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-
 	@Rule
 	public final ExpectedException exception = ExpectedException.none();
 
@@ -301,18 +298,5 @@ public class MasterRecordTest {
 			assert(mr2.getStatus()==MasterRecord.OK);
 		}
 
-	}
-	
-	private static java.util.Date getDate(String sDate){
-		
-		java.util.Date uDate = null;
-	    try {
-		   uDate = formatter.parse(sDate);
-		} catch (ParseException e) {
-			e.printStackTrace();
-			assert(false);
-		}	
-	    return uDate;
-	    
 	}
 }
