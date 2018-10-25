@@ -1,7 +1,4 @@
 -- Table: jtrace.person
-
-DROP TABLE IF EXISTS jtrace.person;
-
 CREATE TABLE jtrace.person
 (
   id SERIAL UNIQUE,
@@ -13,13 +10,13 @@ CREATE TABLE jtrace.person
   dateofbirth date NOT NULL,
   gender character(2) NOT NULL,
   dateofdeath date,
-  givenname character varying(50),
-  surname character varying(50),
-  prevsurname character varying(50),
-  othergivennames character varying(50),
+  givenname character varying(60),
+  surname character varying(60),
+  prevsurname character varying(60),
+  othergivennames character varying(60),
   title character varying(20),
   postcode character(10),
-  street character varying(50),
+  street character varying(220),
   stdsurname character(4),
   stdprevsurname character(4),
   stdgivenname character(4),
@@ -30,5 +27,7 @@ WITH (
   OIDS=FALSE
 );
 ALTER TABLE jtrace.person
-  OWNER TO postgres;
+  OWNER TO ukrdc;
+
+GRANT ALL PRIVILEGES ON TABLE jtrace.person to ukrdc;
 

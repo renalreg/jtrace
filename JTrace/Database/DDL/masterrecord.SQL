@@ -1,15 +1,12 @@
 -- Table: jtrace.masterrecord
-
-DROP TABLE IF EXISTS jtrace.masterrecord;
-
 CREATE TABLE jtrace.masterrecord
 (
     id SERIAL UNIQUE,
     lastupdated timestamp without time zone NOT NULL,
     dateofbirth date NOT NULL,
     gender character varying(5) COLLATE pg_catalog."default",
-    givenname character varying(50) COLLATE pg_catalog."default",
-    surname character varying(50) COLLATE pg_catalog."default",
+    givenname character varying(60) COLLATE pg_catalog."default",
+    surname character varying(60) COLLATE pg_catalog."default",
     nationalid character(10) COLLATE pg_catalog."default" NOT NULL,
     nationalidtype character(5) COLLATE pg_catalog."default" NOT NULL,
     status int NOT NULL,
@@ -21,5 +18,6 @@ WITH (
 )
 TABLESPACE pg_default;
 
-ALTER TABLE jtrace.masterrecord
-    OWNER to postgres;
+ALTER TABLE jtrace.masterrecord OWNER to ukrdc;
+
+GRANT ALL PRIVILEGES ON TABLE jtrace.masterrecord to ukrdc;
