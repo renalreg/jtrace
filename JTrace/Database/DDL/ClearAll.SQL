@@ -7,5 +7,5 @@ delete from jtrace.workitem;
 delete from jtrace.tracerequest;
 delete from jtrace.traceresponse;
 delete from jtrace.traceresponseline;
-ALTER SEQUENCE jtrace.ukrdc_id RESTART WITH 100000000;
+ALTER SEQUENCE jtrace.ukrdc_id RESTART WITH 500000000;
 ALTER SEQUENCE jtrace.patient_id RESTART WITH 1000000000;

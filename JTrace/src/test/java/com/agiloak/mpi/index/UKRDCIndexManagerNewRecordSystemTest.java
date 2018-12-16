@@ -325,7 +325,7 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(!natId.getId().equals(ukrdcId));
-		assert(natId.getId().startsWith("10")); // Allocated numbers will start with 10 whereas numbers sent in from test stub begin RR 
+		assert(natId.getId().startsWith("50")); // Allocated numbers will start with 50 whereas numbers sent in from test stub begin RR 
 		assert(natId.getId().length()==9);      // Allocated numbers are 9 characters long 
 		person = PersonDAO.findByLocalId(p2.getLocalIdType(), p2.getLocalId(), p2.getOriginator());
 		assert(person!=null);
@@ -424,7 +424,7 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(!natId.getId().equals(ukrdcId));
-		assert(natId.getId().startsWith("10")); // Allocated numbers will start with 10 whereas numbers sent in from test stub begin RR 
+		assert(natId.getId().startsWith("50")); // Allocated numbers will start with 50 whereas numbers sent in from test stub begin RR 
 		assert(natId.getId().length()==9);      // Allocated numbers are 9 characters long 
 		person = PersonDAO.findByLocalId(p3.getLocalIdType(), p3.getLocalId(), p3.getOriginator());
 		assert(person!=null);
