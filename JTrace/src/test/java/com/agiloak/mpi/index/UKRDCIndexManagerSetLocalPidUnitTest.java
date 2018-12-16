@@ -116,7 +116,8 @@ public class UKRDCIndexManagerSetLocalPidUnitTest extends JTraceTest {
 		person2.setTitle("MR").setGivenName("Nick").setOtherGivenNames("Ioan").setSurname("JONES");
 		person2.setDateOfBirth(getDate("1962-08-31"));
 		person2.setGender("1");
-		
+		person2.setUnconsolidatedLocalId(person2.getLocalId());
+
 		UKRDCIndexManager im = new UKRDCIndexManager();
 		UKRDCIndexManagerResponse resp = im.setLocalPID(person2, TEST_FACILITY_1, TEST_EXTRACT);
 		assert(resp.getStatus()==UKRDCIndexManagerResponse.SUCCESS);
@@ -159,6 +160,7 @@ public class UKRDCIndexManagerSetLocalPidUnitTest extends JTraceTest {
 		person2.setTitle("MR").setGivenName("Nick").setOtherGivenNames("Ioan").setSurname("JONES");
 		person2.setDateOfBirth(getDate("1962-08-31"));
 		person2.setGender("1");
+		person2.setUnconsolidatedLocalId(person2.getLocalId());
 		
 		UKRDCIndexManager im = new UKRDCIndexManager();
 		UKRDCIndexManagerResponse resp = im.setLocalPID(person2, TEST_FACILITY_1, TEST_EXTRACT);
@@ -210,6 +212,7 @@ public class UKRDCIndexManagerSetLocalPidUnitTest extends JTraceTest {
 		person.addNationalId(new NationalIdentity("NHS", "NHSSLP003A"));
 		person2.setDateOfBirth(getDate("1962-08-31"));
 		person2.setGender("1");
+		person2.setUnconsolidatedLocalId(person2.getLocalId());
 		
 		UKRDCIndexManager im = new UKRDCIndexManager();
 		UKRDCIndexManagerResponse resp = im.setLocalPID(person2, TEST_FACILITY_1, TEST_EXTRACT);
@@ -261,6 +264,7 @@ public class UKRDCIndexManagerSetLocalPidUnitTest extends JTraceTest {
 		person2.setTitle("MR").setGivenName("MATT").setSurname("JONES");
 		person2.setDateOfBirth(getDate("1962-08-31"));
 		person2.setGender("1");
+		person2.setUnconsolidatedLocalId(person2.getLocalId());
 		
 		UKRDCIndexManager im = new UKRDCIndexManager();
 		UKRDCIndexManagerResponse resp = im.setLocalPID(person2, TEST_FACILITY_1, TEST_EXTRACT);
@@ -304,6 +308,7 @@ public class UKRDCIndexManagerSetLocalPidUnitTest extends JTraceTest {
 		person2.setTitle("MR").setGivenName("NICK").setSurname("SMITH");
 		person2.setDateOfBirth(getDate("1962-08-31"));
 		person2.setGender("1");
+		person2.setUnconsolidatedLocalId(person2.getLocalId());
 		
 		UKRDCIndexManager im = new UKRDCIndexManager();
 		UKRDCIndexManagerResponse resp = im.setLocalPID(person2, TEST_FACILITY_1, TEST_EXTRACT);
@@ -347,6 +352,7 @@ public class UKRDCIndexManagerSetLocalPidUnitTest extends JTraceTest {
 		person2.setTitle("MRS").setGivenName("NICK").setSurname("JONES");
 		person2.setDateOfBirth(getDate("1962-08-31"));
 		person2.setGender("2");
+		person2.setUnconsolidatedLocalId(person2.getLocalId());
 		
 		UKRDCIndexManager im = new UKRDCIndexManager();
 		UKRDCIndexManagerResponse resp = im.setLocalPID(person2, TEST_FACILITY_1, TEST_EXTRACT);
@@ -390,6 +396,7 @@ public class UKRDCIndexManagerSetLocalPidUnitTest extends JTraceTest {
 		person2.setTitle("MR").setGivenName("NICK").setSurname("JONES");
 		person2.setDateOfBirth(getDate("1963-08-31"));
 		person2.setGender("1");
+		person2.setUnconsolidatedLocalId(person2.getLocalId());
 		
 		UKRDCIndexManager im = new UKRDCIndexManager();
 		UKRDCIndexManagerResponse resp = im.setLocalPID(person2, TEST_FACILITY_1, TEST_EXTRACT);
@@ -434,6 +441,7 @@ public class UKRDCIndexManagerSetLocalPidUnitTest extends JTraceTest {
 		person2.setTitle("MRS").setGivenName("KAREN").setSurname("SMITH");
 		person2.setDateOfBirth(getDate("1963-08-31"));
 		person2.setGender("2");
+		person2.setUnconsolidatedLocalId(person2.getLocalId());
 		
 		UKRDCIndexManager im = new UKRDCIndexManager();
 		UKRDCIndexManagerResponse resp = im.setLocalPID(person2, TEST_FACILITY_1, TEST_EXTRACT);
@@ -478,6 +486,7 @@ public class UKRDCIndexManagerSetLocalPidUnitTest extends JTraceTest {
 		person2.setTitle("MR").setGivenName("NICK").setSurname("JONES");
 		person2.setDateOfBirth(getDate("1962-08-31"));
 		person2.setGender("1");
+		person2.setUnconsolidatedLocalId(person2.getLocalId());
 		
 		UKRDCIndexManager im = new UKRDCIndexManager();
 		UKRDCIndexManagerResponse resp = im.setLocalPID(person2, TEST_FACILITY_1, TEST_EXTRACT);

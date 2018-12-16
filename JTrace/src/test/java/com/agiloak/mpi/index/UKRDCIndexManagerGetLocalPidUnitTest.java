@@ -98,6 +98,7 @@ public class UKRDCIndexManagerGetLocalPidUnitTest extends JTraceTest {
 		person2.setTitle("MR").setGivenName("Nick").setOtherGivenNames("Ioan").setSurname("JONES");
 		person2.setDateOfBirth(getDate("1962-08-31"));
 		person2.setGender("1");
+		person2.setUnconsolidatedLocalId(person2.getLocalId());
 		
 		UKRDCIndexManager im = new UKRDCIndexManager();
 		UKRDCIndexManagerResponse resp = im.getLocalPID(person2, TEST_FACILITY_1, TEST_EXTRACT);
@@ -149,6 +150,7 @@ public class UKRDCIndexManagerGetLocalPidUnitTest extends JTraceTest {
 		person2.setTitle("MR").setGivenName("MATT").setOtherGivenNames("Ioan").setSurname("JONES");
 		person2.setDateOfBirth(getDate("1962-08-31"));
 		person2.setGender("1");
+		person2.setUnconsolidatedLocalId(person2.getLocalId());
 		
 		UKRDCIndexManager im = new UKRDCIndexManager();
 		UKRDCIndexManagerResponse resp = im.getLocalPID(person2, TEST_FACILITY_1, TEST_EXTRACT);
@@ -199,6 +201,7 @@ public class UKRDCIndexManagerGetLocalPidUnitTest extends JTraceTest {
 		person2.setTitle("MR").setGivenName("Nick").setOtherGivenNames("Ioan").setSurname("JONES");
 		person2.setDateOfBirth(getDate("1962-08-31"));
 		person2.setGender("1");
+		person2.setUnconsolidatedLocalId(person2.getLocalId());
 		
 		UKRDCIndexManager im = new UKRDCIndexManager();
 		UKRDCIndexManagerResponse resp = im.getLocalPID(person2, TEST_FACILITY_1, TEST_EXTRACT);
@@ -249,6 +252,7 @@ public class UKRDCIndexManagerGetLocalPidUnitTest extends JTraceTest {
 		person2.setTitle("MR").setGivenName("Nick").setOtherGivenNames("Ioan").setSurname("JONES");
 		person2.setDateOfBirth(getDate("1962-08-31"));
 		person2.setGender("1");
+		person2.setUnconsolidatedLocalId(person2.getLocalId());
 		
 		UKRDCIndexManager im = new UKRDCIndexManager();
 		UKRDCIndexManagerResponse resp = im.getLocalPID(person2, TEST_FACILITY_1, TEST_EXTRACT);

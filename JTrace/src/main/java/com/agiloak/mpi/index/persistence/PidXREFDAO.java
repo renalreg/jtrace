@@ -226,7 +226,7 @@ public class PidXREFDAO extends NumberAllocatingDAO {
 		logger.debug("Starting");
 
 		//String findSQL = "select * from jtrace.person p, jtrace.linkrecord lr where lr.masterid = ? and p.id = lr.personid ";
-		String findSQL = "select * from  jtrace.pidxref px, jtrace.person p, jtrace.linkrecord lr, jtrace.masterrecord mr "+
+		String findSQL = "select p.* from  jtrace.pidxref px, jtrace.person p, jtrace.linkrecord lr, jtrace.masterrecord mr "+
 					     "where px.sendingFacility = ? and px.sendingExtract = ? and px.pid = p.localId and p.id = lr.personid "+
 					     "and lr.masterId = mr.id and mr.nationalIdType = ? and mr.nationalId = ? ";
 

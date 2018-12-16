@@ -409,7 +409,7 @@ public class UKRDCIndexManager {
 		String pid = null;
 		boolean matchesFound = false;
 		
-		PidXREF xref = PidXREFDAO.findByLocalId(sendingFacility, sendingExtract, person.getLocalId());
+		PidXREF xref = PidXREFDAO.findByLocalId(sendingFacility, sendingExtract, person.getUnconsolidatedLocalId());
 		if (xref!=null) {
 			return xref.getPid();
 		}
@@ -432,9 +432,7 @@ public class UKRDCIndexManager {
 						person.getSurname().equals(potentialMatch.getSurname()) &&
 						person.getGivenName().equals(potentialMatch.getGivenName()) ;
 				
-				// Inefficient, but functionally correct to get the pid from the matched local record. Avoids the rather messy alternative of adding pid to the person or creating a new type to return from the PidXREFDAO for this search.
-				PidXREF matchedXref = PidXREFDAO.findByLocalId(sendingFacility, sendingExtract, potentialMatch.getLocalId());
-				// Inefficient 2 - get the master id that has facilitated the match
+				// Feels inefficient, but correct - get the master id that has facilitated the match
 				MasterRecord matchedMaster = MasterRecordDAO.findByNationalId(nid.getId(), nid.getType());
 
 				// Set up attributes for either the Audit or the WorkItem
@@ -446,8 +444,8 @@ public class UKRDCIndexManager {
 				if (matched) {
 					
 					// Insert the PIDXREF
-					PidXREF newXref = new PidXREF(sendingFacility, sendingExtract, person.getLocalId()); 
-					newXref.setPid(matchedXref.getPid());
+					PidXREF newXref = new PidXREF(sendingFacility, sendingExtract, person.getUnconsolidatedLocalId()); 
+					newXref.setPid(potentialMatch.getLocalId());
 					PidXREFDAO.create(newXref);
 					
 					// Audit the Match
@@ -514,7 +512,7 @@ public class UKRDCIndexManager {
 		String outcome = "NEW";
 		boolean matchesFound = false;
 		
-		PidXREF xref = PidXREFDAO.findByLocalId(sendingFacility, sendingExtract, person.getLocalId());
+		PidXREF xref = PidXREFDAO.findByLocalId(sendingFacility, sendingExtract, person.getUnconsolidatedLocalId());
 		if (xref!=null) {
 			return xref.getPid();
 		}
@@ -538,9 +536,9 @@ public class UKRDCIndexManager {
 						person.getGivenName().equals(potentialMatch.getGivenName()) ;
 				
 				if (matched) {
-					// If matched - This record has not been seen by the EMPI before but it will link to another local record. set outcome = PID and return immediately
-					PidXREF potentialMatchXref = PidXREFDAO.findByLocalId(sendingFacility, sendingExtract, potentialMatch.getLocalId());
-					return potentialMatchXref.getPid();
+					// If matched - This record has not been seen by the EMPI before but it will link to another local record. 
+					// return the PID from this person (this is the consolidated Id)
+					return potentialMatch.getLocalId();
 
 				} else {
 					// This record has not been seen by the EMPI before but it is related by NI to another local record with different demographics. 

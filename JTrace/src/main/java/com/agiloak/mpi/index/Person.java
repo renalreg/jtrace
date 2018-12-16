@@ -9,6 +9,7 @@ public class Person {
 	private int id;
 	private Date effectiveDate;
 	
+	private String unconsolidatedLocalId;
 	private String localId;
 	private String localIdType;
 	private String originator;
@@ -282,9 +283,18 @@ public class Person {
 		this.skipDuplicateCheck = skipDuplicateCheck;
 	}
 
+	public String getUnconsolidatedLocalId() {
+		return unconsolidatedLocalId;
+	}
+
+	public void setUnconsolidatedLocalId(String unconsolidatedLocalId) {
+		this.unconsolidatedLocalId = unconsolidatedLocalId;
+	}
+
 	public String toString() {
 		return "[LID:"+originator+"-"+localIdType+"-"+localId+"]"+
-			   "[NID:"+primaryIdType+"-"+primaryId+"]";
+			   "[NID:"+primaryIdType+"-"+primaryId+"]"+
+				"[Unconsolidated:"+unconsolidatedLocalId+"]";
 	}
 
 }
