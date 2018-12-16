@@ -60,7 +60,7 @@ public class UKRDCIndexManagerMultiUnitLinkSystemTest {
 		// VERIFY
 		assert(natId1!=null);
 		assert(natId1.getType()==NationalIdentity.UKRDC_TYPE);
-		assert(natId1.getId().startsWith("10")); // Allocated numbers will start with 10 whereas numbers sent in from test stub begin RR 
+		assert(natId1.getId().startsWith("50")); // Allocated numbers will start with 10 whereas numbers sent in from test stub begin RR 
 		assert(natId1.getId().length()==9);      // Allocated numbers are 9 characters long 
 		Person person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
