@@ -56,6 +56,12 @@ public class UKRDCIndexManagerGetLocalPidUnitTest extends JTraceTest {
 	}
 	
 
+	/* 
+	 * Test find of a local record which already exists 
+	 * DIRECT MATCH ON full Local ID
+	 * ==> RETURNS LPID of this record
+	 * 
+	 */
 	@Test
 	public void testFindMatchExisting() throws MpiException {
 		
@@ -100,6 +106,13 @@ public class UKRDCIndexManagerGetLocalPidUnitTest extends JTraceTest {
 		
 	}
 
+	/* 
+	 * Test find of a local record with demographic mismatch
+	 * MATCH ON NHS NUMBER BY SE & SF
+	 * DEMOGRAPHICS DONT MATCH
+	 * ==> RETURN REJECT ==> FAIL
+	 * 
+	 */
 	@Test
 	public void testFindMatchReject() throws MpiException {
 		
@@ -143,6 +156,13 @@ public class UKRDCIndexManagerGetLocalPidUnitTest extends JTraceTest {
 		
 	}
 
+	/* 
+	 * Test successful find of a local record
+	 * MATCH ON NHS NUMBER BY SE & SF
+	 * DEMOGRAPHICS MATCH
+	 * ==> RETURN LPID OF MATCHING NUMBER
+	 * 
+	 */
 	@Test
 	public void testFindMatchMatch() throws MpiException {
 		
@@ -183,10 +203,16 @@ public class UKRDCIndexManagerGetLocalPidUnitTest extends JTraceTest {
 		UKRDCIndexManager im = new UKRDCIndexManager();
 		UKRDCIndexManagerResponse resp = im.getLocalPID(person2, TEST_FACILITY_1, TEST_EXTRACT);
 		assert(resp.getStatus()==UKRDCIndexManagerResponse.SUCCESS);
-		assert(resp.getPid().equals("NEW"));
+		assert(resp.getPid().equals(pidx.getPid()));
 		
 	}
 
+	/* 
+	 * Test find of a local record with mismatch 
+	 * NO MATCH ON NHS NUMBER BY SE & SF
+	 * ==> RETURN NEW OF MATCHING NUMBER
+	 * 
+	 */
 	@Test
 	public void testFindMatchNoMatch() throws MpiException {
 		
@@ -196,7 +222,7 @@ public class UKRDCIndexManagerGetLocalPidUnitTest extends JTraceTest {
 
 		Person person = new Person();
 		person.setOriginator(TEST_FACILITY_1).setLocalId(pidx.getPid()).setLocalIdType("MR");
-		person.addNationalId(new NationalIdentity("NHS", "NHSX000008"));
+		person.addNationalId(new NationalIdentity("NHS", "NHSX000009"));
 		person.setTitle("MR").setGivenName("Nick").setOtherGivenNames("Ioan").setSurname("JONES");
 		person.setDateOfBirth(getDate("1962-08-31"));
 		person.setGender("1");

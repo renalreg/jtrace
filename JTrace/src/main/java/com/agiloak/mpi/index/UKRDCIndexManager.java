@@ -539,15 +539,13 @@ public class UKRDCIndexManager {
 				
 				if (matched) {
 					// If matched - This record has not been seen by the EMPI before but it will link to another local record. set outcome = PID and return immediately
-					// This is the validation cycle so don't allocate the PID until the update call
-					//PidXREF xref2 = PidXREFDAO.findByLocalId(sendingFacility, sendingExtract, potentialMatch.getLocalId());
-					//return xref2.getPid();
-					return "NEW";
+					PidXREF potentialMatchXref = PidXREFDAO.findByLocalId(sendingFacility, sendingExtract, potentialMatch.getLocalId());
+					return potentialMatchXref.getPid();
 
 				} else {
 					// This record has not been seen by the EMPI before but it is related by NI to another local record with different demographics. 
 					// Set outcome to "REJECT", but carry on looking
-					// Set up attributes for either the 
+					// Set up attributes for either the WorkItem or Audit as appropriate 
 
 					// Inefficient - get the master id that has facilitated the match
 					MasterRecord matchedMaster = MasterRecordDAO.findByNationalId(nid.getId(), nid.getType());
