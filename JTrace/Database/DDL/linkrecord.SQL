@@ -16,5 +16,7 @@ CREATE TABLE jtrace.linkrecord
 WITH (
   OIDS=FALSE
 );
-ALTER TABLE jtrace.linkrecord
-  OWNER TO postgres;
+
+ALTER TABLE jtrace.linkrecord OWNER to ukrdc;
+    
+GRANT ALL PRIVILEGES ON TABLE jtrace.linkrecord to ukrdc;

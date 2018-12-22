@@ -1,5 +1,3 @@
--- Table: jtrace.pidxref
-
 DROP TABLE IF EXISTS jtrace.pidxref;
 
 CREATE TABLE jtrace.pidxref
@@ -13,5 +11,7 @@ CREATE TABLE jtrace.pidxref
 WITH (
   OIDS=FALSE
 );
-ALTER TABLE jtrace.pidxref
-  OWNER TO postgres;
+
+ALTER TABLE jtrace.pidxref OWNER TO ukrdc;
+
+GRANT ALL PRIVILEGES ON TABLE jtrace.pidxref to ukrdc;

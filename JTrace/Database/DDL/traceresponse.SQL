@@ -16,6 +16,7 @@ CREATE TABLE jtrace.traceresponse
 WITH (
   OIDS=FALSE
 );
-ALTER TABLE jtrace.traceresponse
-  OWNER TO postgres;
 
+ALTER TABLE jtrace.traceresponse OWNER TO ukrdc;
+
+GRANT ALL PRIVILEGES ON TABLE jtrace.traceresponse to ukrdc;
