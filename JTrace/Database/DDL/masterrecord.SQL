@@ -1,10 +1,11 @@
--- Table: jtrace.masterrecord
+DROP TABLE IF EXISTS jtrace.masterrecord;
+
 CREATE TABLE jtrace.masterrecord
 (
     id SERIAL UNIQUE,
     lastupdated timestamp without time zone NOT NULL,
     dateofbirth date NOT NULL,
-    gender character varying(5) COLLATE pg_catalog."default",
+    gender character varying(2) COLLATE pg_catalog."default",
     givenname character varying(60) COLLATE pg_catalog."default",
     surname character varying(60) COLLATE pg_catalog."default",
     nationalid character(10) COLLATE pg_catalog."default" NOT NULL,

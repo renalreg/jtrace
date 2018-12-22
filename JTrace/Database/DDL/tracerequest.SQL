@@ -1,5 +1,3 @@
--- Table: jtrace.tracerequest
-
 DROP TABLE IF EXISTS jtrace.tracerequest;
 
 CREATE TABLE jtrace.tracerequest
@@ -25,5 +23,7 @@ CREATE TABLE jtrace.tracerequest
 WITH (
   OIDS=FALSE
 );
-ALTER TABLE jtrace.tracerequest
-  OWNER TO postgres;
+
+ALTER TABLE jtrace.tracerequest OWNER TO ukrdc;
+
+GRANT ALL PRIVILEGES ON TABLE jtrace.tracerequest to ukrdc;

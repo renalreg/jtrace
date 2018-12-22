@@ -1,8 +1,6 @@
--- Table: jtrace.workitem
+DROP TABLE IF EXISTS jtrace.audit;
 
-DROP TABLE IF EXISTS jtrace.workitem;
-
-CREATE TABLE jtrace.workitem
+CREATE TABLE jtrace.audit
 (
     id SERIAL UNIQUE,
     personid integer NOT NULL,
@@ -10,16 +8,17 @@ CREATE TABLE jtrace.workitem
     type integer NOT NULL,
     description character varying(100) NOT NULL,
     attributes character varying(1024),
-    status integer NOT NULL,
+    mainnationalid character varying(10),
+    mainnationalidtype character varying(5),
     lastupdated timestamp NOT NULL,
     updatedBy character varying(20) ,
-    updatedesc character varying(100),
-    CONSTRAINT workitem_pkey PRIMARY KEY (id)
+    CONSTRAINT audit_pkey PRIMARY KEY (id)
 )
 WITH (
     OIDS = FALSE
 )
 TABLESPACE pg_default;
 
-ALTER TABLE jtrace.workitem
-    OWNER to postgres;
+ALTER TABLE jtrace.audit OWNER to ukrdc;
+    
+GRANT ALL PRIVILEGES ON TABLE jtrace.audit to ukrdc;
