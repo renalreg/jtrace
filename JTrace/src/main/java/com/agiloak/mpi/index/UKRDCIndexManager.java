@@ -387,6 +387,8 @@ public class UKRDCIndexManager {
 	public UKRDCIndexManagerResponse setLocalPID(Person person, String sendingFacility, String sendingExtract) {
 		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
 		try {
+			standardise(person);
+
 			String pid = setLocalPIDInternal(person, sendingFacility, sendingExtract);
 			
 			if (pid==null) {
@@ -485,6 +487,7 @@ public class UKRDCIndexManager {
 	public UKRDCIndexManagerResponse getLocalPID(Person person, String sendingFacility, String sendingExtract) {
 		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
 		try {
+			standardise(person);
 			String outcome = getLocalPIDInternal(person, sendingFacility, sendingExtract);
 			if (outcome.equals("REJECT")) {
 				resp.setStatus(UKRDCIndexManagerResponse.FAIL);

@@ -175,20 +175,20 @@ public class UKRDCIndexManagerGetLocalPidUnitTest extends JTraceTest {
 		Person person = new Person();
 		person.setOriginator(TEST_FACILITY_1).setLocalId(pidx.getPid()).setLocalIdType("MR");
 		person.addNationalId(new NationalIdentity("NHS", "NHSX000008"));
-		person.setTitle("MR").setGivenName("Nick").setOtherGivenNames("Ioan").setSurname("JONES");
+		person.setTitle("MR").setGivenName("NICK").setOtherGivenNames("IOAN").setSurname("JONES");
 		person.setDateOfBirth(getDate("1962-08-31"));
 		person.setGender("1");
 		PersonDAO.create(person);
 
 		MasterRecord mr = new MasterRecord();
 		mr.setDateOfBirth(getDate("1962-08-31")).setGender("M");
-		mr.setGivenName("Nick").setSurname("Jones");
+		mr.setGivenName("NICK").setSurname("JONES");
 		mr.setNationalId("NHSX000008").setNationalIdType("NHS");
 		mr.setEffectiveDate(getDate("2017-08-22"));
 		MasterRecordDAO.create(mr);
 		
 		LinkRecord lr = new LinkRecord(mr.getId(), person.getId());
-		lr.setUpdatedBy("Nick");
+		lr.setUpdatedBy("NICK");
 		lr.setLinkCode(1);
 		lr.setLinkType(2);
 		lr.setLinkDesc("XYZ uses preferred name of patient");
@@ -198,7 +198,7 @@ public class UKRDCIndexManagerGetLocalPidUnitTest extends JTraceTest {
 		Person person2 = new Person();
 		person2.setOriginator(TEST_FACILITY_1).setLocalId(TEST_LOCALID_8A).setLocalIdType("MR");
 		person2.addNationalId(new NationalIdentity("NHS", "NHSX000008"));
-		person2.setTitle("MR").setGivenName("Nick").setOtherGivenNames("Ioan").setSurname("JONES");
+		person2.setTitle("MR").setGivenName("NICK").setOtherGivenNames("IOAN").setSurname("JONES");
 		person2.setDateOfBirth(getDate("1962-08-31"));
 		person2.setGender("1");
 		person2.setUnconsolidatedLocalId(person2.getLocalId());
