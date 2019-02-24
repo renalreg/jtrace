@@ -1083,7 +1083,7 @@ public class UKRDCIndexManager {
 						desc = "Demographics Not Verified Following Update of National Id";
 					}
 					WorkItemManager wim = new WorkItemManager();
-					Map<String,String> attributes = getVerifyAttributes(person, master);
+					Map<String,String> attributes = getVerifyAttributes(linkedPerson, master);
 					wim.create(type, linkedPerson.getId(), master.getId(), desc, attributes);
 				} else {
 					logger.debug("Link still valid. PERSONID:"+linkedPerson.getId());
