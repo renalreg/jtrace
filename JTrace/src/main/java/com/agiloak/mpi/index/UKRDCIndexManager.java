@@ -743,7 +743,8 @@ public class UKRDCIndexManager {
 							// TEST:UT2-5
 							logger.debug("Record no longer verifies with master");
 							WorkItemManager wim = new WorkItemManager();
-							wim.create(WorkItemType.TYPE_STALE_DEMOGS_NOT_VERIFIED_PRIMARY, person.getId(), ukrdcMaster.getId(), "Stale Demographics Not Verified Against PrimaryId");
+							Map<String,String> attributes = getVerifyAttributes(person, ukrdcMaster);
+							wim.create(WorkItemType.TYPE_STALE_DEMOGS_NOT_VERIFIED_PRIMARY, person.getId(), ukrdcMaster.getId(), "Stale Demographics Not Verified Against PrimaryId", attributes);
 
 							ukrdcMaster.setStatus(MasterRecord.INVESTIGATE);
 							MasterRecordDAO.update(ukrdcMaster);
@@ -813,7 +814,8 @@ public class UKRDCIndexManager {
 				} else {
 					logger.debug("Record not verified - creating work item, link and mark master for investigation");
 					WorkItemManager wim = new WorkItemManager();
-					wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_PRIMARY, person.getId(), master.getId(), "Claimed Link to Primary Id Not Verified");
+					Map<String,String> attributes = getVerifyAttributes(person, master);
+					wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_PRIMARY, person.getId(), master.getId(), "Claimed Link to Primary Id Not Verified", attributes);
 
 					LinkRecord link = new LinkRecord(master.getId(), person.getId());
 					LinkRecordDAO.create(link);
@@ -891,7 +893,8 @@ public class UKRDCIndexManager {
 								} else {
 									logger.debug("Link to potential UKRDC Match not verified");
 									WorkItemManager wim = new WorkItemManager();
-									wim.create(WorkItemType.TYPE_INFERRED_LINK_NOT_VERIFIED_PRIMARY, person.getId(), ukrdcMaster.getId(), "Link to Inferred PrimaryId not verified");
+									Map<String,String> attributes = getVerifyAttributes(person, ukrdcMaster);
+									wim.create(WorkItemType.TYPE_INFERRED_LINK_NOT_VERIFIED_PRIMARY, person.getId(), ukrdcMaster.getId(), "Link to Inferred PrimaryId not verified", attributes);
 								}
 							}
 						}
@@ -958,7 +961,8 @@ public class UKRDCIndexManager {
 			if (!verifyMatch(person, master)) {
 				logger.debug("Record not verified - creating a work item and mark the master for invesigation");
 				WorkItemManager wim = new WorkItemManager();
-				wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, person.getId(), master.getId(), "Claimed Link to NationalId Not Verified");
+				Map<String,String> attributes = getVerifyAttributes(person, master);
+				wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, person.getId(), master.getId(), "Claimed Link to NationalId Not Verified", attributes);
 				master.setStatus(MasterRecord.INVESTIGATE);
 				MasterRecordDAO.update(master);
 			}
@@ -979,7 +983,11 @@ public class UKRDCIndexManager {
 					String warnMsg = "More than 1 record from Unit:"+person.getOriginator()+" linked to master:"+master.getId(); 
 					logger.debug(warnMsg);
 					WorkItemManager wim = new WorkItemManager();
-					wim.create(WorkItemType.TYPE_MULTIPLE_NATID_LINKS_FROM_ORIGINATOR, person.getId(), master.getId(), warnMsg);
+					Map<String,String> attributes = new HashMap<String,String>();
+					attributes.put("Originator", person.getOriginator());
+					attributes.put(master.getNationalIdType(), master.getNationalId());
+
+					wim.create(WorkItemType.TYPE_MULTIPLE_NATID_LINKS_FROM_ORIGINATOR, person.getId(), master.getId(), warnMsg, attributes);
 					master.setStatus(MasterRecord.INVESTIGATE);
 					MasterRecordDAO.update(master);
 				}
@@ -1034,8 +1042,8 @@ public class UKRDCIndexManager {
 				// If the effective date is not later then just reverify this person against the master and raise a work item if required
 				if (!verifyMatch(person,master)) {
 					WorkItemManager wim = new WorkItemManager();
-					wim.create(WorkItemType.TYPE_STALE_DEMOGS_NOT_VERIFIED_NATIONAL, person.getId(), master.getId(), "Stale Demographics Not Verified Against NationalId");
-					
+					Map<String,String> attributes = getVerifyAttributes(person, master);
+					wim.create(WorkItemType.TYPE_STALE_DEMOGS_NOT_VERIFIED_NATIONAL, person.getId(), master.getId(), "Stale Demographics Not Verified Against NationalId",attributes);
 					master.setStatus(MasterRecord.INVESTIGATE);
 					MasterRecordDAO.update(master);
 				}
@@ -1075,7 +1083,8 @@ public class UKRDCIndexManager {
 						desc = "Demographics Not Verified Following Update of National Id";
 					}
 					WorkItemManager wim = new WorkItemManager();
-					wim.create(type, linkedPerson.getId(), master.getId(), desc);
+					Map<String,String> attributes = getVerifyAttributes(person, master);
+					wim.create(type, linkedPerson.getId(), master.getId(), desc, attributes);
 				} else {
 					logger.debug("Link still valid. PERSONID:"+linkedPerson.getId());
 				}
@@ -1113,6 +1122,17 @@ public class UKRDCIndexManager {
 		}
 		
 		return nomatch;
+	}
+
+	protected Map<String,String> getVerifyAttributes(Person person, MasterRecord master) {
+		logger.debug("getVerifyAttributes");
+		Map<String,String> attributes = new HashMap<String, String>();
+		if ( !person.getGender().equals(master.getGender()) ) attributes.put("Gender", person.getGender()+":"+master.getGender());
+		if ( !person.getSurname().equals(master.getSurname()) ) attributes.put("Surname", person.getSurname()+":"+master.getSurname());
+		if ( !person.getGivenName().equals(master.getGivenName()) ) attributes.put("GivenName", person.getGivenName()+":"+master.getGivenName());
+		if (person.getDateOfBirth().compareTo(master.getDateOfBirth())!=0) 
+			attributes.put("DOB", dateFormatter.format(person.getDateOfBirth()) + ":" + dateFormatter.format(master.getDateOfBirth()));
+		return attributes;
 	}
 	
 	private boolean demographicsChanged(Person person, Person storedPerson) {
