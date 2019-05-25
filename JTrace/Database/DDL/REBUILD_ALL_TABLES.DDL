@@ -1,0 +1,11 @@
+\i audit.SQL
+\i linkrecord.SQL
+\i masterrecord.SQL
+\i person.SQL
+\i pidxref.SQL
+\i tracerequest.SQL
+\i traceresponse.SQL
+\i traceresponseline.SQL
+\i workitem.SQL
+\i patient_id.SQL
+\i ukrdc_id.SQL

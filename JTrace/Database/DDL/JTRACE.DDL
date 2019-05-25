@@ -1,13 +1,15 @@
 -- Database: "JTRACE"
-DROP DATABASE "jtrace";
+DROP DATABASE "JTRACE";
 
-CREATE DATABASE "jtrace"
+CREATE DATABASE "JTRACE"
   WITH OWNER = postgres
        ENCODING = 'UTF8'
        TABLESPACE = pg_default
        CONNECTION LIMIT = -1;
 
--- Schema: extract
+-- Connect to the database
+\c JTRACE;
+
 DROP SCHEMA "jtrace" CASCADE;
 
 CREATE SCHEMA "jtrace"
