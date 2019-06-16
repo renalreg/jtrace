@@ -34,7 +34,7 @@ public class LinkRecordDAO {
 
 		logger.debug("Starting");
 
-		String insertSQL = "Insert into jtrace.linkrecord "+
+		String insertSQL = "Insert into linkrecord "+
 				"(masterid, personid, lastupdated, linktype, linkcode, linkdesc, updatedby)"+
 				" values (?,?,?,?,?,?,?)";
 		
@@ -99,7 +99,7 @@ public class LinkRecordDAO {
 
 		logger.debug("Starting");
 
-		String deleteSQL = "delete from jtrace.linkrecord where masterid = ? and personid = ?";
+		String deleteSQL = "delete from linkrecord where masterid = ? and personid = ?";
 		
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;
@@ -146,7 +146,7 @@ public class LinkRecordDAO {
 		
 		logger.debug("Starting");
 
-		String deleteSQL = "delete from jtrace.linkrecord where personid = ?";
+		String deleteSQL = "delete from linkrecord where personid = ?";
 		
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;
@@ -198,7 +198,7 @@ public class LinkRecordDAO {
 
 		logger.debug("Starting");
 
-		String findSQL = "select * from jtrace.linkrecord where masterid = ? and personid = ? ";
+		String findSQL = "select * from linkrecord where masterid = ? and personid = ? ";
 		
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;
@@ -261,7 +261,7 @@ public class LinkRecordDAO {
 
 		logger.debug("Starting");
 
-		String findSQL = "select * from jtrace.linkrecord lr, jtrace.masterrecord mr where "+
+		String findSQL = "select * from linkrecord lr, masterrecord mr where "+
 				         "lr.masterid = mr.id and lr.personid = ? and mr.nationalidtype = ? ";
 		
 		PreparedStatement preparedStatement = null;
@@ -325,7 +325,7 @@ public class LinkRecordDAO {
 
 		logger.debug("Starting");
 
-		String findSQL = "select count(*) as cnt from jtrace.person p, jtrace.linkrecord lr where "+
+		String findSQL = "select count(*) as cnt from person p, linkrecord lr where "+
 				         "p.id = lr.personid and lr.masterid = ? and p.originator = ? and p.skipduplicatecheck = false ";
 		
 		PreparedStatement preparedStatement = null;
@@ -390,7 +390,7 @@ public class LinkRecordDAO {
 
 		logger.debug("Starting");
 
-		String findSQL = "select count(*) as cnt from jtrace.person p, jtrace.linkrecord lr where "+
+		String findSQL = "select count(*) as cnt from person p, linkrecord lr where "+
 				         "p.id = lr.personid and lr.masterid = ? and p.originator = ? and p.skipduplicatecheck = false and p.id <> ? ";
 		
 		PreparedStatement preparedStatement = null;
@@ -456,7 +456,7 @@ public class LinkRecordDAO {
 
 		logger.debug("Starting");
 
-		String findSQL = "select * from jtrace.linkrecord where personid = ? ";
+		String findSQL = "select * from linkrecord where personid = ? ";
 		
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;
@@ -520,7 +520,7 @@ public class LinkRecordDAO {
 
 		logger.debug("Starting");
 
-		String findSQL = "select * from jtrace.linkrecord where masterid = ? ";
+		String findSQL = "select * from linkrecord where masterid = ? ";
 		
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;

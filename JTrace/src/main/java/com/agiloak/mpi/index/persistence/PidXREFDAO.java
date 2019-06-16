@@ -31,7 +31,7 @@ public class PidXREFDAO extends NumberAllocatingDAO {
 
 		logger.debug("Starting");
 
-		String getSQL = "select * from jtrace.pidxref where id = ? ";
+		String getSQL = "select * from pidxref where id = ? ";
 		
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;
@@ -99,7 +99,7 @@ public class PidXREFDAO extends NumberAllocatingDAO {
 			xref.setPid(pid);
 		}
 
-		String insertSQL = "Insert into jtrace.pidxref "+
+		String insertSQL = "Insert into pidxref "+
 				"(pid, sendingFacility, sendingExtract, localId)"+
 				" values (?,?,?,?)";
 		
@@ -161,7 +161,7 @@ public class PidXREFDAO extends NumberAllocatingDAO {
 		
 		logger.debug("Starting");
 
-		String findSQL = "select * from jtrace.pidxref where sendingFacility = ? and sendingExtract = ? and localId = ? ";
+		String findSQL = "select * from pidxref where sendingFacility = ? and sendingExtract = ? and localId = ? ";
 		
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;
@@ -225,8 +225,7 @@ public class PidXREFDAO extends NumberAllocatingDAO {
 
 		logger.debug("Starting");
 
-		//String findSQL = "select * from jtrace.person p, jtrace.linkrecord lr where lr.masterid = ? and p.id = lr.personid ";
-		String findSQL = "select p.* from  jtrace.pidxref px, jtrace.person p, jtrace.linkrecord lr, jtrace.masterrecord mr "+
+		String findSQL = "select p.* from  pidxref px, person p, linkrecord lr, masterrecord mr "+
 					     "where px.sendingFacility = ? and px.sendingExtract = ? and px.pid = p.localId and p.id = lr.personid "+
 					     "and lr.masterId = mr.id and mr.nationalIdType = ? and mr.nationalId = ? ";
 
@@ -324,7 +323,7 @@ public class PidXREFDAO extends NumberAllocatingDAO {
 	public static String allocate() throws MpiException {
 
 		logger.debug("Starting");
-		String patientId = allocateSequence("jtrace.patient_id");
+		String patientId = allocateSequence("patient_id");
 		logger.debug("Complete");
 		return patientId;
 		
@@ -334,7 +333,7 @@ public class PidXREFDAO extends NumberAllocatingDAO {
 		
 		logger.debug("Starting");
 
-		String deleteSQL = "delete from jtrace.pidxref where sendingFacility = ? and sendingExtract = ? and localId = ?";
+		String deleteSQL = "delete from pidxref where sendingFacility = ? and sendingExtract = ? and localId = ?";
 		
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;

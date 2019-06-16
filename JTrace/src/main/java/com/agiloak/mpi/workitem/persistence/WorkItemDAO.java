@@ -24,7 +24,7 @@ public class WorkItemDAO {
 
 		logger.debug("Starting");
 		
-		String insertSQL = "Insert into jtrace.workitem "+
+		String insertSQL = "Insert into workitem "+
 				"(personid, masterid, type, description, attributes, status, lastupdated, updatedby, updatedesc)"+ 
 				" values (?,?,?,?,?,?,?,?,?)";
 		
@@ -91,7 +91,7 @@ public class WorkItemDAO {
 
 		logger.debug("Starting");
 
-		String updateSQL = "update jtrace.workitem "
+		String updateSQL = "update workitem "
 				+"set status =?, lastupdated=?, updatedby=?, updatedesc=? "
 				+"where personid=? and masterid=?"; 
 		
@@ -144,7 +144,7 @@ public class WorkItemDAO {
 
 		logger.debug("Starting");
 
-		String deleteSQL = "delete from jtrace.workitem where personid = ?";
+		String deleteSQL = "delete from workitem where personid = ?";
 		
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;
@@ -190,7 +190,7 @@ public class WorkItemDAO {
 
 		logger.debug("Starting");
 
-		String deleteSQL = "delete from jtrace.workitem where masterid = ?";
+		String deleteSQL = "delete from workitem where masterid = ?";
 		
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;
@@ -236,7 +236,7 @@ public class WorkItemDAO {
 
 		logger.debug("Starting");
 		
-		String findSQL = "select * from jtrace.workitem where id = ? ";
+		String findSQL = "select * from workitem where id = ? ";
 		
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;
@@ -307,7 +307,7 @@ public class WorkItemDAO {
 
 		logger.debug("Starting");
 
-		String findSQL = "select * from jtrace.workitem where personid = ? ";
+		String findSQL = "select * from workitem where personid = ? ";
 		
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;
@@ -380,7 +380,7 @@ public class WorkItemDAO {
 
 		logger.debug("Starting");
 		
-		String findSQL = "select * from jtrace.workitem where personid = ? and masterid = ?";
+		String findSQL = "select * from workitem where personid = ? and masterid = ?";
 		
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;

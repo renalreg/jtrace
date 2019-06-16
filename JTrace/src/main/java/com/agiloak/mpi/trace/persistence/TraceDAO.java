@@ -29,7 +29,7 @@ public class TraceDAO {
 		
 		List<TraceResponseLine> candidates = new ArrayList<TraceResponseLine>();
 		
-		String traceDOBSQL = "select * from jtrace.person where dateofbirth = ? ";
+		String traceDOBSQL = "select * from person where dateofbirth = ? ";
 		
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;
@@ -120,7 +120,7 @@ public class TraceDAO {
 		
 		List<TraceResponseLine> candidates = new ArrayList<TraceResponseLine>();
 				
-		String baseSQL = "select * from jtrace.person where dateofdeath is null ";
+		String baseSQL = "select * from person where dateofdeath is null ";
 		
 		// build SQL blocks
 		String fullSQL = baseSQL;
@@ -370,7 +370,7 @@ public class TraceDAO {
 
 		// traceid is set by at database sequence
 		
-		String insertSQL = "Insert into jtrace.tracerequest "+
+		String insertSQL = "Insert into tracerequest "+
 				"(traceid, tracetype, nameswap, localid, localidtype, originator, "+
 	            "givenname, othergivennames, surname, gender, postcode, dateofbirthstart, dateofbirthend,"+ 
 	            "street, longname, longaddress)"+
@@ -440,7 +440,7 @@ public class TraceDAO {
 		TraceResponse response = new TraceResponse();
 		response.setTraceId(traceId);
 		
-		String readSQL = "Select * from jtrace.traceresponse where traceid = ? ";
+		String readSQL = "Select * from traceresponse where traceid = ? ";
 
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;
@@ -505,7 +505,7 @@ public class TraceDAO {
 
 		logger.debug("Starting");
 
-		String readSQL = "Select * from jtrace.traceresponseline where traceid = ? ";
+		String readSQL = "Select * from traceresponseline where traceid = ? ";
 
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;
@@ -577,7 +577,7 @@ public class TraceDAO {
 
 		logger.debug("Starting");
 
-		String insertSQL = "Insert into jtrace.traceresponse "+
+		String insertSQL = "Insert into traceresponse "+
 				"(traceid, tracestarttime, traceendtime, message, status, maxweight, matchcount)"+
 				" values (?,?,?,?,?,?,?)";
 
@@ -634,7 +634,7 @@ public class TraceDAO {
 
 		logger.debug("Starting");
 
-		String insertSQL = "Insert into jtrace.traceresponseline "+
+		String insertSQL = "Insert into traceresponseline "+
 				"(traceid, personid, weight, givenname, othergivennames, surname, "+
 				"prevsurname, gender, postcode, dateofbirth, street, longname, "+
 				"longaddress) "+
@@ -698,9 +698,9 @@ public class TraceDAO {
 
 		// traceid is set by at database sequence
 		
-		String deleteSQL1 = "delete from jtrace.tracerequest where traceid = ?";
-		String deleteSQL2 = "delete from jtrace.traceresponse where traceid = ?";
-		String deleteSQL3 = "delete from jtrace.traceresponseline where traceid = ?";
+		String deleteSQL1 = "delete from tracerequest where traceid = ?";
+		String deleteSQL2 = "delete from traceresponse where traceid = ?";
+		String deleteSQL3 = "delete from traceresponseline where traceid = ?";
 
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;
@@ -757,7 +757,7 @@ public class TraceDAO {
 
 		logger.debug("Starting");
 
-		String readSQL = "Select * from jtrace.tracerequest where tracetype = ? and localid = ? and localidtype = ? and originator = ? ";
+		String readSQL = "Select * from tracerequest where tracetype = ? and localid = ? and localidtype = ? and originator = ? ";
 
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;
