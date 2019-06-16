@@ -24,7 +24,7 @@ public class AuditDAO {
 
 		logger.debug("Starting");
 		
-		String insertSQL = "Insert into jtrace.audit "+
+		String insertSQL = "Insert into audit "+
 				"(personid, masterid, type, description, attributes, mainnationalid, mainnationalidtype, lastupdated, updatedby)"+ 
 				" values (?,?,?,?,?,?,?,?,?)";
 		
@@ -95,7 +95,7 @@ public class AuditDAO {
 		
 		logger.debug("Starting");
 		
-		String deleteSQL = "delete from jtrace.audit where personid = ?";
+		String deleteSQL = "delete from audit where personid = ?";
 		
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;
@@ -141,7 +141,7 @@ public class AuditDAO {
 
 		logger.debug("Starting");
 
-		String findSQL = "select * from jtrace.audit where personid = ? ";
+		String findSQL = "select * from audit where personid = ? ";
 		
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;

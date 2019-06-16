@@ -25,7 +25,7 @@ public class MasterRecordDAO {
 
 		logger.debug("Starting");
 
-		String getSQL = "select * from jtrace.masterrecord where id = ? ";
+		String getSQL = "select * from masterrecord where id = ? ";
 		
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;
@@ -87,7 +87,7 @@ public class MasterRecordDAO {
 
 		logger.debug("Starting");
 
-		String findSQL = "select * from jtrace.masterrecord where nationalid = ? and nationalidtype = ? ";
+		String findSQL = "select * from masterrecord where nationalid = ? and nationalidtype = ? ";
 		
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;
@@ -153,7 +153,7 @@ public class MasterRecordDAO {
 
 		logger.debug("Starting");
 
-		String findSQL = "select * from jtrace.masterrecord where givenname = ? and surname= ? and dateofbirth = ? ";
+		String findSQL = "select * from masterrecord where givenname = ? and surname= ? and dateofbirth = ? ";
 		
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;
@@ -218,7 +218,7 @@ public class MasterRecordDAO {
 
 		logger.debug("Starting");
 
-		String insertSQL = "Insert into jtrace.masterrecord "+
+		String insertSQL = "Insert into masterrecord "+
 				"(dateofbirth, gender, givenname, surname, lastupdated, nationalid, nationalidtype, status, effectivedate)"+
 				" values (?,?,?,?,?,?,?,?,?)";
 		
@@ -277,7 +277,7 @@ public class MasterRecordDAO {
 
 		logger.debug("Starting");
 
-		String updateSQL = "Update jtrace.masterrecord "+
+		String updateSQL = "Update masterrecord "+
 				"set dateofbirth=?, gender=?, givenname=?, surname=?, lastupdated=?, "+
 				   " nationalid=?, nationalidtype=?, status=?, effectivedate=? where id =? ";
 		
@@ -330,7 +330,7 @@ public class MasterRecordDAO {
 
 		logger.debug("Starting");
 
-		String deleteSQL = "delete from jtrace.masterrecord where id = ? ";
+		String deleteSQL = "delete from masterrecord where id = ? ";
 		
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;
@@ -373,7 +373,7 @@ public class MasterRecordDAO {
 		
 		logger.debug("Starting");
 
-		String deleteSQL = "delete from jtrace.masterrecord where nationalid = ? and nationalidtype = ? ";
+		String deleteSQL = "delete from masterrecord where nationalid = ? and nationalidtype = ? ";
 		
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;
@@ -417,7 +417,7 @@ public class MasterRecordDAO {
 
 		logger.debug("Starting");
 
-		String nextValSQL = "select nextval('jtrace.ukrdc_id')";
+		String nextValSQL = "select nextval('ukrdc_id')";
 		
 		String  ukrdcId = "";
 

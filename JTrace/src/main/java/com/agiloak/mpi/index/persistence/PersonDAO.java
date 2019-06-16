@@ -24,7 +24,7 @@ public class PersonDAO {
 
 		logger.debug("Starting");
 
-		String findSQL = "select * from jtrace.person where localidtype = ? and localid = ? and originator = ? ";
+		String findSQL = "select * from person where localidtype = ? and localid = ? and originator = ? ";
 		
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;
@@ -116,7 +116,7 @@ public class PersonDAO {
 
 		logger.debug("Starting");
 
-		String findSQL = "select * from jtrace.person p, jtrace.linkrecord lr where lr.masterid = ? and p.id = lr.personid ";
+		String findSQL = "select * from person p, linkrecord lr where lr.masterid = ? and p.id = lr.personid ";
 		
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;
@@ -212,7 +212,7 @@ public class PersonDAO {
 		// prevsurname is NULL for an insert
 		// stdprevsurname is NULL for an insert
 		
-		String insertSQL = "Insert into jtrace.person "+
+		String insertSQL = "Insert into person "+
 				"(dateofbirth, gender, dateofdeath,"+ 
 	            "givenname, surname, othergivennames, title, postcode, street, "+ 
 	            "stdsurname, stdgivenname, stdpostcode,"+
@@ -286,7 +286,7 @@ public class PersonDAO {
 			throw new MpiException("Person has no ID - cannot update.");
 		}
 		
-		String updateSQL = "Update jtrace.person SET "+
+		String updateSQL = "Update person SET "+
 			   "dateofbirth=?, gender=?,"+ 
 		       "dateofdeath=?, givenname=?, surname=?, othergivennames=?,"+ 
 		       "title=?, postcode=?, street=?, stdsurname=?,"+ 
@@ -341,7 +341,7 @@ public class PersonDAO {
 		
 		logger.debug("Starting");
 
-		String deleteSQL = "delete from jtrace.person where id = ?";
+		String deleteSQL = "delete from person where id = ?";
 		
 		PreparedStatement preparedStatement = null;
 		Connection conn = null;
