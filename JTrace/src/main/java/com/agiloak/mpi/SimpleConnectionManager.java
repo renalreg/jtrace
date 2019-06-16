@@ -27,6 +27,7 @@ public class SimpleConnectionManager {
 	private static String DB_PASSWORD = "postgres";
 	private static String DB_SERVER = "localhost:5432";
 	private static String DB_NAME = "JTRACE";
+	private static String DB_SCHEMA = null;
 	private static GenericObjectPool gPool = null;
 	private static DataSource dataSource = null;
 	
@@ -39,6 +40,8 @@ public class SimpleConnectionManager {
 		DB_PASSWORD = "postgres";
 		DB_SERVER = "localhost:5432";
 		DB_NAME = "JTRACE";
+		DB_SCHEMA = null;
+		
 		try {
 			dataSource = setUpPool(defaultPoolSize);
 		} catch (Exception e) {
@@ -50,17 +53,23 @@ public class SimpleConnectionManager {
 	/**
 	 * Legacy support for earlier version - default poolsize to defaultPoolSize
 	 * Allow the connection to be configured externally. Hardcoded values remain as defaults (for now).
-	 * @param user
-	 * @param password
-	 * @param server
-	 * @param port
-	 * @param dbName
 	 */
 	public static void configure(String user, String password, String server, String port, String dbName) throws MpiException {
 		logger.warn("Using default pool size:"+defaultPoolSize);
 
 		configure(user, password, server, port, dbName, defaultPoolSize);
 	}
+
+	/**
+	 * Legacy support for earlier version - default poolsize to defaultPoolSize and schema to null
+	 * Allow the connection to be configured externally. Hardcoded values remain as defaults (for now).
+	 */
+	public static void configure(String user, String password, String server, String port, String dbName, int poolSize) throws MpiException {
+		logger.warn("Using default pool size:"+defaultPoolSize);
+
+		configure(user, password, server, port, dbName, null, defaultPoolSize);
+	}
+
 	/**
 	 * Allow the connection to be configured externally. Hardcoded values remain as defaults (for now).
 	 * @param user
@@ -68,8 +77,10 @@ public class SimpleConnectionManager {
 	 * @param server
 	 * @param port
 	 * @param dbName
+	 * @param poolsize
+	 * @param schema
 	 */
-	public static void configure(String user, String password, String server, String port, String dbName, int poolSize) throws MpiException {
+	public static void configure(String user, String password, String server, String port, String dbName, String schema, int poolSize) throws MpiException {
 		
 		if (user==null || password == null || server == null || port == null || dbName == null) {
 			logger.error("Invalid database configuration. 1 or more null parameters");
@@ -85,6 +96,7 @@ public class SimpleConnectionManager {
 		DB_PASSWORD = password;
 		DB_SERVER = server + ":" + port;
 		DB_NAME = dbName;
+		DB_SCHEMA = schema;
 		try {
 			dataSource = setUpPool(poolSize);
 		} catch (Exception e) {
@@ -100,6 +112,9 @@ public class SimpleConnectionManager {
 
         // Creates a ConnectionFactory Object Which Will Be Use by the Pool to Create the Connection Object!
         String dbURL = DB_CONNECTION + DB_SERVER + "/" +DB_NAME;
+        if (DB_SCHEMA != null) {
+        	dbURL += "?currentSchema="+DB_SCHEMA;
+        }
         ConnectionFactory cf = new DriverManagerConnectionFactory(dbURL, DB_USER, DB_PASSWORD);
 
 		// Creates a PoolableConnectionFactory That Will Wraps the Connection Object Created by the ConnectionFactory to Add Object Pooling Functionality!
@@ -126,54 +141,4 @@ public class SimpleConnectionManager {
 		return conn;
 	}
 
-/*	
-	public static Connection getDBConnectionOld() {
-
-		if (dbConn!=null) {
-			try {
-				if (dbConn.isValid(1)){
-					return dbConn;
-				}
-			} catch (SQLException e) {
-				logger.error("Error getting connection:",e);
-			}
-		} else {
-			logger.debug("No connection - get new connection");
-		}
-		 
-		dbConn = null;
-	
-		try {
-	
-			Class.forName(DB_DRIVER);
-	
-			logger.info("JTRACE database connection reset:");
-			logger.info("User:"+DB_USER+"/*****");
-			logger.info("Endpoint:"+DB_SERVER+"/"+DB_NAME);
-			if (defaultConnection) {
-				logger.warn("***** DEFAULT DATABASE CONNECTION DETAILS IN USE **********");
-				logger.warn("***** DEFAULT DATABASE CONNECTION DETAILS IN USE **********");
-				logger.warn("***** DEFAULT DATABASE CONNECTION DETAILS IN USE **********");
-			}
-
-		} catch (ClassNotFoundException e) {
-			logger.error("Failure Load JDBC Driver",e);
-	
-		}
-	
-		try {
-			String connectionString = DB_CONNECTION+DB_SERVER+"/"+DB_NAME;
-			dbConn = DriverManager.getConnection(
-					connectionString, DB_USER, DB_PASSWORD);
-			return dbConn;
-	
-		} catch (SQLException e) {
-			logger.error("Failed to get Database Connection",e);
-			// Consider throwing MpiException here. Currently will fail in the DAO instead.
-		}
-		
-		return dbConn;
-	
-	}
-*/
 }

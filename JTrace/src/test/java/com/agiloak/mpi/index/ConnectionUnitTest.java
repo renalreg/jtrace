@@ -1,6 +1,8 @@
 package com.agiloak.mpi.index;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 
@@ -10,6 +12,8 @@ import org.junit.rules.ExpectedException;
 
 import com.agiloak.mpi.MpiException;
 import com.agiloak.mpi.SimpleConnectionManager;
+
+// Depends on the Database existing. Should probably be a DB rebuild as part of this test
 
 public class ConnectionUnitTest {
 	
@@ -43,17 +47,57 @@ public class ConnectionUnitTest {
 	}
 
 	@Test
+	public void testConfiguredConnectionBadSchema() throws MpiException, SQLException {
+		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE", "jtrace2", 10);
+		Connection conn = SimpleConnectionManager.getDBConnection();
+		// Connection is made even though the schema does not exist (odd but true it appears)
+		assert(conn.isValid(1));
+		// But no data is available so a simple query will fail
+		try {
+			checkPersonTable(conn);
+		} catch (Exception e) {
+			assert(true);
+		}
+	}
+
+	private void checkPersonTable(Connection conn) throws SQLException {
+		PreparedStatement preparedStatement = conn.prepareStatement("Select count(*) from person");
+		ResultSet rs = preparedStatement.executeQuery();
+		rs.next();
+	}
+
+	// Depends on the jtrace schema being in the search path
+	@Test
 	public void testConfiguredConnection() throws MpiException, SQLException {
 		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE");
 		
 		Connection conn1 = SimpleConnectionManager.getDBConnection();
 		assert(conn1!=null);
 		assert(conn1.isValid(1));
+		checkPersonTable(conn1);
 		
 		Connection conn2 = SimpleConnectionManager.getDBConnection();
 		assert(conn2!=conn1);
 		assert(conn2!=null);
 		assert(conn2.isValid(1));
+		checkPersonTable(conn2);
+		
+	}
+	
+	@Test
+	public void testConfiguredConnectionWithSchema() throws MpiException, SQLException {
+		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE", "jtrace", 10);
+		
+		Connection conn1 = SimpleConnectionManager.getDBConnection();
+		assert(conn1!=null);
+		assert(conn1.isValid(1));
+		checkPersonTable(conn1);
+		
+		Connection conn2 = SimpleConnectionManager.getDBConnection();
+		assert(conn2!=conn1);
+		assert(conn2!=null);
+		assert(conn2.isValid(1));
+		checkPersonTable(conn1);
 		
 	}
 	
