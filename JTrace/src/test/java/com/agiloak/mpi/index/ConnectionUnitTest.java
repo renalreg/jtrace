@@ -9,9 +9,17 @@ import java.text.SimpleDateFormat;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.postgresql.util.PSQLException;
 
 import com.agiloak.mpi.MpiException;
 import com.agiloak.mpi.SimpleConnectionManager;
+import com.agiloak.mpi.audit.persistence.AuditDAO;
+import com.agiloak.mpi.index.persistence.LinkRecordDAO;
+import com.agiloak.mpi.index.persistence.MasterRecordDAO;
+import com.agiloak.mpi.index.persistence.PersonDAO;
+import com.agiloak.mpi.index.persistence.PidXREFDAO;
+import com.agiloak.mpi.trace.persistence.TraceDAO;
+import com.agiloak.mpi.workitem.persistence.WorkItemDAO;
 
 // Depends on the Database existing. Should probably be a DB rebuild as part of this test
 
@@ -37,27 +45,69 @@ public class ConnectionUnitTest {
 	
 	@Test
 	public void testConfiguredConnectionBadDatabase() throws MpiException, SQLException {
-		try {
-			SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE2");
-			Connection conn = SimpleConnectionManager.getDBConnection();
-			assert(false);
-		} catch (MpiException ex) {
-			assert(true);
-		}
+		exception.expect(MpiException.class);
+		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE2");
+		SimpleConnectionManager.getDBConnection();
 	}
 
 	@Test
 	public void testConfiguredConnectionBadSchema() throws MpiException, SQLException {
+		exception.expect(PSQLException.class);
 		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE", "jtrace2", 10);
 		Connection conn = SimpleConnectionManager.getDBConnection();
 		// Connection is made even though the schema does not exist (odd but true it appears)
 		assert(conn.isValid(1));
 		// But no data is available so a simple query will fail
-		try {
-			checkPersonTable(conn);
-		} catch (Exception e) {
-			assert(true);
-		}
+		checkPersonTable(conn);
+	}
+
+	@Test
+	public void testConfiguredConnectionBadSchemaAuditDAO() throws MpiException, SQLException {
+		exception.expect(MpiException.class);
+		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE", "jtrace2", 10);
+		AuditDAO.findByPerson(1);
+	}
+
+	@Test
+	public void testConfiguredConnectionBadSchemaLinkRecordDAO() throws MpiException, SQLException {
+		exception.expect(MpiException.class);
+		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE", "jtrace2", 10);
+		LinkRecordDAO.findByPerson(1);
+	}
+
+	@Test
+	public void testConfiguredConnectionBadSchemaMasterRecordDAO() throws MpiException, SQLException {
+		exception.expect(MpiException.class);
+		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE", "jtrace2", 10);
+		MasterRecordDAO.get(1);
+	}
+
+	@Test
+	public void testConfiguredConnectionBadSchemaPersonDAO() throws MpiException, SQLException {
+		exception.expect(MpiException.class);
+		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE", "jtrace2", 10);
+		PersonDAO.findByMasterId(1);
+	}
+
+	@Test
+	public void testConfiguredConnectionBadSchemaTraceDAO() throws MpiException, SQLException {
+		exception.expect(MpiException.class);
+		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE", "jtrace2", 10);
+		TraceDAO.getResponse("");
+	}
+
+	@Test
+	public void testConfiguredConnectionBadSchemaWorkItemDAO() throws MpiException, SQLException {
+		exception.expect(MpiException.class);
+		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE", "jtrace2", 10);
+		WorkItemDAO.findByPerson(1);
+	}
+
+	@Test
+	public void testConfiguredConnectionBadSchemaPidXREF() throws MpiException, SQLException {
+		exception.expect(MpiException.class);
+		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE", "jtrace2", 10);
+		PidXREFDAO.findByLocalId("TEST", "TEST", "12345");
 	}
 
 	private void checkPersonTable(Connection conn) throws SQLException {
