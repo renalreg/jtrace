@@ -1,5 +1,7 @@
 package com.agiloak.mpi.index;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -14,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.agiloak.mpi.MpiException;
+import com.agiloak.mpi.SimpleConnectionManager;
 import com.agiloak.mpi.audit.Audit;
 import com.agiloak.mpi.audit.AuditManager;
 import com.agiloak.mpi.audit.persistence.AuditDAO;
@@ -38,7 +41,7 @@ public class UKRDCIndexManager {
 	 * @param linkCode
 	 * @param linkDesc
 	 */
-	private void linkInternal(int personId, int masterId, String user, int linkCode, String linkDesc) throws MpiException {
+	protected void linkInternal(Connection conn, int personId, int masterId, String user, int linkCode, String linkDesc) throws MpiException {
 
 		if (personId==0 || masterId==0 || linkCode==0 || user==null || user.length()==0 || 
 			linkDesc==null || linkDesc.length()==0) {
@@ -47,7 +50,7 @@ public class UKRDCIndexManager {
 			throw new MpiException("Incomplete parameters for link");
 		}
 		
-		LinkRecord link = LinkRecordDAO.find(masterId, personId);
+		LinkRecord link = LinkRecordDAO.find(conn, masterId, personId);
 		
 		if (link!=null) {
 			// LT1-3
@@ -56,18 +59,18 @@ public class UKRDCIndexManager {
 			throw new MpiException("Link already exists");
 		}
 
-		LinkRecord ukrdcLink = LinkRecordDAO.findByPersonAndType(personId, NationalIdentity.UKRDC_TYPE);
+		LinkRecord ukrdcLink = LinkRecordDAO.findByPersonAndType(conn, personId, NationalIdentity.UKRDC_TYPE);
 		if (ukrdcLink!=null) {
 			// LT1-4
 			
 			int oldMaster = ukrdcLink.getMasterId();
 			// Drop the prior link
-			LinkRecordDAO.delete(ukrdcLink);
+			LinkRecordDAO.delete(conn, ukrdcLink);
 			// And if no links remain to the master, drop the master
-			List<LinkRecord> remainingLinks = LinkRecordDAO.findByMaster(oldMaster);
+			List<LinkRecord> remainingLinks = LinkRecordDAO.findByMaster(conn, oldMaster);
 			if (remainingLinks.size() == 0) {
 				logger.debug("Master has no remaining links so delete");
-				MasterRecordDAO.delete(oldMaster);
+				MasterRecordDAO.delete(conn, oldMaster);
 			} else {
 				logger.debug("Master has remaining linked records so will not be deleted");
 			}
@@ -77,7 +80,8 @@ public class UKRDCIndexManager {
 		link = new LinkRecord(masterId, personId);
 		link.setUpdatedBy(user).setLinkCode(linkCode).setLinkDesc(linkDesc);
 		link.setLinkType(LinkRecord.MANUAL_TYPE);
-		LinkRecordDAO.create(link);
+		LinkRecordDAO.create(conn, 
+				link);
 		
 	}
 	
@@ -87,7 +91,7 @@ public class UKRDCIndexManager {
 	 * @return
 	 * @throws MpiException
 	 */
-	private String searchInternal(ProgrammeSearchRequest psr) throws MpiException {
+	protected String searchInternal(Connection conn, ProgrammeSearchRequest psr) throws MpiException {
 		String ukrdcId = null;
 		
 		if (psr==null) {
@@ -110,7 +114,7 @@ public class UKRDCIndexManager {
 			throw new MpiException("Invalid Date Of Birth Format");
 		}	
 
-		MasterRecord nationalMaster = MasterRecordDAO.findByNationalId(psr.getNationalId().getId(), psr.getNationalId().getType());
+		MasterRecord nationalMaster = MasterRecordDAO.findByNationalId(conn, psr.getNationalId().getId(), psr.getNationalId().getType());
 		// If the national record is not found then we can't match to a UKRDC id
 		if (nationalMaster == null) {
 			// ST4-1
@@ -125,18 +129,18 @@ public class UKRDCIndexManager {
 		searchPerson.setSurname(psr.getSurname());
 		
 		// Get any records linked to this national id
-		List<LinkRecord> links = LinkRecordDAO.findByMaster(nationalMaster.getId());
+		List<LinkRecord> links = LinkRecordDAO.findByMaster(conn, nationalMaster.getId());
 		
 		for (LinkRecord link : links ){
 				
 			// Find the UKRDC Master linked to this person (if any)
-			LinkRecord ukrdcLink = LinkRecordDAO.findByPersonAndType(link.getPersonId(), NationalIdentity.UKRDC_TYPE);
+			LinkRecord ukrdcLink = LinkRecordDAO.findByPersonAndType(conn, link.getPersonId(), NationalIdentity.UKRDC_TYPE);
 			
 			if (ukrdcLink != null) {
 				
 				// If found - we have identified a Person linked to a UKRDC Number AND by National Id to the incoming Person
 				//            Does the incoming Person verify against the UKRDC Master
-				MasterRecord ukrdcMaster = MasterRecordDAO.get(ukrdcLink.getMasterId());
+				MasterRecord ukrdcMaster = MasterRecordDAO.get(conn, ukrdcLink.getMasterId());
 				
 				boolean verified = verifyMatch(searchPerson, ukrdcMaster);
 				if (verified) {
@@ -156,7 +160,7 @@ public class UKRDCIndexManager {
 		return ukrdcId;
 	}
 
-	private void validateInternal(Person person) throws MpiException {
+	protected void validateInternal(Person person) throws MpiException {
 		
 		if (person.getPrimaryIdType()!=null && person.getPrimaryIdType() != NationalIdentity.UKRDC_TYPE) {
 			logger.error("If provided, the primaryIdType must be UKRDC");
@@ -192,31 +196,31 @@ public class UKRDCIndexManager {
 		}
 	}
 	
-	private void validateWithEMPI(Person person) throws MpiException {
+	protected void validateWithEMPI(Connection conn, Person person) throws MpiException {
 
 		if (person.isSkipDuplicateCheck()) return;
 
 		for (NationalIdentity natId : person.getNationalIds()) {
 			
 			// For each National Identity - see if already used for this org.
-			validateNationalIdWithEMPI(person, natId.getId(), natId.getType());
+			validateNationalIdWithEMPI(conn, person, natId.getId(), natId.getType());
 		}			
 
 	}
 	
-	private void validateNationalIdWithEMPI(Person person, String id, String type) throws MpiException {
+	private void validateNationalIdWithEMPI(Connection conn, Person person, String id, String type) throws MpiException {
 
 		// This check needs to ignore the same patient record when detecting duplicates, so pick up the id from the MPI (where it exists)
-		Person storedPerson = PersonDAO.findByLocalId(person.getLocalIdType(), person.getLocalId(), person.getOriginator());
+		Person storedPerson = PersonDAO.findByLocalId(conn, person.getLocalIdType(), person.getLocalId(), person.getOriginator());
 		if (storedPerson != null) {
 			person.setId(storedPerson.getId());
 		}
 		
-		MasterRecord master = MasterRecordDAO.findByNationalId(id, type);
+		MasterRecord master = MasterRecordDAO.findByNationalId(conn, id, type);
 		if (master != null) {
 			
 			// Check for duplicates for this Originator and Master
-			int count = LinkRecordDAO.countByMasterAndOriginatorExcludingPid(master.getId(), person.getOriginator(), person.getId());
+			int count = LinkRecordDAO.countByMasterAndOriginatorExcludingPid(conn, master.getId(), person.getOriginator(), person.getId());
 			if (count > 0) {
 				String errorMsg = "Another record from Unit:"+person.getOriginator()+" already linked to master:"+master.getId(); 
 				logger.error(errorMsg);
@@ -255,163 +259,187 @@ public class UKRDCIndexManager {
 
 	}
 
-	public UKRDCIndexManagerResponse validate(Person person) {
-		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
-		try {
-			validateInternal(person);
-			validateWithEMPI(person);
-			resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
-		} catch (Exception e) {
-			resp.setStatus(UKRDCIndexManagerResponse.FAIL);
-			resp.setMessage(e.getMessage());
-			resp.setStackTrace(ExceptionUtils.getStackTrace(e));
+	/* 
+	 * Helper methods to streamline the connection management and error response handling in API functions
+	 */
+	private void closeConnection(Connection conn) throws MpiException {
+		// Tidy up the connection
+		if( conn != null) {
+			try {
+				conn.close();
+			} catch (SQLException e) {
+				logger.error("Failure closing Connection",e);
+				throw new MpiException("Failure closing Connection"+e.getMessage());
+			}
 		}
+	}
+	private void rollback(Connection conn, Exception ex) throws Exception {
+		conn.rollback();
+		throw ex;
+	}
+	private Connection getConnection() throws Exception {
+		Connection conn = SimpleConnectionManager.getDBConnection();
+		conn.setAutoCommit(false);
+		return conn;
+	}
+	private UKRDCIndexManagerResponse getErrorResponse(Exception ex) {
+		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
+		resp.setStatus(UKRDCIndexManagerResponse.FAIL);
+		resp.setMessage(ex.getMessage());
+		resp.setStackTrace(ExceptionUtils.getStackTrace(ex));
 		return resp;
 	}
-	
+	/*
+	 * End of Helper methods
+	 */
+
+	/*
+	 * API FUNCTIONS
+	 */
+
+	public UKRDCIndexManagerResponse validate(Person person) {
+		ValidateCommand cmd = new ValidateCommand(person);
+		UKRDCIndexManagerResponse resp = cmd.executeAPICommand(this);
+		return resp;
+	}
+
 	public UKRDCIndexManagerResponse store(Person person) {
 		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
+		Connection conn = null;
 		try {
-			NationalIdentity natId = createOrUpdate(person);
-			resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
-			resp.setNationalIdentity(natId);
-		} catch (Exception e) {
-			resp.setStatus(UKRDCIndexManagerResponse.FAIL);
-			resp.setMessage(e.getMessage());
-			resp.setStackTrace(ExceptionUtils.getStackTrace(e));
+			try {
+				conn = getConnection();
+				// API BUSINESS START
+				NationalIdentity natId = createOrUpdate(conn, person);
+				resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
+				resp.setNationalIdentity(natId);
+				// API BUSINESS END
+				conn.commit();
+			} catch (Exception ex) {
+				rollback(conn, ex);
+			} finally {
+				closeConnection(conn);
+			}
+		} catch (Exception ex) {
+			resp = getErrorResponse(ex);
 		}
+		
 		return resp;
 	}
 
 	public UKRDCIndexManagerResponse getUKRDCId(int masterId) {
 		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
+		Connection conn = null;
 		try {
-			MasterRecord master = MasterRecordDAO.get(masterId);
-			if (master == null) {
-				resp.setStatus(UKRDCIndexManagerResponse.FAIL);
-				resp.setMessage("Master ID does not exist");
-			} else {
-				if (master.getNationalIdType().equals(NationalIdentity.UKRDC_TYPE)) {
-					resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
-					resp.setNationalIdentity(new NationalIdentity(master.getNationalIdType(), master.getNationalId()));
-				} else {
+			try {
+				conn = getConnection();
+				// API BUSINESS START
+				MasterRecord master = MasterRecordDAO.get(conn, masterId);
+				if (master == null) {
 					resp.setStatus(UKRDCIndexManagerResponse.FAIL);
-					resp.setMessage("Master ID is not a UKRDC ID");
+					resp.setMessage("Master ID does not exist");
+				} else {
+					if (master.getNationalIdType().equals(NationalIdentity.UKRDC_TYPE)) {
+						resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
+						resp.setNationalIdentity(new NationalIdentity(master.getNationalIdType(), master.getNationalId()));
+					} else {
+						resp.setStatus(UKRDCIndexManagerResponse.FAIL);
+						resp.setMessage("Master ID is not a UKRDC ID");
+					}
 				}
+				// API BUSINESS END
+				conn.commit();
+			} catch (Exception ex) {
+				rollback(conn, ex);
+			} finally {
+				closeConnection(conn);
 			}
-		} catch (Exception e) {
-			resp.setStatus(UKRDCIndexManagerResponse.FAIL);
-			resp.setMessage(e.getMessage());
-			resp.setStackTrace(ExceptionUtils.getStackTrace(e));
+		} catch (Exception ex) {
+			resp = getErrorResponse(ex);
 		}
 		return resp;
 	}
 
 	public UKRDCIndexManagerResponse merge(int superceedingId, int supercededId) {
 		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
-		resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
-
+		Connection conn = null;
 		try {
-			// 0 - Get Details
-			MasterRecord superceeding = MasterRecordDAO.get(superceedingId);
-			MasterRecord superceded   = MasterRecordDAO.get(supercededId);
-			// 1 - LINK
-			// For every record linking to the superceeded record id
-			List<LinkRecord> links = LinkRecordDAO.findByMaster(supercededId);
-			for (LinkRecord link : links) {
-				LinkRecordDAO.delete(link);
+			try {
+				conn = getConnection();
+				// API BUSINESS START
+				// 0 - Get Details
+				MasterRecord superceeding = MasterRecordDAO.get(conn, superceedingId);
+				MasterRecord superceded   = MasterRecordDAO.get(conn, supercededId);
+				// 1 - LINK
+				// For every record linking to the superceeded record id
+				List<LinkRecord> links = LinkRecordDAO.findByMaster(conn, supercededId);
+				for (LinkRecord link : links) {
+					LinkRecordDAO.delete(conn, link);
 
-				LinkRecord newLink = new LinkRecord(superceedingId, link.getPersonId());
-				LinkRecordDAO.create(newLink);
+					LinkRecord newLink = new LinkRecord(superceedingId, link.getPersonId());
+					LinkRecordDAO.create(conn, newLink);
 
-				// 2 - AUDIT
-				Map<String,String> attr = new HashMap<String, String>();
-				attr.put("SuperceedingMaster", Integer.toString(superceedingId));
-				attr.put("SupercededMaster", Integer.toString(supercededId));
-				attr.put("SuperceedingUKRDC", superceeding.getNationalId());
-				attr.put("SupercededUKRDC", superceded.getNationalId());
-				AuditManager am = new AuditManager();
-				am.create(Audit.UKRDC_MERGE, link.getPersonId(), superceedingId, "UKRDC Merge", attr);
-
-//				// 3 - WORK ITEMS - Dissociated from Merge - will be done manually
-//				WorkItemManager wim = new WorkItemManager();
-//				
-//				List<WorkItem> items = wim.findByPerson(link.getPersonId());
-//				for (WorkItem item : items) {
-//					item.setStatus(WorkItem.STATUS_CLOSED);
-//					item.setLastUpdated(new Date());
-//					item.setUpdatedBy("SYSTEM");
-//					item.setUpdateDesc("UKRDC MERGE");
-//					wim.update(item);
-//				}
-				
+					// 2 - AUDIT
+					Map<String,String> attr = new HashMap<String, String>();
+					attr.put("SuperceedingMaster", Integer.toString(superceedingId));
+					attr.put("SupercededMaster", Integer.toString(supercededId));
+					attr.put("SuperceedingUKRDC", superceeding.getNationalId());
+					attr.put("SupercededUKRDC", superceded.getNationalId());
+					AuditManager am = new AuditManager();
+					am.create(conn, Audit.UKRDC_MERGE, link.getPersonId(), superceedingId, "UKRDC Merge", attr);
+					
+				}
+				// 3 - MASTER RECORD
+				MasterRecordDAO.delete(conn, supercededId);
+				// API BUSINESS END
+				conn.commit();
+			} catch (Exception ex) {
+				rollback(conn, ex);
+			} finally {
+				closeConnection(conn);
 			}
 			
-			// 4- MASTER RECORD
-			MasterRecordDAO.delete(supercededId);
-			
-		} catch (Exception e) {
-			resp.setStatus(UKRDCIndexManagerResponse.FAIL);
-			resp.setMessage(e.getMessage());
-			resp.setStackTrace(ExceptionUtils.getStackTrace(e));
+		} catch (Exception ex) {
+			resp = getErrorResponse(ex);
 		}
 		return resp;
 	}
+	
 	public UKRDCIndexManagerResponse search(ProgrammeSearchRequest psr) {
-		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
-		try {
-			String ukrdcId = searchInternal(psr);
-			NationalIdentity natId = new NationalIdentity(ukrdcId);
-			resp.setNationalIdentity(natId);
-			resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
-		} catch (Exception e) {
-			resp.setStatus(UKRDCIndexManagerResponse.FAIL);
-			resp.setMessage(e.getMessage());
-			resp.setStackTrace(ExceptionUtils.getStackTrace(e));
-		}
+		SearchCommand cmd = new SearchCommand(psr);
+		UKRDCIndexManagerResponse resp = cmd.executeAPICommand(this);
 		return resp;
 	}
 
 	public UKRDCIndexManagerResponse link(int personId, int masterId, String user, int linkCode, String linkDesc) {
-		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
-		try {
-			linkInternal(personId, masterId, user, linkCode, linkDesc);
-			resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
-		} catch (Exception e) {
-			resp.setStatus(UKRDCIndexManagerResponse.FAIL);
-			resp.setMessage(e.getMessage());
-			resp.setStackTrace(ExceptionUtils.getStackTrace(e));
-		}
+		LinkCommand cmd = new LinkCommand(personId, masterId, user, linkCode, linkDesc);
+		UKRDCIndexManagerResponse resp = cmd.executeAPICommand(this);
 		return resp;
 	}
+
 	public UKRDCIndexManagerResponse setLocalPID(Person person, String sendingFacility, String sendingExtract) {
-		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
-		try {
-			standardise(person);
-
-			String pid = setLocalPIDInternal(person, sendingFacility, sendingExtract);
-			
-			if (pid==null) {
-				resp.setStatus(UKRDCIndexManagerResponse.FAIL);
-				resp.setMessage("FAILED TO MATCH DURING UPDATE - SEE WORK ITEMS");
-			} else {
-				resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
-				resp.setPid(pid);
-			}
-			
-		} catch (Exception e) {
-			resp.setStatus(UKRDCIndexManagerResponse.FAIL);
-			resp.setMessage(e.getMessage());
-			resp.setStackTrace(ExceptionUtils.getStackTrace(e));
-		}
+		SetLocalPidCommand cmd = new SetLocalPidCommand(person, sendingFacility, sendingExtract) ;
+		UKRDCIndexManagerResponse resp = cmd.executeAPICommand(this);
 		return resp;
 	}
 
-	private String setLocalPIDInternal(Person person, String sendingFacility, String sendingExtract) throws MpiException {
+	public UKRDCIndexManagerResponse getLocalPID(Person person, String sendingFacility, String sendingExtract) {
+		GetLocalPidCommand cmd = new GetLocalPidCommand(person, sendingFacility, sendingExtract) ;
+		UKRDCIndexManagerResponse resp = cmd.executeAPICommand(this);
+		return resp;
+	}
+
+
+	/*
+	 * API - END
+	 */
+	
+	
+	protected String setLocalPIDInternal(Connection conn, Person person, String sendingFacility, String sendingExtract) throws MpiException {
 		String pid = null;
 		boolean matchesFound = false;
 		
-		PidXREF xref = PidXREFDAO.findByLocalId(sendingFacility, sendingExtract, person.getUnconsolidatedLocalId());
+		PidXREF xref = PidXREFDAO.findByLocalId(conn, sendingFacility, sendingExtract, person.getUnconsolidatedLocalId());
 		if (xref!=null) {
 			return xref.getPid();
 		}
@@ -421,7 +449,7 @@ public class UKRDCIndexManager {
 			//  Look for this NI linked to a local id for this SF AND SE - looking for situations where only the number has changed.
 			//  Person joined to LR joined to MR identified by NI and joined to XREF with this SF and SE. New code in LinkRecordDAO
 			
-			List<Person> matchPersons = PidXREFDAO.FindByNationalIdAndFacility(sendingFacility, sendingExtract, nid.getType(), nid.getId());
+			List<Person> matchPersons = PidXREFDAO.FindByNationalIdAndFacility(conn, sendingFacility, sendingExtract, nid.getType(), nid.getId());
 			
 			for (Person potentialMatch : matchPersons) { 
 				matchesFound = true;
@@ -435,7 +463,7 @@ public class UKRDCIndexManager {
 						person.getGivenName().equals(potentialMatch.getGivenName()) ;
 				
 				// Feels inefficient, but correct - get the master id that has facilitated the match
-				MasterRecord matchedMaster = MasterRecordDAO.findByNationalId(nid.getId(), nid.getType());
+				MasterRecord matchedMaster = MasterRecordDAO.findByNationalId(conn, nid.getId(), nid.getType());
 
 				// Set up attributes for either the Audit or the WorkItem
 				Map<String,String> attributes = new HashMap<String, String>();
@@ -448,11 +476,11 @@ public class UKRDCIndexManager {
 					// Insert the PIDXREF
 					PidXREF newXref = new PidXREF(sendingFacility, sendingExtract, person.getUnconsolidatedLocalId()); 
 					newXref.setPid(potentialMatch.getLocalId());
-					PidXREFDAO.create(newXref);
+					PidXREFDAO.create(conn, newXref);
 					
 					// Audit the Match
 					Audit audit = new Audit(Audit.NEW_PIDXREF, potentialMatch.getId(), matchedMaster.getId(), "PIDXREF Match", attributes);
-					AuditDAO.create(audit);
+					AuditDAO.create(conn, audit);
 					pid = newXref.getPid();
 					
 					// Don't process any more potential matches or we will get multiple links to the same PID
@@ -467,7 +495,7 @@ public class UKRDCIndexManager {
 					WorkItemManager wim = new WorkItemManager();
 					int personToLog = person.getId();
 					if (personToLog==0) personToLog = 999999999; // Person is not known at this point
-					wim.create(WorkItemType.TYPE_XREF_MATCHED_NOT_VERIFIED, personToLog, matchedMaster.getId(), "Person matched by facility, extract and national id - not matched by demographics", attributes);
+					wim.create(conn, WorkItemType.TYPE_XREF_MATCHED_NOT_VERIFIED, personToLog, matchedMaster.getId(), "Person matched by facility, extract and national id - not matched by demographics", attributes);
 				}
 				
 			}
@@ -477,33 +505,13 @@ public class UKRDCIndexManager {
 		// If no matches found, this record has not been seen by the EMPI before and no local link is found so it will be allocated a new PID and linked to it
 		if (!matchesFound) {
 			PidXREF newXref = new PidXREF(sendingFacility, sendingExtract, person.getLocalId()); 
-			PidXREFDAO.create(newXref);
+			PidXREFDAO.create(conn, newXref);
 			pid = newXref.getPid();
 		}
 		
 		return pid;
 	}
-	
-	public UKRDCIndexManagerResponse getLocalPID(Person person, String sendingFacility, String sendingExtract) {
-		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
-		try {
-			standardise(person);
-			String outcome = getLocalPIDInternal(person, sendingFacility, sendingExtract);
-			if (outcome.equals("REJECT")) {
-				resp.setStatus(UKRDCIndexManagerResponse.FAIL);
-				resp.setMessage("FAILED TO MATCH DURING VALIDATION - SEE WORK ITEMS");
-			} else {
-				resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
-				resp.setPid(outcome); 
-			}
-		} catch (Exception e) {
-			resp.setStatus(UKRDCIndexManagerResponse.FAIL);
-			resp.setMessage(e.getMessage());
-			resp.setStackTrace(ExceptionUtils.getStackTrace(e));
-		}
-		return resp;
-	}
-	
+		
 	/**
 	 * @param person
 	 * @param sendingFacility
@@ -511,11 +519,11 @@ public class UKRDCIndexManager {
 	 * @return
 	 * @throws MpiException
 	 */
-	private String getLocalPIDInternal(Person person, String sendingFacility, String sendingExtract) throws MpiException {
+	protected String getLocalPIDInternal(Connection conn, Person person, String sendingFacility, String sendingExtract) throws MpiException {
 		String outcome = "NEW";
 		boolean matchesFound = false;
 		
-		PidXREF xref = PidXREFDAO.findByLocalId(sendingFacility, sendingExtract, person.getUnconsolidatedLocalId());
+		PidXREF xref = PidXREFDAO.findByLocalId(conn, sendingFacility, sendingExtract, person.getUnconsolidatedLocalId());
 		if (xref!=null) {
 			return xref.getPid();
 		}
@@ -525,7 +533,7 @@ public class UKRDCIndexManager {
 			//  Look for this NI linked to a local id for this SF AND SE - looking for situations where only the number has changed.
 			//  Person joined to LR joined to MR identified by NI and joined to XREF with this SF and SE. New code in LinkRecordDAO
 			
-			List<Person> matchPersons = PidXREFDAO.FindByNationalIdAndFacility(sendingFacility, sendingExtract, nid.getType(), nid.getId());
+			List<Person> matchPersons = PidXREFDAO.FindByNationalIdAndFacility(conn, sendingFacility, sendingExtract, nid.getType(), nid.getId());
 			
 			for (Person potentialMatch : matchPersons) { 
 				matchesFound = true;
@@ -549,7 +557,7 @@ public class UKRDCIndexManager {
 					// Set up attributes for either the WorkItem or Audit as appropriate 
 
 					// Inefficient - get the master id that has facilitated the match
-					MasterRecord matchedMaster = MasterRecordDAO.findByNationalId(nid.getId(), nid.getType());
+					MasterRecord matchedMaster = MasterRecordDAO.findByNationalId(conn, nid.getId(), nid.getType());
 					Map<String,String> attributes = new HashMap<String, String>();
 					attributes.put("SF", sendingFacility);
 					attributes.put("SE", sendingExtract);
@@ -562,7 +570,7 @@ public class UKRDCIndexManager {
 					WorkItemManager wim = new WorkItemManager();
 					int personToLog = person.getId();
 					if (personToLog==0) personToLog = 999999999; // Person is not known at this point
-					wim.create(WorkItemType.TYPE_XREF_MATCHED_NOT_VERIFIED, personToLog, matchedMaster.getId(), "Person matched by facility, extract and national id - not matched by demographics", attributes);
+					wim.create(conn, WorkItemType.TYPE_XREF_MATCHED_NOT_VERIFIED, personToLog, matchedMaster.getId(), "Person matched by facility, extract and national id - not matched by demographics", attributes);
 
 					outcome = "REJECT";
 				}
@@ -583,7 +591,7 @@ public class UKRDCIndexManager {
 	 *  
 	 * @param person
 	 */
-	private NationalIdentity createOrUpdate(Person person) throws MpiException {
+	private NationalIdentity createOrUpdate(Connection conn, Person person) throws MpiException {
 
 		logger.debug("*********Processing person record:"+person);
 		NationalIdentity ukrdcId = null;
@@ -596,7 +604,7 @@ public class UKRDCIndexManager {
 		
 		standardise(person);
 		
-		Person storedPerson = PersonDAO.findByLocalId(person.getLocalIdType(), person.getLocalId(), person.getOriginator());
+		Person storedPerson = PersonDAO.findByLocalId(conn, person.getLocalIdType(), person.getLocalId(), person.getOriginator());
 		if (storedPerson != null) {
 			logger.debug("RECORD EXISTS:"+storedPerson.getId());
 			person.setId(storedPerson.getId());
@@ -612,15 +620,15 @@ public class UKRDCIndexManager {
 			}
 
 			// Store the record
-			PersonDAO.update(person);
+			PersonDAO.update(conn, person);
 			
 			// Remove any national identifiers which are no longer in the person record (expensive!)
-			List<LinkRecord> links = LinkRecordDAO.findByPerson(storedPerson.getId());
+			List<LinkRecord> links = LinkRecordDAO.findByPerson(conn, storedPerson.getId());
 			List<String> processed = new ArrayList<String>();
 			for (LinkRecord link : links) {
 				logger.debug("National Id link exists on db - comparing to inbound record.");
 
-				MasterRecord master = MasterRecordDAO.get(link.getMasterId());
+				MasterRecord master = MasterRecordDAO.get(conn, link.getMasterId());
 				
 				// Don't process UKRDC links here - these will be updated later
 				if (!master.getNationalIdType().equals(NationalIdentity.UKRDC_TYPE) ){
@@ -635,7 +643,7 @@ public class UKRDCIndexManager {
 							// TEST:UT4-2 [NHS record]
 							logger.debug("A national link record on the database was matched with the inbound record - updating the link as required");
 							found = true;
-							updateNationalIdLinks(person, storedPerson, master, link);
+							updateNationalIdLinks(conn, person, storedPerson, master, link);
 							processed.add(natId.getType());
 						}
 					}			
@@ -644,12 +652,12 @@ public class UKRDCIndexManager {
 						// TEST:UT4-2 [CHI record]
 						logger.debug("A national link record on the database is not on this inbound record - delete the link");
 						// The Link on the database is not in the new record so delete the old link. If no other links to this master then delete the master
-						LinkRecordDAO.delete(link);
-						List<LinkRecord> remainingLinks = LinkRecordDAO.findByMaster(master.getId());
+						LinkRecordDAO.delete(conn, link);
+						List<LinkRecord> remainingLinks = LinkRecordDAO.findByMaster(conn, master.getId());
 						if (remainingLinks.size() == 0) {
 							// TEST:UT4-2
 							logger.debug("No links remain to the master - deleting the master");
-							MasterRecordDAO.delete(master);
+							MasterRecordDAO.delete(conn, master);
 						} else {
 							// TEST:UT4-??
 							logger.debug("Links remain to the master so the master will not be deleted");
@@ -669,12 +677,12 @@ public class UKRDCIndexManager {
 				if (!processed.contains(natId.getType())) {
 					// TEST:UT4-1
 					// TEST:UT4-2
-					createNationalIdLinks(person, natId.getId(), natId.getType());
+					createNationalIdLinks(conn, person, natId.getId(), natId.getType());
 				}
 			}			
 			
 			// Update the UKRDC link
-			ukrdcId = updateUKRDCLink(person, storedPerson);
+			ukrdcId = updateUKRDCLink(conn, person, storedPerson);
 			
 		} else {
 			logger.debug("NEW RECORD");
@@ -684,15 +692,15 @@ public class UKRDCIndexManager {
 			person.setStdPostcode(NormalizationManager.getStandardPostcode(person.getPostcode()));
 			
 			// Store the record
-			PersonDAO.create(person);
+			PersonDAO.create(conn, person);
 			
 			// Link to other national identifiers as required
 			for (NationalIdentity natId : person.getNationalIds()) {
-				createNationalIdLinks(person, natId.getId(), natId.getType());
+				createNationalIdLinks(conn, person, natId.getId(), natId.getType());
 			}			
 			
 			// Link to the UKRDC number
-			ukrdcId = createUKRDCLink(person);
+			ukrdcId = createUKRDCLink(conn, person);
 			
 		}
 		
@@ -704,20 +712,20 @@ public class UKRDCIndexManager {
 	 * 
 	 * @param person
 	 */
-	private NationalIdentity updateUKRDCLink(Person person, Person storedPerson) throws MpiException {
+	private NationalIdentity updateUKRDCLink(Connection conn, Person person, Person storedPerson) throws MpiException {
 
 		logger.debug("updateUKRDCLink");
 		NationalIdentity ukrdcIdentity = null;
 		
 		// Find current link to a UKRDC Master, if it exists
-		LinkRecord masterLink = LinkRecordDAO.findByPersonAndType(person.getId(), NationalIdentity.UKRDC_TYPE);
+		LinkRecord masterLink = LinkRecordDAO.findByPersonAndType(conn, person.getId(), NationalIdentity.UKRDC_TYPE);
 		if (masterLink == null) {
 			// No current link - process as for new record
 			// TEST:UT1-1
-			ukrdcIdentity = createUKRDCLink(person);
+			ukrdcIdentity = createUKRDCLink(conn, person);
 		} else {
 			// UKRDC master exists for this record - get the details
-			MasterRecord ukrdcMaster = MasterRecordDAO.get(masterLink.getMasterId());
+			MasterRecord ukrdcMaster = MasterRecordDAO.get(conn, masterLink.getMasterId());
 			// If no primary id on the incoming record OR it is the same as currently stored then just reverify
 			if ( (person.getPrimaryId()==null) || 
 					(nationalIdMatch(ukrdcMaster.getNationalId(), person.getPrimaryId(), ukrdcMaster.getNationalIdType(), person.getPrimaryIdType())) ) {
@@ -733,8 +741,8 @@ public class UKRDCIndexManager {
 						// TEST:UT2-3
 						logger.debug("Demographics have changed - update master and verify links");
 						ukrdcMaster.updateDemographics(person);
-						MasterRecordDAO.update(ukrdcMaster);
-						verifyLinks(ukrdcMaster, person);
+						MasterRecordDAO.update(conn, ukrdcMaster);
+						verifyLinks(conn, ukrdcMaster, person);
 					} else {
 						// TEST:UT2-4
 						logger.debug("Demographics have changed but record older than current master - no update to master");
@@ -744,10 +752,10 @@ public class UKRDCIndexManager {
 							logger.debug("Record no longer verifies with master");
 							WorkItemManager wim = new WorkItemManager();
 							Map<String,String> attributes = getVerifyAttributes(person, ukrdcMaster);
-							wim.create(WorkItemType.TYPE_STALE_DEMOGS_NOT_VERIFIED_PRIMARY, person.getId(), ukrdcMaster.getId(), "Stale Demographics Not Verified Against PrimaryId", attributes);
+							wim.create(conn, WorkItemType.TYPE_STALE_DEMOGS_NOT_VERIFIED_PRIMARY, person.getId(), ukrdcMaster.getId(), "Stale Demographics Not Verified Against PrimaryId", attributes);
 
 							ukrdcMaster.setStatus(MasterRecord.INVESTIGATE);
-							MasterRecordDAO.update(ukrdcMaster);
+							MasterRecordDAO.update(conn, ukrdcMaster);
 						}
 					}
 				} else {
@@ -759,19 +767,19 @@ public class UKRDCIndexManager {
 				logger.debug("Primary Id has changed - delete the link and re-add");
 				// If primary id is different
 				// Drop the prior link
-				LinkRecordDAO.delete(masterLink);
+				LinkRecordDAO.delete(conn, masterLink);
 				// And if no links remain to the master, drop the master
-				List<LinkRecord> remainingLinks = LinkRecordDAO.findByMaster(ukrdcMaster.getId());
+				List<LinkRecord> remainingLinks = LinkRecordDAO.findByMaster(conn, ukrdcMaster.getId());
 				if (remainingLinks.size() == 0) {
 					// TEST:UT3-1 
 					logger.debug("Master has no remaining links so delete");
-					MasterRecordDAO.delete(ukrdcMaster);
+					MasterRecordDAO.delete(conn, ukrdcMaster);
 				} else {
 					// TEST:UT3-2
 					logger.debug("Master has remaining linked records so will not be deleted");
 				}
 				// Create the UKRDC link as for a new person
-				ukrdcIdentity = createUKRDCLink(person);
+				ukrdcIdentity = createUKRDCLink(conn, person);
 			}
 		}
 		
@@ -784,7 +792,7 @@ public class UKRDCIndexManager {
 	 * 
 	 * @param person
 	 */
-	private NationalIdentity createUKRDCLink(Person person) throws MpiException {
+	private NationalIdentity createUKRDCLink(Connection conn, Person person) throws MpiException {
 
 		logger.debug("createUKRDCLink");
 
@@ -794,7 +802,7 @@ public class UKRDCIndexManager {
 			logger.debug("Primary Id found on the incoming record");
 			ukrdcIdentity = new NationalIdentity(person.getPrimaryId());
 
-			MasterRecord master = MasterRecordDAO.findByNationalId(person.getPrimaryId(), person.getPrimaryIdType());
+			MasterRecord master = MasterRecordDAO.findByNationalId(conn, person.getPrimaryId(), person.getPrimaryIdType());
 			if (master != null) {
 				
 				logger.debug("Master found for this Primary id. MASTERID:"+master.getId());
@@ -803,11 +811,11 @@ public class UKRDCIndexManager {
 				if (verifyMatch(person, master)) {
 					logger.debug("Record verified - creating link");
 					LinkRecord link = new LinkRecord(master.getId(), person.getId());
-					LinkRecordDAO.create(link);
+					LinkRecordDAO.create(conn, link);
 					if (master.getEffectiveDate().compareTo(person.getEffectiveDate()) < 0 ) {
 						logger.debug("TEST:T4-2");
 						master.updateDemographics(person);
-						MasterRecordDAO.update(master);
+						MasterRecordDAO.update(conn, master);
 					} else {
 						logger.debug("TEST:T4-3");						
 					}
@@ -815,10 +823,10 @@ public class UKRDCIndexManager {
 					logger.debug("Record not verified - creating work item, link and mark master for investigation");
 					WorkItemManager wim = new WorkItemManager();
 					Map<String,String> attributes = getVerifyAttributes(person, master);
-					wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_PRIMARY, person.getId(), master.getId(), "Claimed Link to Primary Id Not Verified", attributes);
+					wim.create(conn, WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_PRIMARY, person.getId(), master.getId(), "Claimed Link to Primary Id Not Verified", attributes);
 
 					LinkRecord link = new LinkRecord(master.getId(), person.getId());
-					LinkRecordDAO.create(link);
+					LinkRecordDAO.create(conn, link);
 					master.setStatus(MasterRecord.INVESTIGATE);
 					if (master.getEffectiveDate().compareTo(person.getEffectiveDate()) < 0 ) {
 						logger.debug("TEST:T5-2");
@@ -826,7 +834,7 @@ public class UKRDCIndexManager {
 					} else {
 						logger.debug("TEST:T5-3");						
 					}
-					MasterRecordDAO.update(master);
+					MasterRecordDAO.update(conn, master);
 				}
 
 			} else {
@@ -836,12 +844,12 @@ public class UKRDCIndexManager {
 				
 				// a master record does not exist for this Primary id so create one
 				master = new MasterRecord(person);		
-				MasterRecordDAO.create(master);
+				MasterRecordDAO.create(conn, master);
 				
 				logger.debug("Linking to the new master record");
 				// and link this record to it
 				LinkRecord link = new LinkRecord(master.getId(), person.getId());
-				LinkRecordDAO.create(link);
+				LinkRecordDAO.create(conn, link);
 				
 			}
 			
@@ -856,29 +864,29 @@ public class UKRDCIndexManager {
 			for (NationalIdentity natId : person.getNationalIds()) {
 				
 				// get the master for this national id (e.g. NHS Number)
-				master = MasterRecordDAO.findByNationalId(natId.getId(), natId.getType());
+				master = MasterRecordDAO.findByNationalId(conn, natId.getId(), natId.getType());
 				if (master!=null) {
 					
 					// Get any records linked to this national id
-					List<LinkRecord> links = LinkRecordDAO.findByMaster(master.getId());
+					List<LinkRecord> links = LinkRecordDAO.findByMaster(conn, master.getId());
 					
 					for (LinkRecord link : links ){
 						// Ignore the link to the record being processed
 						if (link.getPersonId()!= person.getId()) {
 							
 							// Find the UKRDC Master linked to this person (if any)
-							LinkRecord ukrdcLink = LinkRecordDAO.findByPersonAndType(link.getPersonId(), NationalIdentity.UKRDC_TYPE);
+							LinkRecord ukrdcLink = LinkRecordDAO.findByPersonAndType(conn, link.getPersonId(), NationalIdentity.UKRDC_TYPE);
 							
 							if (ukrdcLink != null) {
 								
 								// If found - we have identified a Person linked to a UKRDC Number AND by National Id to the incoming Person
 								//            Does the incoming Person verify against the UKRDC Master
-								ukrdcMaster = MasterRecordDAO.get(ukrdcLink.getMasterId());
+								ukrdcMaster = MasterRecordDAO.get(conn, ukrdcLink.getMasterId());
 								boolean verified = verifyMatch(person, ukrdcMaster);
 								if (verified) {
 									logger.debug("Linking to the found and verified master record");
 									LinkRecord newLink = new LinkRecord(ukrdcMaster.getId(), person.getId());
-									LinkRecordDAO.create(newLink);
+									LinkRecordDAO.create(conn, newLink);
 									
 									// Audit the creation of the new UKRDC Number
 									AuditManager am = new AuditManager();
@@ -886,7 +894,7 @@ public class UKRDCIndexManager {
 									attr.put("NationalIdType", natId.getType());
 									attr.put("NationalId", natId.getId());
 
-									am.create(Audit.NEW_MATCH_THROUGH_NATIONAL_ID, person.getId(), ukrdcMaster.getId(),"Matched By National Id", attr);
+									am.create(conn, Audit.NEW_MATCH_THROUGH_NATIONAL_ID, person.getId(), ukrdcMaster.getId(),"Matched By National Id", attr);
 
 									linked = true;
 									break; //Only want to link once
@@ -894,7 +902,7 @@ public class UKRDCIndexManager {
 									logger.debug("Link to potential UKRDC Match not verified");
 									WorkItemManager wim = new WorkItemManager();
 									Map<String,String> attributes = getVerifyAttributes(person, ukrdcMaster);
-									wim.create(WorkItemType.TYPE_INFERRED_LINK_NOT_VERIFIED_PRIMARY, person.getId(), ukrdcMaster.getId(), "Link to Inferred PrimaryId not verified", attributes);
+									wim.create(conn, WorkItemType.TYPE_INFERRED_LINK_NOT_VERIFIED_PRIMARY, person.getId(), ukrdcMaster.getId(), "Link to Inferred PrimaryId not verified", attributes);
 								}
 							}
 						}
@@ -906,13 +914,13 @@ public class UKRDCIndexManager {
 			if (!linked) {
 				logger.debug("No link found - allocating a new UKRDC Number");
 				
-				String ukrdcId = MasterRecordDAO.allocate();
+				String ukrdcId = MasterRecordDAO.allocate(conn);
 				
 				// a master record does not exist for this Primary id so create one
 				ukrdcMaster = new MasterRecord(person);
 				ukrdcMaster.setNationalId(ukrdcId);
 				ukrdcMaster.setNationalIdType(NationalIdentity.UKRDC_TYPE);
-				MasterRecordDAO.create(ukrdcMaster);
+				MasterRecordDAO.create(conn, ukrdcMaster);
 
 				// Audit the creation of the new UKRDC Number
 				AuditManager am = new AuditManager();
@@ -920,12 +928,12 @@ public class UKRDCIndexManager {
 				attr.put("NationalIdType", NationalIdentity.UKRDC_TYPE);
 				attr.put("NationalId", ukrdcMaster.getNationalId());
 
-				am.create(Audit.NO_MATCH_ASSIGN_NEW, person.getId(), ukrdcMaster.getId(), "UKRDC Number Allocated", attr);
+				am.create(conn, Audit.NO_MATCH_ASSIGN_NEW, person.getId(), ukrdcMaster.getId(), "UKRDC Number Allocated", attr);
 
 				logger.debug("Linking to the new master record");
 				// and link this record to it
 				LinkRecord link = new LinkRecord(ukrdcMaster.getId(), person.getId());
-				LinkRecordDAO.create(link);
+				LinkRecordDAO.create(conn, link);
 			}
 			
 			ukrdcIdentity = new NationalIdentity(ukrdcMaster.getNationalId());
@@ -940,7 +948,7 @@ public class UKRDCIndexManager {
 	 * 
 	 * @param person
 	 */
-	private void createNationalIdLinks(Person person, String id, String type) throws MpiException {
+	private void createNationalIdLinks(Connection conn, Person person, String id, String type) throws MpiException {
 
 		logger.debug("createNationalIdLinks");
 		
@@ -949,28 +957,28 @@ public class UKRDCIndexManager {
 			throw new MpiException("NationalId not set");
 		}
 			
-		MasterRecord master = MasterRecordDAO.findByNationalId(id, type);
+		MasterRecord master = MasterRecordDAO.findByNationalId(conn, id, type);
 		if (master != null) {
 			
 			logger.debug("Master found for this national id. MASTERID:"+master.getId());
 			// a master record exists for this national id so link to it
 			LinkRecord link = new LinkRecord(master.getId(), person.getId());
-			LinkRecordDAO.create(link);
+			LinkRecordDAO.create(conn, link);
 			
 			// Verify that the details match
 			if (!verifyMatch(person, master)) {
 				logger.debug("Record not verified - creating a work item and mark the master for invesigation");
 				WorkItemManager wim = new WorkItemManager();
 				Map<String,String> attributes = getVerifyAttributes(person, master);
-				wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, person.getId(), master.getId(), "Claimed Link to NationalId Not Verified", attributes);
+				wim.create(conn, WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, person.getId(), master.getId(), "Claimed Link to NationalId Not Verified", attributes);
 				master.setStatus(MasterRecord.INVESTIGATE);
-				MasterRecordDAO.update(master);
+				MasterRecordDAO.update(conn, master);
 			}
 			
 			// Update the master demographics
 			if (person.getEffectiveDate().compareTo(master.getEffectiveDate())>0) {
 				master.updateDemographics(person);
-				MasterRecordDAO.update(master);
+				MasterRecordDAO.update(conn, master);
 			}
 			
 			// Check for duplicates for this Originator and Master (unless suppressed)
@@ -978,7 +986,7 @@ public class UKRDCIndexManager {
 				logger.debug("Duplicate check skipped at client request");
 			}
 			else {
-				int count = LinkRecordDAO.countByMasterAndOriginator(master.getId(), person.getOriginator());
+				int count = LinkRecordDAO.countByMasterAndOriginator(conn, master.getId(), person.getOriginator());
 				if (count > 1) {
 					String warnMsg = "More than 1 record from Unit:"+person.getOriginator()+" linked to master:"+master.getId(); 
 					logger.debug(warnMsg);
@@ -987,9 +995,9 @@ public class UKRDCIndexManager {
 					attributes.put("Originator", person.getOriginator());
 					attributes.put(master.getNationalIdType(), master.getNationalId());
 
-					wim.create(WorkItemType.TYPE_MULTIPLE_NATID_LINKS_FROM_ORIGINATOR, person.getId(), master.getId(), warnMsg, attributes);
+					wim.create(conn, WorkItemType.TYPE_MULTIPLE_NATID_LINKS_FROM_ORIGINATOR, person.getId(), master.getId(), warnMsg, attributes);
 					master.setStatus(MasterRecord.INVESTIGATE);
-					MasterRecordDAO.update(master);
+					MasterRecordDAO.update(conn, master);
 				}
 			}
 
@@ -1002,12 +1010,12 @@ public class UKRDCIndexManager {
 			master = new MasterRecord(person);
 			// use the national id being processed
 			master.setNationalId(id).setNationalIdType(type);
-			MasterRecordDAO.create(master);
+			MasterRecordDAO.create(conn, master);
 
 			logger.debug("Linking to the new master record");
 			// and link this record to it
 			LinkRecord link = new LinkRecord(master.getId(), person.getId());
-			LinkRecordDAO.create(link);
+			LinkRecordDAO.create(conn, link);
 
 		}
 	}
@@ -1017,8 +1025,8 @@ public class UKRDCIndexManager {
 	 * 
 	 * @param person
 	 */
-	private void updateNationalIdLinks(Person person, Person storedPerson, MasterRecord master, LinkRecord link) throws MpiException {
-
+	private void updateNationalIdLinks(Connection conn, Person person, Person storedPerson, MasterRecord master, LinkRecord link) throws MpiException {
+	
 		logger.debug("updateNationalIdLinks");
 		
 		if ((person == null) || (master == null) || (link==null)) {
@@ -1034,8 +1042,8 @@ public class UKRDCIndexManager {
 				// If the effective date is later on the inbound record - update the record and reverify
 				logger.debug("Demographics have changed and this record has a later effective date - update master and verify links");
 				master.updateDemographics(person);
-				MasterRecordDAO.update(master);
-				verifyLinks(master, person);
+				MasterRecordDAO.update(conn, master);
+				verifyLinks(conn, master, person);
 			} else {
 				// TEST:UT4-4
 				logger.debug("Demographics have changed but this record is stale so master is not updated. Reverify against master.");
@@ -1043,27 +1051,27 @@ public class UKRDCIndexManager {
 				if (!verifyMatch(person,master)) {
 					WorkItemManager wim = new WorkItemManager();
 					Map<String,String> attributes = getVerifyAttributes(person, master);
-					wim.create(WorkItemType.TYPE_STALE_DEMOGS_NOT_VERIFIED_NATIONAL, person.getId(), master.getId(), "Stale Demographics Not Verified Against NationalId",attributes);
+					wim.create(conn, WorkItemType.TYPE_STALE_DEMOGS_NOT_VERIFIED_NATIONAL, person.getId(), master.getId(), "Stale Demographics Not Verified Against NationalId",attributes);
 					master.setStatus(MasterRecord.INVESTIGATE);
-					MasterRecordDAO.update(master);
+					MasterRecordDAO.update(conn, master);
 				}
 			}
 		} else {
 			// TEST:UT4-2
 			logger.debug("Demographics have not changed so the master will not be updated");
 		}
-
+	
 	}
-		
+
 	/**
 	 * Verifies all links to a master record and deletes if appropriate
 	 * Used after the demographics on a master are updated
 	 * @param person
 	 */
-	private void verifyLinks(MasterRecord master, Person person) throws MpiException {
+	private void verifyLinks(Connection conn, MasterRecord master, Person person) throws MpiException {
 
 		logger.debug("Verifying Links:");
-		List<Person> linkedPersons = PersonDAO.findByMasterId(master.getId());
+		List<Person> linkedPersons = PersonDAO.findByMasterId(conn, master.getId());
 		
 		for (Person linkedPerson : linkedPersons) {
 			if (linkedPerson.getId()==person.getId()) {
@@ -1072,7 +1080,7 @@ public class UKRDCIndexManager {
 				if (!verifyMatch(linkedPerson,master)) {
 					logger.debug("Link record no longer verifies - Mark master for INVESTIGATION and raise WORK. PERSONID:"+linkedPerson.getId());
 					master.setStatus(MasterRecord.INVESTIGATE);
-					MasterRecordDAO.update(master);
+					MasterRecordDAO.update(conn, master);
 					int type;
 					String desc=null;
 					if (master.getNationalIdType().equals(NationalIdentity.UKRDC_TYPE)) {
@@ -1084,7 +1092,7 @@ public class UKRDCIndexManager {
 					}
 					WorkItemManager wim = new WorkItemManager();
 					Map<String,String> attributes = getVerifyAttributes(linkedPerson, master);
-					wim.create(type, linkedPerson.getId(), master.getId(), desc, attributes);
+					wim.create(conn, type, linkedPerson.getId(), master.getId(), desc, attributes);
 				} else {
 					logger.debug("Link still valid. PERSONID:"+linkedPerson.getId());
 				}

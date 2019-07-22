@@ -1,9 +1,13 @@
 package com.agiloak.mpi.index.persistence;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 
+import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -17,33 +21,55 @@ import com.agiloak.mpi.index.Person;
 public class LinkRecordTest {
 	final static String UKRDC_TYPE = "UKRDC";
 	final static String RR1 = "RR1";
+	final static String RR2 = "RR2";
 
 	@Rule
 	public final ExpectedException exception = ExpectedException.none();
 
+	public static Connection conn = null;
 	@Before
-	public void setup() throws MpiException {
-		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE");
-		LinkRecordDAO.deleteByPerson(1);
-		LinkRecordDAO.deleteByPerson(2);
-		LinkRecordDAO.deleteByPerson(3);
-		LinkRecordDAO.deleteByPerson(4);
-		LinkRecordDAO.deleteByPerson(5);
-		LinkRecordDAO.deleteByPerson(6);
-		LinkRecordDAO.deleteByPerson(7);
-		LinkRecordDAO.deleteByPerson(8);
-		LinkRecordDAO.deleteByPerson(9);
-		LinkRecordDAO.deleteByPerson(10);
-		MasterRecordDAO.deleteByNationalId(RR1, UKRDC_TYPE);
+	public void openConnection()  throws MpiException {
+		conn = SimpleConnectionManager.getDBConnection();
 	}
-	
+	@After
+	public void closeConnection()  throws MpiException {
+		try {
+			conn.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new MpiException("FAILED TO CLOSE CONNECTION");
+		}
+	}
+
+	@BeforeClass
+	public static void setupWrapper()  throws MpiException, SQLException {
+		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE");
+		conn = SimpleConnectionManager.getDBConnection();
+		setup();
+		conn.close();
+	}
+	public static void setup()  throws MpiException {
+		LinkRecordDAO.deleteByPerson(conn, 1);
+		LinkRecordDAO.deleteByPerson(conn, 2);
+		LinkRecordDAO.deleteByPerson(conn, 3);
+		LinkRecordDAO.deleteByPerson(conn, 4);
+		LinkRecordDAO.deleteByPerson(conn, 5);
+		LinkRecordDAO.deleteByPerson(conn, 6);
+		LinkRecordDAO.deleteByPerson(conn, 7);
+		LinkRecordDAO.deleteByPerson(conn, 8);
+		LinkRecordDAO.deleteByPerson(conn, 9);
+		LinkRecordDAO.deleteByPerson(conn, 10);
+		MasterRecordDAO.deleteByNationalId(conn, RR1, UKRDC_TYPE);
+		MasterRecordDAO.deleteByNationalId(conn, RR2, UKRDC_TYPE);
+	}
+		
 	@Test
 	public void testCreate() throws MpiException {
-		int personToTest = 1;
-		LinkRecord lr = new LinkRecord(1,personToTest);
-		LinkRecordDAO.create(lr);
+		int personToTest = 9;
+		LinkRecord lr = new LinkRecord(1, personToTest);
+		LinkRecordDAO.create(conn,lr);
 		
-		List<LinkRecord> links = LinkRecordDAO.findByPerson(personToTest);
+		List<LinkRecord> links = LinkRecordDAO.findByPerson(conn, personToTest);
 		assert(links.size()==1);
 
 		LinkRecord lr2 = links.get(0);
@@ -59,9 +85,9 @@ public class LinkRecordTest {
 		lr.setLinkCode(1);
 		lr.setLinkType(2);
 		lr.setLinkDesc("XYZ uses preferred name of patient");
-		LinkRecordDAO.create(lr);
+		LinkRecordDAO.create(conn, lr);
 		
-		List<LinkRecord> links = LinkRecordDAO.findByPerson(personToTest);
+		List<LinkRecord> links = LinkRecordDAO.findByPerson(conn, personToTest);
 		assert(links.size()==1);
 
 		LinkRecord lr2 = links.get(0);
@@ -73,11 +99,11 @@ public class LinkRecordTest {
 	public void testFind() throws MpiException {
 		int personToTest = 2;
 		LinkRecord lr = new LinkRecord(1,personToTest);
-		LinkRecordDAO.create(lr);
-		List<LinkRecord> links = LinkRecordDAO.findByPerson(personToTest);
+		LinkRecordDAO.create(conn, lr);
+		List<LinkRecord> links = LinkRecordDAO.findByPerson(conn, personToTest);
 		assert(links.size()==1);
 
-		LinkRecord lr2 =LinkRecordDAO.find(1,personToTest);
+		LinkRecord lr2 =LinkRecordDAO.find(conn, 1,personToTest);
 		assert(lr.getId()==lr2.getId());
 	}
 	
@@ -85,9 +111,9 @@ public class LinkRecordTest {
 	public void testFindByPerson() throws MpiException {
 		int personToTest = 3;
 		LinkRecord lr = new LinkRecord(1,personToTest);
-		LinkRecordDAO.create(lr);
+		LinkRecordDAO.create(conn, lr);
 		
-		List<LinkRecord> links =LinkRecordDAO.findByPerson(personToTest);
+		List<LinkRecord> links =LinkRecordDAO.findByPerson(conn, personToTest);
 		assert(lr.getId()==links.get(0).getId());
 		assert(links.size()==1);
 	}
@@ -96,11 +122,11 @@ public class LinkRecordTest {
 	public void testNoFindByPerson() throws MpiException {
 		int personToTest = 4;
 		LinkRecord lr = new LinkRecord(1,personToTest);
-		LinkRecordDAO.create(lr);
-		List<LinkRecord> links = LinkRecordDAO.findByPerson(personToTest);
+		LinkRecordDAO.create(conn, lr);
+		List<LinkRecord> links = LinkRecordDAO.findByPerson(conn, personToTest);
 		assert(links.size()==1);
 		
-		List<LinkRecord> links2 =LinkRecordDAO.findByPerson(99);
+		List<LinkRecord> links2 =LinkRecordDAO.findByPerson(conn, 99);
 		assert(links2.size()==0);
 	}
 
@@ -108,11 +134,11 @@ public class LinkRecordTest {
 	public void testNoFind() throws MpiException {
 		int personToTest = 5;
 		LinkRecord lr = new LinkRecord(1,personToTest);
-		LinkRecordDAO.create(lr);
-		List<LinkRecord> links = LinkRecordDAO.findByPerson(personToTest);
+		LinkRecordDAO.create(conn, lr);
+		List<LinkRecord> links = LinkRecordDAO.findByPerson(conn, personToTest);
 		assert(links.size()==1);
 
-		LinkRecord lr2 =LinkRecordDAO.find(2,personToTest);
+		LinkRecord lr2 =LinkRecordDAO.find(conn, 2,personToTest);
 		assert(lr2==null);
 	}
 
@@ -120,12 +146,12 @@ public class LinkRecordTest {
 	public void testDelete() throws MpiException {
 		int personToTest = 6;
 		LinkRecord lr = new LinkRecord(1,personToTest);
-		LinkRecordDAO.create(lr);
-		List<LinkRecord> links = LinkRecordDAO.findByPerson(personToTest);
+		LinkRecordDAO.create(conn, lr);
+		List<LinkRecord> links = LinkRecordDAO.findByPerson(conn, personToTest);
 		assert(links.size()==1);
 
-		LinkRecordDAO.delete(lr);
-		List<LinkRecord> links2 = LinkRecordDAO.findByPerson(personToTest);
+		LinkRecordDAO.delete(conn, lr);
+		List<LinkRecord> links2 = LinkRecordDAO.findByPerson(conn, personToTest);
 		assert(links2.size()==0);
 	}
 	
@@ -133,12 +159,12 @@ public class LinkRecordTest {
 	public void testDeleteByPerson() throws MpiException {
 		int personToTest = 7;
 		LinkRecord lr = new LinkRecord(1,personToTest);
-		LinkRecordDAO.create(lr);
-		List<LinkRecord> links = LinkRecordDAO.findByPerson(personToTest);
+		LinkRecordDAO.create(conn, lr);
+		List<LinkRecord> links = LinkRecordDAO.findByPerson(conn, personToTest);
 		assert(links.size()==1);
 		
-		LinkRecordDAO.deleteByPerson(personToTest);
-		List<LinkRecord> links2 = LinkRecordDAO.findByPerson(personToTest);
+		LinkRecordDAO.deleteByPerson(conn, personToTest);
+		List<LinkRecord> links2 = LinkRecordDAO.findByPerson(conn, personToTest);
 		assert(links2.size()==0);
 		
 	}
@@ -150,11 +176,11 @@ public class LinkRecordTest {
 		mr.setNationalId(RR1).setNationalIdType(UKRDC_TYPE);
 		mr.setDateOfBirth(new Date());
 		mr.setEffectiveDate(new Date());
-		MasterRecordDAO.create(mr);
+		MasterRecordDAO.create(conn, mr);
 		LinkRecord lr = new LinkRecord(mr.getId(),personToTest);
-		LinkRecordDAO.create(lr);
+		LinkRecordDAO.create(conn, lr);
 		
-		LinkRecord link = LinkRecordDAO.findByPersonAndType(personToTest, UKRDC_TYPE);
+		LinkRecord link = LinkRecordDAO.findByPersonAndType(conn, personToTest, UKRDC_TYPE);
 		assert(lr.getId()==link.getId());
 	}
 
@@ -166,30 +192,30 @@ public class LinkRecordTest {
 		person1.setTitle("MR").setGivenName("NICK").setSurname("JONES");
 		person1.setDateOfBirth(new Date());
 		person1.setGender("1");
-		PersonDAO.create(person1);
+		PersonDAO.create(conn, person1);
 
 		Person person2 = new Person();
 		person2.setOriginator("TORG1").setLocalId("TST1000002").setLocalIdType("MR");
 		person2.setTitle("MR").setGivenName("NICK").setSurname("JONES");
 		person2.setDateOfBirth(new Date());
 		person2.setGender("1");
-		PersonDAO.create(person2);
+		PersonDAO.create(conn, person2);
 
 		MasterRecord mr = new MasterRecord();
-		mr.setNationalId(RR1).setNationalIdType(UKRDC_TYPE);
+		mr.setNationalId(RR2).setNationalIdType(UKRDC_TYPE);
 		mr.setDateOfBirth(new Date());
 		mr.setEffectiveDate(new Date());
-		MasterRecordDAO.create(mr);
+		MasterRecordDAO.create(conn, mr);
 		LinkRecord lr = new LinkRecord(mr.getId(),person1.getId());
-		LinkRecordDAO.create(lr);
+		LinkRecordDAO.create(conn, lr);
 		
-		int count = LinkRecordDAO.countByMasterAndOriginator(mr.getId(), "TORG1");
+		int count = LinkRecordDAO.countByMasterAndOriginator(conn, mr.getId(), "TORG1");
 		assert(count==1);
 	
 		lr = new LinkRecord(mr.getId(),person2.getId());
-		LinkRecordDAO.create(lr);
+		LinkRecordDAO.create(conn, lr);
 		
-		count = LinkRecordDAO.countByMasterAndOriginator(mr.getId(), "TORG1");
+		count = LinkRecordDAO.countByMasterAndOriginator(conn, mr.getId(), "TORG1");
 		assert(count==2);
 
 	}

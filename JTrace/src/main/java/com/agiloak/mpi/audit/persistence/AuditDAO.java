@@ -20,7 +20,7 @@ public class AuditDAO {
 	
 	private final static Logger logger = LoggerFactory.getLogger(AuditDAO.class);
 
-	public static void create(Audit audit) throws MpiException {
+	public static void create(Connection conn, Audit audit) throws MpiException {
 
 		logger.debug("Starting");
 		
@@ -29,12 +29,9 @@ public class AuditDAO {
 				" values (?,?,?,?,?,?,?,?,?)";
 		
 		PreparedStatement preparedStatement = null;
-		Connection conn = null;
 		
 		try {
 
-			conn = SimpleConnectionManager.getDBConnection();
-			
 			preparedStatement = conn.prepareStatement(insertSQL, Statement.RETURN_GENERATED_KEYS);
 			preparedStatement.setInt(1, audit.getPersonId());
 			preparedStatement.setInt(2, audit.getMasterId());
@@ -79,31 +76,20 @@ public class AuditDAO {
 					throw new MpiException("Audit insert failed");
 				}
 			}
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing Connection",e);
-					throw new MpiException("Audit insert failed. "+e.getMessage());
-				}
-			}
 
 		}
 
 	}
-	public static void deleteByPerson(int personId) throws MpiException {
+	public static void deleteByPerson(Connection conn, int personId) throws MpiException {
 		
 		logger.debug("Starting");
 		
 		String deleteSQL = "delete from audit where personid = ?";
 		
 		PreparedStatement preparedStatement = null;
-		Connection conn = null;
 		
 		try {
 
-			conn = SimpleConnectionManager.getDBConnection();
-			
 			preparedStatement = conn.prepareStatement(deleteSQL);
 			preparedStatement.setInt(1, personId);
 
@@ -124,35 +110,25 @@ public class AuditDAO {
 					throw new MpiException("Audit delete failed");
 				}
 			}
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing Connection",e);
-					throw new MpiException("Audit delete failed. "+e.getMessage());
-				}
-			}
 
 		}
 
 	}	
 	
-	public static List<Audit> findByPerson(int personId) throws MpiException {
+	public static List<Audit> findByPerson(Connection conn, int personId) throws MpiException {
 
 		logger.debug("Starting");
 
 		String findSQL = "select * from audit where personid = ? ";
 		
 		PreparedStatement preparedStatement = null;
-		Connection conn = null;
+
 		ResultSet rs = null;
 		
 		List<Audit> audits = new ArrayList<Audit>();
 		
 		try {
 
-			conn = SimpleConnectionManager.getDBConnection();
-			
 			preparedStatement = conn.prepareStatement(findSQL);
 			preparedStatement.setInt(1, personId);
 
@@ -194,14 +170,6 @@ public class AuditDAO {
 				} catch (SQLException e) {
 					logger.error("Failure closing prepared statement.",e);
 					throw new MpiException("Failure closing prepared statement. "+e.getMessage());
-				}
-			}
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing Connection",e);
-					throw new MpiException("Audit read failed. "+e.getMessage());
 				}
 			}
 

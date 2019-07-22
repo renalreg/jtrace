@@ -65,28 +65,32 @@ public class ConnectionUnitTest {
 	public void testConfiguredConnectionBadSchemaAuditDAO() throws MpiException, SQLException {
 		exception.expect(MpiException.class);
 		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE", "jtrace2", 10);
-		AuditDAO.findByPerson(1);
+		Connection conn = SimpleConnectionManager.getDBConnection();
+		AuditDAO.findByPerson(conn, 1);
 	}
 
 	@Test
 	public void testConfiguredConnectionBadSchemaLinkRecordDAO() throws MpiException, SQLException {
 		exception.expect(MpiException.class);
 		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE", "jtrace2", 10);
-		LinkRecordDAO.findByPerson(1);
+		Connection conn = SimpleConnectionManager.getDBConnection();
+		LinkRecordDAO.findByPerson(conn, 1);
 	}
 
 	@Test
 	public void testConfiguredConnectionBadSchemaMasterRecordDAO() throws MpiException, SQLException {
 		exception.expect(MpiException.class);
 		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE", "jtrace2", 10);
-		MasterRecordDAO.get(1);
+		Connection conn = SimpleConnectionManager.getDBConnection();
+		MasterRecordDAO.get(conn, 1);
 	}
 
 	@Test
 	public void testConfiguredConnectionBadSchemaPersonDAO() throws MpiException, SQLException {
 		exception.expect(MpiException.class);
 		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE", "jtrace2", 10);
-		PersonDAO.findByMasterId(1);
+		Connection conn = SimpleConnectionManager.getDBConnection();
+		PersonDAO.findByMasterId(conn, 1);
 	}
 
 	@Test
@@ -100,14 +104,16 @@ public class ConnectionUnitTest {
 	public void testConfiguredConnectionBadSchemaWorkItemDAO() throws MpiException, SQLException {
 		exception.expect(MpiException.class);
 		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE", "jtrace2", 10);
-		WorkItemDAO.findByPerson(1);
+		Connection conn = SimpleConnectionManager.getDBConnection();
+		WorkItemDAO.findByPerson(conn, 1);
 	}
 
 	@Test
 	public void testConfiguredConnectionBadSchemaPidXREF() throws MpiException, SQLException {
 		exception.expect(MpiException.class);
 		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE", "jtrace2", 10);
-		PidXREFDAO.findByLocalId("TEST", "TEST", "12345");
+		Connection conn = SimpleConnectionManager.getDBConnection();
+		PidXREFDAO.findByLocalId(conn, "TEST", "TEST", "12345");
 	}
 
 	private void checkPersonTable(Connection conn) throws SQLException {

@@ -20,22 +20,19 @@ public class PersonDAO {
 	
 	private final static Logger logger = LoggerFactory.getLogger(PersonDAO.class);
 
-	public static Person findByLocalId(String localIdType, String localId, String originator) throws MpiException {
+	public static Person findByLocalId(Connection conn, String localIdType, String localId, String originator) throws MpiException {
 
 		logger.debug("Starting");
 
 		String findSQL = "select * from person where localidtype = ? and localid = ? and originator = ? ";
 		
 		PreparedStatement preparedStatement = null;
-		Connection conn = null;
 		ResultSet rs = null;
 		
 		Person person = null;
 		
 		try {
 
-			conn = SimpleConnectionManager.getDBConnection();
-			
 			preparedStatement = conn.prepareStatement(findSQL);
 			preparedStatement.setString(1, localIdType);
 			preparedStatement.setString(2, localId);
@@ -97,37 +94,25 @@ public class PersonDAO {
 					throw new MpiException("Person read failed. "+e.getMessage());
 				}
 			}
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing connection.",e);
-					throw new MpiException("Person read failed. "+e.getMessage());
-				}
-			}
-
 		}
 		
 		return person;
 
 	}
 
-	public static List<Person> findByMasterId(int masterId) throws MpiException {
+	public static List<Person> findByMasterId(Connection conn, int masterId) throws MpiException {
 
 		logger.debug("Starting");
 
 		String findSQL = "select * from person p, linkrecord lr where lr.masterid = ? and p.id = lr.personid ";
 		
 		PreparedStatement preparedStatement = null;
-		Connection conn = null;
 		ResultSet rs = null;
 		
 		List<Person> personList = new ArrayList<Person>();
 		
 		try {
 
-			conn = SimpleConnectionManager.getDBConnection();
-			
 			preparedStatement = conn.prepareStatement(findSQL);
 			preparedStatement.setInt(1, masterId);
 
@@ -190,21 +175,13 @@ public class PersonDAO {
 				}
 			}
 
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing connection.",e);
-					throw new MpiException("Person read failed. "+e.getMessage());
-				}
-			}
 		}
 		
 		return personList;
 
 	}
 
-	public static void create(Person person) throws MpiException {
+	public static void create(Connection conn, Person person) throws MpiException {
 
 		logger.debug("Starting");
 
@@ -225,12 +202,9 @@ public class PersonDAO {
 				" ?,?,?)";
 		
 		PreparedStatement preparedStatement = null;
-		Connection conn = null;
 		
 		try {
 
-			conn = SimpleConnectionManager.getDBConnection();
-			
 			preparedStatement = conn.prepareStatement(insertSQL, Statement.RETURN_GENERATED_KEYS);
 			populatePersonStatement(preparedStatement, person);
 			preparedStatement.setString(16, person.getLocalId());
@@ -264,20 +238,12 @@ public class PersonDAO {
 					throw new MpiException("Person create failed. "+e.getMessage());
 				}
 			}
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing connection.",e);
-					throw new MpiException("Person read failed. "+e.getMessage());
-				}
-			}
 
 		}
 
 	}
 
-	public static void update(Person person) throws MpiException {
+	public static void update(Connection conn, Person person) throws MpiException {
 
 		logger.debug("Starting");
 
@@ -295,12 +261,9 @@ public class PersonDAO {
 		       "WHERE id = ? ";
 		
 		PreparedStatement preparedStatement = null;
-		Connection conn = null;
 		
 		try {
 
-			conn = SimpleConnectionManager.getDBConnection();
-			
 			preparedStatement = conn.prepareStatement(updateSQL);
 			
 			populatePersonStatement(preparedStatement, person);
@@ -324,31 +287,21 @@ public class PersonDAO {
 					throw new MpiException("Person update failed. "+e.getMessage());
 				}
 			}
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing connection.",e);
-					throw new MpiException("Person read failed. "+e.getMessage());
-				}
-			}
 
 		}
 
 	}
 
-	public static void delete(Person person) throws MpiException {
+	public static void delete(Connection conn, Person person) throws MpiException {
 		
 		logger.debug("Starting");
 
 		String deleteSQL = "delete from person where id = ?";
 		
 		PreparedStatement preparedStatement = null;
-		Connection conn = null;
 		
 		try {
 
-			conn = SimpleConnectionManager.getDBConnection();
 			preparedStatement = conn.prepareStatement(deleteSQL);
 			preparedStatement.setInt(1, person.getId());
 			int affectedRows = preparedStatement.executeUpdate();
@@ -367,17 +320,7 @@ public class PersonDAO {
 					throw new MpiException("Person delete failed. "+e.getMessage());
 				}
 			}
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing connection.",e);
-					throw new MpiException("Person read failed. "+e.getMessage());
-				}
-			}
-
 		}
-
 	}
 			
 	private static void populatePersonStatement(PreparedStatement preparedStatement, Person person) throws SQLException {
