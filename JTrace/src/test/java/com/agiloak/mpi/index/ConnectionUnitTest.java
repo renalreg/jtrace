@@ -6,6 +6,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -97,7 +99,8 @@ public class ConnectionUnitTest {
 	public void testConfiguredConnectionBadSchemaTraceDAO() throws MpiException, SQLException {
 		exception.expect(MpiException.class);
 		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE", "jtrace2", 10);
-		TraceDAO.getResponse("");
+		Connection conn = SimpleConnectionManager.getDBConnection();
+		TraceDAO.getResponse(conn, "");
 	}
 
 	@Test

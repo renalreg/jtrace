@@ -32,34 +32,35 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 	public static void setup()  throws MpiException {
 		logger.debug("***************START OF SETUP****************");
 		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE");
+		conn = SimpleConnectionManager.getDBConnection();
 
-		clear("NSYS100001", "NSYS1");
-		clear("NSYS100002", "NSYS1");
-		clear("NSYS100003", "NSYS1");
+		clear(conn, "MR", "NSYS100001", "NSYS1");
+		clear(conn, "MR", "NSYS100002", "NSYS1");
+		clear(conn, "MR", "NSYS100003", "NSYS1");
 		
-		clear("NSYS200001", "NSYS2A");
-		clear("NSYS200002", "NSYS2A");
-		clear("NSYS200003", "NSYS2B");
+		clear(conn, "MR", "NSYS200001", "NSYS2A");
+		clear(conn, "MR", "NSYS200002", "NSYS2A");
+		clear(conn, "MR", "NSYS200003", "NSYS2B");
 		
-		clear("NSYS300001", "NSYS3A");
-		clear("NSYS300002", "NSYS3A");
-		clear("NSYS300003", "NSYS3B");
+		clear(conn, "MR", "NSYS300001", "NSYS3A");
+		clear(conn, "MR", "NSYS300002", "NSYS3A");
+		clear(conn, "MR", "NSYS300003", "NSYS3B");
 		
-		clear("NSYS400001", "NSYS4");
-		clear("NSYS400002", "NSYS4");
-		clear("NSYS400003", "NSYS4");
+		clear(conn, "MR", "NSYS400001", "NSYS4");
+		clear(conn, "MR", "NSYS400002", "NSYS4");
+		clear(conn, "MR", "NSYS400003", "NSYS4");
 
-		clear("NSYS500001", "NSYS5");
-		clear("NSYS500002", "NSYS5");
-		clear("NSYS500003", "NSYS5");
+		clear(conn, "MR", "NSYS500001", "NSYS5");
+		clear(conn, "MR", "NSYS500002", "NSYS5");
+		clear(conn, "MR", "NSYS500003", "NSYS5");
 
-		clear("NSYS600001", "NSYS6");
-		clear("NSYS600002", "NSYS6");
+		clear(conn, "MR", "NSYS600001", "NSYS6");
+		clear(conn, "MR", "NSYS600002", "NSYS6");
 
-		clear("NSYS700001", "NSYS7");
-		clear("NSYS700002", "NSYS7");
-		clear("NHS0700001", "NSYS7");
-		clear("NHS0700002", "NSYS7");
+		clear(conn, "MR", "NSYS700001", "NSYS7");
+		clear(conn, "MR", "NSYS700002", "NSYS7");
+		clear(conn, "MR", "NHS0700001", "NSYS7");
+		clear(conn, "MR", "NHS0700002", "NSYS7");
 		logger.debug("***************END OF SETUP****************");
 	}
 
@@ -79,14 +80,14 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(natId.getId().equals(ukrdcId));
-		Person person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
+		Person person = PersonDAO.findByLocalId(conn, p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		MasterRecord master = MasterRecordDAO.findByNationalId(ukrdcId, NationalIdentity.UKRDC_TYPE);
+		MasterRecord master = MasterRecordDAO.findByNationalId(conn, ukrdcId, NationalIdentity.UKRDC_TYPE);
 		assert(master!=null);
-		List<LinkRecord> links = LinkRecordDAO.findByPerson(person.getId());
+		List<LinkRecord> links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==1);
 		assert(links.get(0).getMasterId()==master.getId()); 
-		List<WorkItem> items = WorkItemDAO.findByPerson(person.getId());
+		List<WorkItem> items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==0);
 
 		// T1-2 - New + NationalId + NationalId exists + Matches. New Person & Link to existing Master
@@ -98,14 +99,14 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(natId.getId().equals(ukrdcId));
-		person = PersonDAO.findByLocalId(p2.getLocalIdType(), p2.getLocalId(), p2.getOriginator());
+		person = PersonDAO.findByLocalId(conn, p2.getLocalIdType(), p2.getLocalId(), p2.getOriginator());
 		assert(person!=null);
-		master = MasterRecordDAO.findByNationalId(ukrdcId, NationalIdentity.UKRDC_TYPE);
+		master = MasterRecordDAO.findByNationalId(conn, ukrdcId, NationalIdentity.UKRDC_TYPE);
 		assert(master!=null);
-		links = LinkRecordDAO.findByPerson(person.getId());
+		links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==1);
 		assert(links.get(0).getMasterId()==master.getId()); 
-		items = WorkItemDAO.findByPerson(person.getId());
+		items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==0);
 		
 		// T1-3 - New + NationalId + NationalId exists + No match (DOB 2 part and given name mismatch). New Person & Link but mark Master for INVESTIGATION & work item about mismatched Master
@@ -117,15 +118,15 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(natId.getId().equals(ukrdcId));
-		person = PersonDAO.findByLocalId(p3.getLocalIdType(), p3.getLocalId(), p3.getOriginator());
+		person = PersonDAO.findByLocalId(conn, p3.getLocalIdType(), p3.getLocalId(), p3.getOriginator());
 		assert(person!=null);
-		master = MasterRecordDAO.findByNationalId(ukrdcId, NationalIdentity.UKRDC_TYPE);
+		master = MasterRecordDAO.findByNationalId(conn, ukrdcId, NationalIdentity.UKRDC_TYPE);
 		assert(master!=null);
 		assert(master.getStatus()==MasterRecord.INVESTIGATE);
-		links = LinkRecordDAO.findByPerson(person.getId());
+		links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==1);
 		assert(links.get(0).getMasterId()==master.getId());
-		items = WorkItemDAO.findByPerson(person.getId());
+		items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==1);
 		assert(items.get(0).getType()==WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_PRIMARY);
 
@@ -149,15 +150,15 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(natId.getId().equals(ukrdcId));
-		Person person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
+		Person person = PersonDAO.findByLocalId(conn, p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		MasterRecord master = MasterRecordDAO.findByNationalId(ukrdcId, NationalIdentity.UKRDC_TYPE);
+		MasterRecord master = MasterRecordDAO.findByNationalId(conn, ukrdcId, NationalIdentity.UKRDC_TYPE);
 		assert(master!=null);
 		assert(master.getEffectiveDate().compareTo(getDate("2017-08-01"))==0);
-		List<LinkRecord> links = LinkRecordDAO.findByPerson(person.getId());
+		List<LinkRecord> links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==1);
 		assert(links.get(0).getMasterId()==master.getId());
-		List<WorkItem> items = WorkItemDAO.findByPerson(person.getId());
+		List<WorkItem> items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==0);
 
 		// T4-2 - New + NationalId + NationalId exists + Matches. New Person & Link to existing Master. Effective date is later than previous update so master is updated 
@@ -170,16 +171,16 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(natId.getId().equals(ukrdcId));
-		person = PersonDAO.findByLocalId(p2.getLocalIdType(), p2.getLocalId(), p2.getOriginator());
+		person = PersonDAO.findByLocalId(conn, p2.getLocalIdType(), p2.getLocalId(), p2.getOriginator());
 		assert(person!=null);
-		master = MasterRecordDAO.findByNationalId(ukrdcId, NationalIdentity.UKRDC_TYPE);
+		master = MasterRecordDAO.findByNationalId(conn, ukrdcId, NationalIdentity.UKRDC_TYPE);
 		assert(master!=null);
 		assert(master.getEffectiveDate().compareTo(getDate("2017-08-02"))==0);
 		assert(master.getGivenName().equals(p2.getGivenName()));
-		links = LinkRecordDAO.findByPerson(person.getId());
+		links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==1);
 		assert(links.get(0).getMasterId()==master.getId()); 
-		items = WorkItemDAO.findByPerson(person.getId());
+		items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==0);
 		
 		// T4-3 - New + NationalId + NationalId exists + Matches. New Person & Link to existing Master. Effective date is earlier than previous update so no master is updated 
@@ -192,16 +193,16 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(natId.getId().equals(ukrdcId));
-		person = PersonDAO.findByLocalId(p3.getLocalIdType(), p3.getLocalId(), p3.getOriginator());
+		person = PersonDAO.findByLocalId(conn, p3.getLocalIdType(), p3.getLocalId(), p3.getOriginator());
 		assert(person!=null);
-		master = MasterRecordDAO.findByNationalId(ukrdcId, NationalIdentity.UKRDC_TYPE);
+		master = MasterRecordDAO.findByNationalId(conn, ukrdcId, NationalIdentity.UKRDC_TYPE);
 		assert(master!=null);
 		assert(master.getEffectiveDate().compareTo(getDate("2017-08-02"))==0);
 		assert(master.getGivenName().equals(p2.getGivenName()));
-		links = LinkRecordDAO.findByPerson(person.getId());
+		links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==1);
 		assert(links.get(0).getMasterId()==master.getId());
-		items = WorkItemDAO.findByPerson(person.getId());
+		items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==0);
 
 	}
@@ -224,15 +225,15 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(natId.getId().equals(ukrdcId));
-		Person person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
+		Person person = PersonDAO.findByLocalId(conn, p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		MasterRecord master = MasterRecordDAO.findByNationalId(ukrdcId, NationalIdentity.UKRDC_TYPE);
+		MasterRecord master = MasterRecordDAO.findByNationalId(conn, ukrdcId, NationalIdentity.UKRDC_TYPE);
 		assert(master!=null);
 		assert(master.getEffectiveDate().compareTo(getDate("2017-08-01"))==0);
-		List<LinkRecord> links = LinkRecordDAO.findByPerson(person.getId());
+		List<LinkRecord> links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==1);
 		assert(links.get(0).getMasterId()==master.getId());
-		List<WorkItem> items = WorkItemDAO.findByPerson(person.getId());
+		List<WorkItem> items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==0);
 
 		// T5-2 - New + NationalId + NationalId exists + Not verified. New Person & Link to existing Master. Effective date is later than previous update so master is updated 
@@ -246,17 +247,17 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(natId.getId().equals(ukrdcId));
-		person = PersonDAO.findByLocalId(p2.getLocalIdType(), p2.getLocalId(), p2.getOriginator());
+		person = PersonDAO.findByLocalId(conn, p2.getLocalIdType(), p2.getLocalId(), p2.getOriginator());
 		assert(person!=null);
-		master = MasterRecordDAO.findByNationalId(ukrdcId, NationalIdentity.UKRDC_TYPE);
+		master = MasterRecordDAO.findByNationalId(conn, ukrdcId, NationalIdentity.UKRDC_TYPE);
 		assert(master!=null);
 		assert(master.getEffectiveDate().compareTo(getDate("2017-08-02"))==0);
 		assert(master.getGivenName().equals(p2.getGivenName()));
 		assert(master.getStatus()==MasterRecord.INVESTIGATE);
-		links = LinkRecordDAO.findByPerson(person.getId());
+		links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==1);
 		assert(links.get(0).getMasterId()==master.getId()); 
-		items = WorkItemDAO.findByPerson(person.getId());
+		items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==1);
 		
 		// T5-3 - New + NationalId + NationalId exists + Not verified. New Person & Link to existing Master. Effective date is earlier than previous update so no master update 
@@ -270,17 +271,17 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(natId.getId().equals(ukrdcId));
-		person = PersonDAO.findByLocalId(p3.getLocalIdType(), p3.getLocalId(), p3.getOriginator());
+		person = PersonDAO.findByLocalId(conn, p3.getLocalIdType(), p3.getLocalId(), p3.getOriginator());
 		assert(person!=null);
-		master = MasterRecordDAO.findByNationalId(ukrdcId, NationalIdentity.UKRDC_TYPE);
+		master = MasterRecordDAO.findByNationalId(conn, ukrdcId, NationalIdentity.UKRDC_TYPE);
 		assert(master!=null);
 		assert(master.getEffectiveDate().compareTo(getDate("2017-08-02"))==0);
 		assert(master.getGivenName().equals(p2.getGivenName()));
 		assert(master.getStatus()==MasterRecord.INVESTIGATE);
-		links = LinkRecordDAO.findByPerson(person.getId());
+		links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==1);
 		assert(links.get(0).getMasterId()==master.getId());
-		items = WorkItemDAO.findByPerson(person.getId());
+		items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==1);
 
 	}	
@@ -303,17 +304,17 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(natId.getId().equals(ukrdcId));
-		Person person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
+		Person person = PersonDAO.findByLocalId(conn, p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		MasterRecord master1 = MasterRecordDAO.findByNationalId(ukrdcId, NationalIdentity.UKRDC_TYPE);
+		MasterRecord master1 = MasterRecordDAO.findByNationalId(conn, ukrdcId, NationalIdentity.UKRDC_TYPE);
 		assert(master1!=null);
-		MasterRecord master2 = MasterRecordDAO.findByNationalId("NHS0200001", NationalIdentity.NHS_TYPE);
+		MasterRecord master2 = MasterRecordDAO.findByNationalId(conn, "NHS0200001", NationalIdentity.NHS_TYPE);
 		assert(master2!=null);
-		List<LinkRecord> links = LinkRecordDAO.findByPerson(person.getId());
+		List<LinkRecord> links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==2);
 		assert(links.get(0).getMasterId()==master2.getId()); // NHS Numbers linked before UKRDC in current process
 		assert(links.get(1).getMasterId()==master1.getId()); 
-		List<WorkItem> items = WorkItemDAO.findByPerson(person.getId());
+		List<WorkItem> items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==0);
 
 		// T2-1 - New + No NationalId No Matches to any master. New Person and Allocate Master
@@ -327,15 +328,15 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 		assert(!natId.getId().equals(ukrdcId));
 		assert(natId.getId().startsWith("50")); // Allocated numbers will start with 50 whereas numbers sent in from test stub begin RR 
 		assert(natId.getId().length()==9);      // Allocated numbers are 9 characters long 
-		person = PersonDAO.findByLocalId(p2.getLocalIdType(), p2.getLocalId(), p2.getOriginator());
+		person = PersonDAO.findByLocalId(conn, p2.getLocalIdType(), p2.getLocalId(), p2.getOriginator());
 		assert(person!=null);
-		links = LinkRecordDAO.findByPerson(person.getId());
+		links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==1);
-		MasterRecord allocatedMr = MasterRecordDAO.get(links.get(0).getMasterId());
+		MasterRecord allocatedMr = MasterRecordDAO.get(conn, links.get(0).getMasterId());
 		assert(allocatedMr.getNationalIdType().equals(NationalIdentity.UKRDC_TYPE));
-		items = WorkItemDAO.findByPerson(person.getId());
+		items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==0);
-		List<Audit> audits = AuditDAO.findByPerson(person.getId());
+		List<Audit> audits = AuditDAO.findByPerson(conn, person.getId());
 		assert(audits.size()==1);
 		assert(audits.get(0).getType()==Audit.NO_MATCH_ASSIGN_NEW);
 		assert(audits.get(0).getMasterId()==allocatedMr.getId());
@@ -350,13 +351,13 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(natId.getId().equals(ukrdcId));
-		person = PersonDAO.findByLocalId(p3.getLocalIdType(), p3.getLocalId(), p3.getOriginator());
+		person = PersonDAO.findByLocalId(conn, p3.getLocalIdType(), p3.getLocalId(), p3.getOriginator());
 		assert(person!=null);
-		links = LinkRecordDAO.findByPerson(person.getId());
+		links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==2);
 		assert(links.get(0).getMasterId()==master2.getId()); 
 		assert(links.get(1).getMasterId()==master1.getId()); 
-		items = WorkItemDAO.findByPerson(person.getId());
+		items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==0);
 		
 	}	
@@ -381,14 +382,14 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(natId.getId().equals(ukrdcId));
-		Person person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
+		Person person = PersonDAO.findByLocalId(conn, p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		MasterRecord masterRR = MasterRecordDAO.findByNationalId(ukrdcId, NationalIdentity.UKRDC_TYPE);
+		MasterRecord masterRR = MasterRecordDAO.findByNationalId(conn, ukrdcId, NationalIdentity.UKRDC_TYPE);
 		assert(masterRR!=null);
-		List<LinkRecord> links = LinkRecordDAO.findByPerson(person.getId());
+		List<LinkRecord> links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==1);
 		assert(links.get(0).getMasterId()==masterRR.getId()); 
-		List<WorkItem> items = WorkItemDAO.findByPerson(person.getId());
+		List<WorkItem> items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==0);
 
 		// Setup - Person with UKRDC Number and NHS Number. DOB only a 2-point match, but good enough to match. Old Effective date stops UKRDC Master being updated so allowing step 3 to be unverified on DOB 
@@ -403,15 +404,15 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(natId.getId().equals(ukrdcId));
-		person = PersonDAO.findByLocalId(p2.getLocalIdType(), p2.getLocalId(), p2.getOriginator());
+		person = PersonDAO.findByLocalId(conn, p2.getLocalIdType(), p2.getLocalId(), p2.getOriginator());
 		assert(person!=null);
-		MasterRecord masterNHS = MasterRecordDAO.findByNationalId("NHS0300001", NationalIdentity.NHS_TYPE);
+		MasterRecord masterNHS = MasterRecordDAO.findByNationalId(conn, "NHS0300001", NationalIdentity.NHS_TYPE);
 		assert(masterNHS!=null);
-		links = LinkRecordDAO.findByPerson(person.getId());
+		links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==2);
 		assert(links.get(0).getMasterId()==masterNHS.getId()); // NHS Numbers linked before UKRDC in current process
 		assert(links.get(1).getMasterId()==masterRR.getId());
-		items = WorkItemDAO.findByPerson(person.getId());
+		items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==0);
 		
 		// T3-1 - New + No UKRDC Number but an NHS Number which matches to an existing NHS Number which could corroborate the UKRDC - but UKRDC:Person don't match (1 part DOB only). Will Allocate
@@ -426,16 +427,16 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 		assert(!natId.getId().equals(ukrdcId));
 		assert(natId.getId().startsWith("50")); // Allocated numbers will start with 50 whereas numbers sent in from test stub begin RR 
 		assert(natId.getId().length()==9);      // Allocated numbers are 9 characters long 
-		person = PersonDAO.findByLocalId(p3.getLocalIdType(), p3.getLocalId(), p3.getOriginator());
+		person = PersonDAO.findByLocalId(conn, p3.getLocalIdType(), p3.getLocalId(), p3.getOriginator());
 		assert(person!=null);
-		links = LinkRecordDAO.findByPerson(person.getId());
+		links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==2); // Linked to the NHS Number and a newly allocated UKRDC number
 		assert(links.get(0).getMasterId()==masterNHS.getId());
-		MasterRecord allocatedMr = MasterRecordDAO.get(links.get(1).getMasterId());
+		MasterRecord allocatedMr = MasterRecordDAO.get(conn, links.get(1).getMasterId());
 		assert(allocatedMr.getNationalIdType().equals(NationalIdentity.UKRDC_TYPE));
-		items = WorkItemDAO.findByPerson(person.getId());
+		items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==1);
-		List<Audit> audits = AuditDAO.findByPerson(person.getId());
+		List<Audit> audits = AuditDAO.findByPerson(conn, person.getId());
 		assert(audits.size()==1);
 		for (Audit audit : audits) {
 			if (audit.getType()==Audit.NO_MATCH_ASSIGN_NEW) {
@@ -468,17 +469,17 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(natId.getId().equals(ukrdcId));
-		Person person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
+		Person person = PersonDAO.findByLocalId(conn, p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		MasterRecord master1 = MasterRecordDAO.findByNationalId(ukrdcId, NationalIdentity.UKRDC_TYPE);
+		MasterRecord master1 = MasterRecordDAO.findByNationalId(conn, ukrdcId, NationalIdentity.UKRDC_TYPE);
 		assert(master1!=null);
-		MasterRecord master2 = MasterRecordDAO.findByNationalId("NHS0600001", NationalIdentity.NHS_TYPE);
+		MasterRecord master2 = MasterRecordDAO.findByNationalId(conn, "NHS0600001", NationalIdentity.NHS_TYPE);
 		assert(master2!=null);
-		List<LinkRecord> links = LinkRecordDAO.findByPerson(person.getId());
+		List<LinkRecord> links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==2);
 		assert(links.get(0).getMasterId()==master2.getId()); // NHS Numbers linked before UKRDC in current process
 		assert(links.get(1).getMasterId()==master1.getId()); 
-		List<WorkItem> items = WorkItemDAO.findByPerson(person.getId());
+		List<WorkItem> items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==0);
 		
 		// T2-2 - Change MRN
@@ -488,16 +489,16 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(natId.getId().equals(ukrdcId));
-		person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
+		person = PersonDAO.findByLocalId(conn, p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		links = LinkRecordDAO.findByPerson(person.getId());
+		links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==2);
 		assert(links.get(0).getMasterId()==master2.getId()); 
 		assert(links.get(1).getMasterId()==master1.getId()); 
-		items = WorkItemDAO.findByPerson(person.getId());
+		items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==1);
 		assert(items.get(0).getType()==WorkItemType.TYPE_MULTIPLE_NATID_LINKS_FROM_ORIGINATOR);
-		MasterRecord mr = MasterRecordDAO.get(master2.getId());
+		MasterRecord mr = MasterRecordDAO.get(conn, master2.getId());
 		assert(mr.getStatus()==MasterRecord.INVESTIGATE);
 		
 	}	
@@ -520,18 +521,18 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(natId.getId().equals(ukrdcId));
-		Person person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
+		Person person = PersonDAO.findByLocalId(conn, p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
 		assert(!person.isSkipDuplicateCheck());
-		MasterRecord master1 = MasterRecordDAO.findByNationalId(ukrdcId, NationalIdentity.UKRDC_TYPE);
+		MasterRecord master1 = MasterRecordDAO.findByNationalId(conn, ukrdcId, NationalIdentity.UKRDC_TYPE);
 		assert(master1!=null);
-		MasterRecord master2 = MasterRecordDAO.findByNationalId("NHS0700001", NationalIdentity.NHS_TYPE);
+		MasterRecord master2 = MasterRecordDAO.findByNationalId(conn, "NHS0700001", NationalIdentity.NHS_TYPE);
 		assert(master2!=null);
-		List<LinkRecord> links = LinkRecordDAO.findByPerson(person.getId());
+		List<LinkRecord> links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==2);
 		assert(links.get(0).getMasterId()==master2.getId()); // NHS Numbers linked before UKRDC in current process
 		assert(links.get(1).getMasterId()==master1.getId()); 
-		List<WorkItem> items = WorkItemDAO.findByPerson(person.getId());
+		List<WorkItem> items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==0);
 		
 		// Test 1 - patient from same org with the same NHS Number - should raise a warning
@@ -544,7 +545,7 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 		assert(natId2!=null);
 		assert(natId2.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(natId2.getId().equals(ukrdcId));
-		items = WorkItemDAO.findByPerson(p2.getId());
+		items = WorkItemDAO.findByPerson(conn, p2.getId());
 		assert(items.size()==1);
 		assert(items.get(0).getType()==WorkItemType.TYPE_MULTIPLE_NATID_LINKS_FROM_ORIGINATOR);
 
@@ -559,7 +560,7 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 		assert(natId3!=null);
 		assert(natId3.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(natId3.getId().equals(ukrdcId));
-		items = WorkItemDAO.findByPerson(p3.getId());
+		items = WorkItemDAO.findByPerson(conn, p3.getId());
 		assert(items.size()==0);
 
 		// Test 3 - patient from same org with the same NHS Number, but this is a fake MRN using NHS Number but not flagged as such - Warning should be created
@@ -572,7 +573,7 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 		assert(natId4!=null);
 		assert(natId4.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(natId4.getId().equals(ukrdcId));
-		items = WorkItemDAO.findByPerson(p4.getId());
+		items = WorkItemDAO.findByPerson(conn, p4.getId());
 		assert(items.size()==1);
 		assert(items.get(0).getType()==WorkItemType.TYPE_MULTIPLE_NATID_LINKS_FROM_ORIGINATOR);
 	}	
@@ -592,14 +593,14 @@ public class UKRDCIndexManagerNewRecordSystemTest extends UKRDCIndexManagerBaseT
 		// VERIFY
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
-		Person person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
+		Person person = PersonDAO.findByLocalId(conn, p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		MasterRecord master = MasterRecordDAO.findByNationalId(natId.getId(), NationalIdentity.UKRDC_TYPE);
+		MasterRecord master = MasterRecordDAO.findByNationalId(conn, natId.getId(), NationalIdentity.UKRDC_TYPE);
 		assert(master!=null);
-		List<LinkRecord> links = LinkRecordDAO.findByPerson(person.getId());
+		List<LinkRecord> links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==1);
 		assert(links.get(0).getMasterId()==master.getId()); 
-		List<WorkItem> items = WorkItemDAO.findByPerson(person.getId());
+		List<WorkItem> items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==0);
 		
 	}	

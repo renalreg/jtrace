@@ -2,6 +2,7 @@ package com.agiloak.mpi.trace;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.sql.Connection;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Iterator;
@@ -12,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.agiloak.mpi.MpiException;
+import com.agiloak.mpi.SimpleConnectionManager;
 import com.agiloak.mpi.normalization.NormalizationManager;
 import com.agiloak.mpi.trace.persistence.TraceDAO;
 import com.google.gson.Gson;
@@ -63,28 +65,57 @@ public class TraceManager {
 
 	public TraceResponse trace(TraceRequest request) throws MpiException {
 		
-		TraceResponse response = null ;
-		
-		response = new TraceResponse();
-		response.setTraceId(request.getTraceId());
-		String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss.SSS").format(new Date());
-		response.setTraceStartTime(timeStamp);
-		
-		response = doTrace(request, response);
-		
-		timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss.SSS").format(new Date());
-		response.setTraceEndTime(timeStamp);
-		
-		TraceDAO.saveResponse(response);
-			
-		return response;
+		TraceResponse resp = new TraceResponse();
+		Connection conn = null;
+		try {
+			try {
+				conn = SimpleConnectionManager.getConnection();
+				// API BUSINESS START
+				resp.setTraceId(resp.getTraceId());
+				String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss.SSS").format(new Date());
+				resp.setTraceStartTime(timeStamp);
+				
+				resp = doTrace(conn, request, resp);
+				
+				timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss.SSS").format(new Date());
+				resp.setTraceEndTime(timeStamp);
+				
+				TraceDAO.saveResponse(conn, resp);
+				// API BUSINESS END
+				conn.commit();
+			} catch (Exception ex) {
+				SimpleConnectionManager.rollback(conn, ex);
+			} finally {
+				SimpleConnectionManager.closeConnection(conn);
+			}
+		} catch (Exception ex) {
+			resp.setMessage(ex.getMessage());
+		}
+		return resp;
 	}
 
 	public TraceResponse getTraceResponse(String traceId) throws MpiException {
-		return TraceDAO.getResponse(traceId);
+		TraceResponse resp = new TraceResponse();
+		Connection conn = null;
+		try {
+			try {
+				conn = SimpleConnectionManager.getConnection();
+				// API BUSINESS START
+				resp =  TraceDAO.getResponse(conn, traceId);
+				// API BUSINESS END
+				conn.commit();
+			} catch (Exception ex) {
+				SimpleConnectionManager.rollback(conn, ex);
+			} finally {
+				SimpleConnectionManager.closeConnection(conn);
+			}
+		} catch (Exception ex) {
+			resp.setMessage(ex.getMessage());
+		}
+		return resp;
 	}
 	
-	private TraceResponse doTrace(TraceRequest request, TraceResponse response) throws MpiException {
+	private TraceResponse doTrace(Connection conn, TraceRequest request, TraceResponse response) throws MpiException {
 		
 		// 1) Validate and store request
 		if (request==null){
@@ -93,14 +124,14 @@ public class TraceManager {
 			return response;
 		}
 		
-		TraceDAO.saveRequest(request);
+		TraceDAO.saveRequest(conn, request);
 		
 		// 2) Get candidate pool
 		List<TraceResponseLine> candidates;
 		if (request.getSurname()==null || request.getSurname().equals("")){
-			candidates = TraceDAO.findCandidatesByDOB(request, config);
+			candidates = TraceDAO.findCandidatesByDOB(conn, request, config);
 		} else {
-			candidates = TraceDAO.findCandidates(request, config);
+			candidates = TraceDAO.findCandidates(conn, request, config);
 		}
 		
 		// 3) Check pool size

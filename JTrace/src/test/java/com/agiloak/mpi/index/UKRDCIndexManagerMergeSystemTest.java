@@ -24,15 +24,16 @@ public class UKRDCIndexManagerMergeSystemTest extends UKRDCIndexManagerBaseTest 
 
 	private Date d1 = getDate("1962-08-31");
 	private Date d2 = getDate("1962-08-30");
-	private Date d3 = getDate("1961-08-30");
 
 
 	@BeforeClass
 	public static void setup()  throws MpiException {
 		logger.debug("***************START OF SETUP****************");
 		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE");
-		clear("LOCALHOSP", "MSYS100001", "MSYS1");
-		clear("RADAR",     "MSYS100002", "MSYS1");
+		conn = SimpleConnectionManager.getDBConnection();
+		
+		clear(conn, "LOCALHOSP", "MSYS100001", "MSYS1");
+		clear(conn, "RADAR",     "MSYS100002", "MSYS1");
 		logger.debug("***************END OF SETUP****************");
 	}
 
@@ -59,18 +60,18 @@ public class UKRDCIndexManagerMergeSystemTest extends UKRDCIndexManagerBaseTest 
 		assert(natId1.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(natId2.getType()==NationalIdentity.UKRDC_TYPE);
 
-		Person person1 = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
+		Person person1 = PersonDAO.findByLocalId(conn, p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person1!=null);
-		List<WorkItem> items1 = WorkItemDAO.findByPerson(person1.getId());
+		List<WorkItem> items1 = WorkItemDAO.findByPerson(conn, person1.getId());
 		assert(items1.size()==0);
-		MasterRecord mr1 = MasterRecordDAO.findByNationalId(natId1.getId(), NationalIdentity.UKRDC_TYPE);
+		MasterRecord mr1 = MasterRecordDAO.findByNationalId(conn, natId1.getId(), NationalIdentity.UKRDC_TYPE);
 		assert(mr1!=null);
 
-		Person person2 = PersonDAO.findByLocalId(p2.getLocalIdType(), p2.getLocalId(), p2.getOriginator());
+		Person person2 = PersonDAO.findByLocalId(conn, p2.getLocalIdType(), p2.getLocalId(), p2.getOriginator());
 		assert(person2!=null);
-		List<WorkItem> items2 = WorkItemDAO.findByPerson(person2.getId());
+		List<WorkItem> items2 = WorkItemDAO.findByPerson(conn, person2.getId());
 		assert(items2.size()==2);
-		MasterRecord mr2 = MasterRecordDAO.findByNationalId(natId2.getId(), NationalIdentity.UKRDC_TYPE);
+		MasterRecord mr2 = MasterRecordDAO.findByNationalId(conn, natId2.getId(), NationalIdentity.UKRDC_TYPE);
 		assert(mr2!=null);
 
 		UKRDCIndexManager im = new UKRDCIndexManager();
@@ -85,15 +86,15 @@ public class UKRDCIndexManagerMergeSystemTest extends UKRDCIndexManagerBaseTest 
 		}
 */		
 		// Superceeded Master has been deleted
-		MasterRecord mr2a = MasterRecordDAO.findByNationalId(natId2.getId(), NationalIdentity.UKRDC_TYPE);
+		MasterRecord mr2a = MasterRecordDAO.findByNationalId(conn, natId2.getId(), NationalIdentity.UKRDC_TYPE);
 		assert(mr2a==null);
 		
 		// No more links to the superceeded master
-		List<LinkRecord> links2a = LinkRecordDAO.findByMaster(mr2.getId());
+		List<LinkRecord> links2a = LinkRecordDAO.findByMaster(conn, mr2.getId());
 		assert(links2a.size()==0);
 		
 		// Check that audit has been created
-		List<Audit> audits = AuditDAO.findByPerson(p2.getId());
+		List<Audit> audits = AuditDAO.findByPerson(conn, p2.getId());
 		assert(audits.size()==2);
 		for (Audit audit : audits) {
 			assert((audit.getType()==Audit.UKRDC_MERGE) || (audit.getType()==Audit.NO_MATCH_ASSIGN_NEW)  || (audit.getType()==Audit.WORK_ITEM_CREATED));

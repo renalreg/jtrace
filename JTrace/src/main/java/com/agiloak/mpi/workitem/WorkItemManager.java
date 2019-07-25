@@ -1,7 +1,6 @@
 package com.agiloak.mpi.workitem;
 
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -15,11 +14,7 @@ import com.agiloak.mpi.MpiException;
 import com.agiloak.mpi.SimpleConnectionManager;
 import com.agiloak.mpi.audit.Audit;
 import com.agiloak.mpi.audit.AuditManager;
-import com.agiloak.mpi.index.MasterRecord;
-import com.agiloak.mpi.index.NationalIdentity;
-import com.agiloak.mpi.index.Person;
 import com.agiloak.mpi.index.UKRDCIndexManagerResponse;
-import com.agiloak.mpi.index.persistence.MasterRecordDAO;
 import com.agiloak.mpi.workitem.persistence.WorkItemDAO;
 
 /*
@@ -104,7 +99,7 @@ public class WorkItemManager {
 		Connection conn = null;
 		try {
 			try {
-				conn = getConnection();
+				conn = SimpleConnectionManager.getConnection();
 				// API BUSINESS START
 				WorkItem workItem = updateInternal(conn, Integer.parseInt(workItemId), Integer.parseInt(status), updateDesc, updatedBy);
 				resp.setStatus(WorkItemManagerResponse.SUCCESS);
@@ -112,9 +107,9 @@ public class WorkItemManager {
 				// API BUSINESS END
 				conn.commit();
 			} catch (Exception ex) {
-				rollback(conn, ex);
+				SimpleConnectionManager.rollback(conn, ex);
 			} finally {
-				closeConnection(conn);
+				SimpleConnectionManager.closeConnection(conn);
 			}
 		} catch (Exception ex) {
 			resp = getErrorResponse(ex);
@@ -215,30 +210,6 @@ public class WorkItemManager {
 		WorkItemDAO.deleteByMasterId(conn, masterId);
 		
 	}
-	/* 
-	 * Helper methods to streamline the connection management and error response handling in API functions
-	 * TODO = Make this API section use the common APICommand approach - issue is the high level response object is different
-	 */
-	private void closeConnection(Connection conn) throws MpiException {
-		// Tidy up the connection
-		if( conn != null) {
-			try {
-				conn.close();
-			} catch (SQLException e) {
-				logger.error("Failure closing Connection",e);
-				throw new MpiException("Failure closing Connection"+e.getMessage());
-			}
-		}
-	}
-	private void rollback(Connection conn, Exception ex) throws Exception {
-		conn.rollback();
-		throw ex;
-	}
-	private Connection getConnection() throws Exception {
-		Connection conn = SimpleConnectionManager.getDBConnection();
-		conn.setAutoCommit(false);
-		return conn;
-	}
 	private WorkItemManagerResponse getErrorResponse(Exception ex) {
 		WorkItemManagerResponse resp = new WorkItemManagerResponse();
 		resp.setStatus(UKRDCIndexManagerResponse.FAIL);
@@ -246,8 +217,5 @@ public class WorkItemManager {
 		resp.setStackTrace(ExceptionUtils.getStackTrace(ex));
 		return resp;
 	}
-	/*
-	 * End of Helper methods
-	 */	
 	
 }
