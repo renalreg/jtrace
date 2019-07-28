@@ -80,8 +80,7 @@ public class UKRDCIndexManager {
 		link = new LinkRecord(masterId, personId);
 		link.setUpdatedBy(user).setLinkCode(linkCode).setLinkDesc(linkDesc);
 		link.setLinkType(LinkRecord.MANUAL_TYPE);
-		LinkRecordDAO.create(conn, 
-				link);
+		LinkRecordDAO.create(conn, link);
 		
 	}
 	
@@ -259,40 +258,6 @@ public class UKRDCIndexManager {
 
 	}
 
-	/* 
-	 * Helper methods to streamline the connection management and error response handling in API functions
-	 */
-	private void closeConnection(Connection conn) throws MpiException {
-		// Tidy up the connection
-		if( conn != null) {
-			try {
-				conn.close();
-			} catch (SQLException e) {
-				logger.error("Failure closing Connection",e);
-				throw new MpiException("Failure closing Connection"+e.getMessage());
-			}
-		}
-	}
-	private void rollback(Connection conn, Exception ex) throws Exception {
-		conn.rollback();
-		throw ex;
-	}
-	private Connection getConnection() throws Exception {
-		Connection conn = SimpleConnectionManager.getDBConnection();
-		conn.setAutoCommit(false);
-		return conn;
-	}
-	private UKRDCIndexManagerResponse getErrorResponse(Exception ex) {
-		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
-		resp.setStatus(UKRDCIndexManagerResponse.FAIL);
-		resp.setMessage(ex.getMessage());
-		resp.setStackTrace(ExceptionUtils.getStackTrace(ex));
-		return resp;
-	}
-	/*
-	 * End of Helper methods
-	 */
-
 	/*
 	 * API FUNCTIONS
 	 */
@@ -304,107 +269,23 @@ public class UKRDCIndexManager {
 	}
 
 	public UKRDCIndexManagerResponse store(Person person) {
-		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
-		Connection conn = null;
-		try {
-			try {
-				conn = getConnection();
-				// API BUSINESS START
-				NationalIdentity natId = createOrUpdate(conn, person);
-				resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
-				resp.setNationalIdentity(natId);
-				// API BUSINESS END
-				conn.commit();
-			} catch (Exception ex) {
-				rollback(conn, ex);
-			} finally {
-				closeConnection(conn);
-			}
-		} catch (Exception ex) {
-			resp = getErrorResponse(ex);
-		}
-		
+		StoreCommand cmd = new StoreCommand(person);
+		UKRDCIndexManagerResponse resp = cmd.executeAPICommand(this);
 		return resp;
 	}
 
 	public UKRDCIndexManagerResponse getUKRDCId(int masterId) {
-		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
-		Connection conn = null;
-		try {
-			try {
-				conn = getConnection();
-				// API BUSINESS START
-				MasterRecord master = MasterRecordDAO.get(conn, masterId);
-				if (master == null) {
-					resp.setStatus(UKRDCIndexManagerResponse.FAIL);
-					resp.setMessage("Master ID does not exist");
-				} else {
-					if (master.getNationalIdType().equals(NationalIdentity.UKRDC_TYPE)) {
-						resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
-						resp.setNationalIdentity(new NationalIdentity(master.getNationalIdType(), master.getNationalId()));
-					} else {
-						resp.setStatus(UKRDCIndexManagerResponse.FAIL);
-						resp.setMessage("Master ID is not a UKRDC ID");
-					}
-				}
-				// API BUSINESS END
-				conn.commit();
-			} catch (Exception ex) {
-				rollback(conn, ex);
-			} finally {
-				closeConnection(conn);
-			}
-		} catch (Exception ex) {
-			resp = getErrorResponse(ex);
-		}
+		GetUKRDCIdCommand cmd = new GetUKRDCIdCommand(masterId);
+		UKRDCIndexManagerResponse resp = cmd.executeAPICommand(this);
 		return resp;
 	}
 
 	public UKRDCIndexManagerResponse merge(int superceedingId, int supercededId) {
-		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
-		Connection conn = null;
-		try {
-			try {
-				conn = getConnection();
-				// API BUSINESS START
-				// 0 - Get Details
-				MasterRecord superceeding = MasterRecordDAO.get(conn, superceedingId);
-				MasterRecord superceded   = MasterRecordDAO.get(conn, supercededId);
-				// 1 - LINK
-				// For every record linking to the superceeded record id
-				List<LinkRecord> links = LinkRecordDAO.findByMaster(conn, supercededId);
-				for (LinkRecord link : links) {
-					LinkRecordDAO.delete(conn, link);
-
-					LinkRecord newLink = new LinkRecord(superceedingId, link.getPersonId());
-					LinkRecordDAO.create(conn, newLink);
-
-					// 2 - AUDIT
-					Map<String,String> attr = new HashMap<String, String>();
-					attr.put("SuperceedingMaster", Integer.toString(superceedingId));
-					attr.put("SupercededMaster", Integer.toString(supercededId));
-					attr.put("SuperceedingUKRDC", superceeding.getNationalId());
-					attr.put("SupercededUKRDC", superceded.getNationalId());
-					AuditManager am = new AuditManager();
-					am.create(conn, Audit.UKRDC_MERGE, link.getPersonId(), superceedingId, "UKRDC Merge", attr);
-					
-				}
-				// 3 - MASTER RECORD
-				MasterRecordDAO.delete(conn, supercededId);
-				// API BUSINESS END
-				conn.commit();
-			} catch (Exception ex) {
-				rollback(conn, ex);
-			} finally {
-				closeConnection(conn);
-			}
-			
-		} catch (Exception ex) {
-			resp = getErrorResponse(ex);
-		}
-		return resp;
+		MergeCommand cmd = new MergeCommand(superceedingId, supercededId);
+		UKRDCIndexManagerResponse resp = cmd.executeAPICommand(this);
+		return resp;		
 	}
-	
+
 	public UKRDCIndexManagerResponse search(ProgrammeSearchRequest psr) {
 		SearchCommand cmd = new SearchCommand(psr);
 		UKRDCIndexManagerResponse resp = cmd.executeAPICommand(this);
@@ -591,7 +472,7 @@ public class UKRDCIndexManager {
 	 *  
 	 * @param person
 	 */
-	private NationalIdentity createOrUpdate(Connection conn, Person person) throws MpiException {
+	protected NationalIdentity createOrUpdate(Connection conn, Person person) throws MpiException {
 
 		logger.debug("*********Processing person record:"+person);
 		NationalIdentity ukrdcId = null;

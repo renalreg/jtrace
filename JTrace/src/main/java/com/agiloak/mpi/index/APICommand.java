@@ -9,8 +9,6 @@ import org.slf4j.LoggerFactory;
 
 import com.agiloak.mpi.MpiException;
 import com.agiloak.mpi.SimpleConnectionManager;
-import com.agiloak.mpi.workitem.WorkItemManager;
-import com.agiloak.mpi.workitem.WorkItemManagerResponse;
 
 public abstract class APICommand {
 
