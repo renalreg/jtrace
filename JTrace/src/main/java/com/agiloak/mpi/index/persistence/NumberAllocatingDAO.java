@@ -15,7 +15,7 @@ public abstract class NumberAllocatingDAO {
 
 	final static Logger logger = LoggerFactory.getLogger(NumberAllocatingDAO.class);
 
-	protected static String allocateSequence(String sequenceName) throws MpiException {
+	protected static String allocateSequence(Connection conn, String sequenceName) throws MpiException {
 	
 		logger.debug("Starting");
 	
@@ -24,13 +24,10 @@ public abstract class NumberAllocatingDAO {
 		String  allocatedId = "";
 	
 		PreparedStatement preparedStatement = null;
-		Connection conn = null;
 		ResultSet rs = null;
 		
 		try {
 	
-			conn = SimpleConnectionManager.getDBConnection();
-			
 			preparedStatement = conn.prepareStatement(nextValSQL);
 	
 			rs = preparedStatement.executeQuery();
@@ -59,14 +56,6 @@ public abstract class NumberAllocatingDAO {
 				} catch (SQLException e) {
 					logger.error("Failure closing prepared statement.",e);
 					throw new MpiException("Failure closing prepared statement. "+e.getMessage());
-				}
-			}
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing Connection",e);
-					throw new MpiException(sequenceName+" allocate failed. "+e.getMessage());
 				}
 			}
 	

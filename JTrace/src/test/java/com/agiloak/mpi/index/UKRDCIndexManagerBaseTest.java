@@ -1,5 +1,6 @@
 package com.agiloak.mpi.index;
 
+import java.sql.Connection;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.List;
@@ -14,6 +15,7 @@ import com.agiloak.mpi.workitem.persistence.WorkItemDAO;
 public class UKRDCIndexManagerBaseTest {
 
 	public static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+	public static Connection conn = null;
 
 	protected static java.util.Date getDate(String sDate) {
 		
@@ -28,27 +30,27 @@ public class UKRDCIndexManagerBaseTest {
 	    
 	}
 
-	// convenience for legacy tests - should probably be updated over time
-	protected static void clear(String localId, String originator) throws MpiException {
-		
-		clear("MR", localId, originator);
-	
-	}
+//	// convenience for legacy tests - should probably be updated over time
+//	protected static void clear(String localId, String originator) throws MpiException {
+//		
+//		clear(conn, "MR", localId, originator);
+//	
+//	}
 
-	protected static void clear(String type, String localId, String originator) throws MpiException {
+	protected static void clear(Connection conn, String type, String localId, String originator) throws MpiException {
 		
-		Person person = PersonDAO.findByLocalId(type, localId, originator);
+		Person person = PersonDAO.findByLocalId(conn, type, localId, originator);
 		if (person != null) {
-			List<LinkRecord> links = LinkRecordDAO.findByPerson(person.getId());
+			List<LinkRecord> links = LinkRecordDAO.findByPerson(conn, person.getId());
 			for (LinkRecord link : links) {
-				MasterRecordDAO.delete(link.getMasterId());
+				MasterRecordDAO.delete(conn, link.getMasterId());
 			}
-			LinkRecordDAO.deleteByPerson(person.getId());
-			WorkItemDAO.deleteByPerson(person.getId());
-			PersonDAO.delete(person);
-			String traceId = TraceDAO.getTraceId(localId, "MR", originator, "AUTO");
+			LinkRecordDAO.deleteByPerson(conn, person.getId());
+			WorkItemDAO.deleteByPerson(conn, person.getId());
+			PersonDAO.delete(conn, person);
+			String traceId = TraceDAO.getTraceId(conn, localId, "MR", originator, "AUTO");
 			if (traceId != null) {
-				TraceDAO.clearByTraceId(traceId);
+				TraceDAO.clearByTraceId(conn, traceId);
 			}
 		}
 	

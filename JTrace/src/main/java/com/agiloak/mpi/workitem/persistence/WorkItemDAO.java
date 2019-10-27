@@ -20,7 +20,7 @@ public class WorkItemDAO {
 	
 	private final static Logger logger = LoggerFactory.getLogger(WorkItemDAO.class);
 
-	public static void create(WorkItem workItem) throws MpiException {
+	public static void create(Connection conn, WorkItem workItem) throws MpiException {
 
 		logger.debug("Starting");
 		
@@ -29,12 +29,9 @@ public class WorkItemDAO {
 				" values (?,?,?,?,?,?,?,?,?)";
 		
 		PreparedStatement preparedStatement = null;
-		Connection conn = null;
 		
 		try {
 
-			conn = SimpleConnectionManager.getDBConnection();
-			
 			preparedStatement = conn.prepareStatement(insertSQL, Statement.RETURN_GENERATED_KEYS);
 			preparedStatement.setInt(1, workItem.getPersonId());
 			preparedStatement.setInt(2, workItem.getMasterId());
@@ -75,19 +72,11 @@ public class WorkItemDAO {
 					throw new MpiException("WorkItem insert failed");
 				}
 			}
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing Connection",e);
-					throw new MpiException("WorkItem insert failed. "+e.getMessage());
-				}
-			}
 		}
 
 	}
 	
-	public static void update(WorkItem workItem) throws MpiException {
+	public static void update(Connection conn, WorkItem workItem) throws MpiException {
 
 		logger.debug("Starting");
 
@@ -96,12 +85,9 @@ public class WorkItemDAO {
 				+"where personid=? and masterid=?"; 
 		
 		PreparedStatement preparedStatement = null;
-		Connection conn = null;
 		
 		try {
 
-			conn = SimpleConnectionManager.getDBConnection();
-			
 			preparedStatement = conn.prepareStatement(updateSQL);
 			preparedStatement.setInt(1, workItem.getStatus());
 			preparedStatement.setTimestamp(2,new Timestamp(workItem.getLastUpdated().getTime()));
@@ -127,32 +113,20 @@ public class WorkItemDAO {
 					throw new MpiException("WorkItem insert failed");
 				}
 			}
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing Connection",e);
-					throw new MpiException("WorkItem insert failed. "+e.getMessage());
-				}
-			}
-
 		}
 
 	}
 	
-	public static void deleteByPerson(int personId) throws MpiException {
+	public static void deleteByPerson(Connection conn, int personId) throws MpiException {
 
 		logger.debug("Starting");
 
 		String deleteSQL = "delete from workitem where personid = ?";
 		
 		PreparedStatement preparedStatement = null;
-		Connection conn = null;
 		
 		try {
 
-			conn = SimpleConnectionManager.getDBConnection();
-			
 			preparedStatement = conn.prepareStatement(deleteSQL);
 			preparedStatement.setInt(1, personId);
 
@@ -173,32 +147,21 @@ public class WorkItemDAO {
 					throw new MpiException("WorkItem delete failed");
 				}
 			}
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing Connection",e);
-					throw new MpiException("WorkItem delete failed. "+e.getMessage());
-				}
-			}
 
 		}
 
 	}	
 	
-	public static void deleteByMasterId(int masterId) throws MpiException {
+	public static void deleteByMasterId(Connection conn, int masterId) throws MpiException {
 
 		logger.debug("Starting");
 
 		String deleteSQL = "delete from workitem where masterid = ?";
 		
 		PreparedStatement preparedStatement = null;
-		Connection conn = null;
 		
 		try {
 
-			conn = SimpleConnectionManager.getDBConnection();
-			
 			preparedStatement = conn.prepareStatement(deleteSQL);
 			preparedStatement.setInt(1, masterId);
 
@@ -219,35 +182,24 @@ public class WorkItemDAO {
 					throw new MpiException("WorkItem delete failed");
 				}
 			}
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing Connection",e);
-					throw new MpiException("WorkItem delete failed. "+e.getMessage());
-				}
-			}
 
 		}
 
 	}	
 	
-	public static WorkItem get(int id) throws MpiException {
+	public static WorkItem get(Connection conn, int id) throws MpiException {
 
 		logger.debug("Starting");
 		
 		String findSQL = "select * from workitem where id = ? ";
 		
 		PreparedStatement preparedStatement = null;
-		Connection conn = null;
 		ResultSet rs = null;
 		
 		WorkItem workItem = null;
 	
 		try {
 
-			conn = SimpleConnectionManager.getDBConnection();
-			
 			preparedStatement = conn.prepareStatement(findSQL);
 			preparedStatement.setInt(1, id);
 
@@ -289,36 +241,26 @@ public class WorkItemDAO {
 					throw new MpiException("Failure closing prepared statement. "+e.getMessage());
 				}
 			}
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing Connection",e);
-					throw new MpiException("WorkItem read failed. "+e.getMessage());
-				}
-			}
 
 		}
 		
 		return workItem;
 
-	}		
-	public static List<WorkItem> findByPerson(int personId) throws MpiException {
+	}
+
+	public static List<WorkItem> findByPerson(Connection conn, int personId) throws MpiException {
 
 		logger.debug("Starting");
 
 		String findSQL = "select * from workitem where personid = ? ";
 		
 		PreparedStatement preparedStatement = null;
-		Connection conn = null;
 		ResultSet rs = null;
 		
 		List<WorkItem> workItems = new ArrayList<WorkItem>();
 		
 		try {
 
-			conn = SimpleConnectionManager.getDBConnection();
-			
 			preparedStatement = conn.prepareStatement(findSQL);
 			preparedStatement.setInt(1, personId);
 
@@ -362,36 +304,25 @@ public class WorkItemDAO {
 					throw new MpiException("Failure closing prepared statement. "+e.getMessage());
 				}
 			}
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing Connection",e);
-					throw new MpiException("WorkItem read failed. "+e.getMessage());
-				}
-			}
 
 		}
 		
 		return workItems;
 
 	}	
-	public static WorkItem findByPersonAndMaster(int personId, int masterId) throws MpiException {
+	public static WorkItem findByPersonAndMaster(Connection conn, int personId, int masterId) throws MpiException {
 
 		logger.debug("Starting");
 		
 		String findSQL = "select * from workitem where personid = ? and masterid = ?";
 		
 		PreparedStatement preparedStatement = null;
-		Connection conn = null;
 		ResultSet rs = null;
 		
 		WorkItem workItem = null;
 	
 		try {
 
-			conn = SimpleConnectionManager.getDBConnection();
-			
 			preparedStatement = conn.prepareStatement(findSQL);
 			preparedStatement.setInt(1, personId);
 			preparedStatement.setInt(2, masterId);
@@ -432,14 +363,6 @@ public class WorkItemDAO {
 				} catch (SQLException e) {
 					logger.error("Failure closing prepared statement.",e);
 					throw new MpiException("Failure closing prepared statement. "+e.getMessage());
-				}
-			}
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing Connection",e);
-					throw new MpiException("WorkItem read failed. "+e.getMessage());
 				}
 			}
 

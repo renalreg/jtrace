@@ -1,9 +1,13 @@
 package com.agiloak.mpi.workitem;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
@@ -20,30 +24,50 @@ public class WorkItemTest {
 	
 	public static int testWorkItemId = 0;
 	
+	public static Connection conn = null;
+	@Before
+	public void openConnection()  throws MpiException {
+		conn = SimpleConnectionManager.getDBConnection();
+	}
+	@After
+	public void closeConnection()  throws MpiException {
+		try {
+			conn.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new MpiException("FAILED TO CLOSE CONNECTION");
+		}
+	}
+
 	@BeforeClass
-	public static void setup()  throws MpiException {
+	public static void setupWrapper()  throws MpiException, SQLException {
 		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE");
-		// delete test data
-		WorkItemDAO.deleteByPerson(200001);
-		WorkItemDAO.deleteByPerson(200002);
-		WorkItemDAO.deleteByPerson(200003);
-		WorkItemDAO.deleteByPerson(200004);
-		WorkItemDAO.deleteByPerson(200005);
-		WorkItemDAO.deleteByPerson(200006);
+		conn = SimpleConnectionManager.getDBConnection();
+		setup();
+		conn.close();
+	}
+
+	public static void setup()  throws MpiException {
+		WorkItemDAO.deleteByPerson(conn, 200001);
+		WorkItemDAO.deleteByPerson(conn, 200002);
+		WorkItemDAO.deleteByPerson(conn, 200003);
+		WorkItemDAO.deleteByPerson(conn, 200004);
+		WorkItemDAO.deleteByPerson(conn, 200005);
+		WorkItemDAO.deleteByPerson(conn, 200006);
 		
 		WorkItemManager wim = new WorkItemManager();
-		WorkItem wi1 = wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200005, 1, "test");
+		WorkItem wi1 = wim.create(conn, WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200005, 1, "test");
+		
 		testWorkItemId = wi1.getId();
-
 	}
 
 	@Test
 	public void testCreate() throws MpiException {
 		WorkItemManager wim = new WorkItemManager();
-		WorkItem wi1 = wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200001, 1, "test");
+		WorkItem wi1 = wim.create(conn, WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200001, 1, "test");
 		assert(true);
 
-		List<WorkItem> workItems = wim.findByPerson(200001);
+		List<WorkItem> workItems = wim.findByPerson(conn, 200001);
 		assert(workItems.size()==1);
 		
 		WorkItem wi2 = workItems.get(0);
@@ -58,10 +82,10 @@ public class WorkItemTest {
 	@Test
 	public void testExplicitUpdate() throws MpiException {
 		WorkItemManager wim = new WorkItemManager();
-		WorkItem wi1 = wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200002, 1, "test");
+		WorkItem wi1 = wim.create(conn, WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200002, 1, "test");
 		assert(true);
 
-		List<WorkItem> workItems = wim.findByPerson(200002);
+		List<WorkItem> workItems = wim.findByPerson(conn, 200002);
 		assert(workItems.size()==1);
 		
 		WorkItem wi2 = workItems.get(0);
@@ -77,7 +101,7 @@ public class WorkItemTest {
 		assert(resp.getWorkItem()!=null);
 		assert(resp.getWorkItem().getId()==wi2.getId());
 		
-		workItems = wim.findByPerson(200002);
+		workItems = wim.findByPerson(conn, 200002);
 		assert(workItems.size()==1);
 		
 		wi2 = workItems.get(0);
@@ -144,10 +168,10 @@ public class WorkItemTest {
 	@Test
 	public void testUpdateIfExists() throws MpiException {
 		WorkItemManager wim = new WorkItemManager();
-		WorkItem wi1 = wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200003, 1, "test");
+		WorkItem wi1 = wim.create(conn, WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200003, 1, "test");
 		assert(true);
 
-		List<WorkItem> workItems = wim.findByPerson(200003);
+		List<WorkItem> workItems = wim.findByPerson(conn, 200003);
 		assert(workItems.size()==1);
 	
 		WorkItem wi2 = workItems.get(0);
@@ -158,21 +182,21 @@ public class WorkItemTest {
 		assert(wi2.getDescription().equals(wi1.getDescription()));
 		assert(wi2.getLastUpdated().compareTo(wi1.getLastUpdated())==0);
 
-		WorkItem wi3 = wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200003, 1, "test2");
+		WorkItem wi3 = wim.create(conn, WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200003, 1, "test2");
 		assert(wi3.getId()==wi1.getId());
 
 	}
 	@Test
 	public void testDelete() throws MpiException {
 		WorkItemManager wim = new WorkItemManager();
-		wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200004, 2, "test");
-		wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200004, 3, "test2");
+		wim.create(conn, WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200004, 2, "test");
+		wim.create(conn, WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200004, 3, "test2");
 		assert(true);
-		List<WorkItem> workItems = wim.findByPerson(200004);
+		List<WorkItem> workItems = wim.findByPerson(conn, 200004);
 		assert(workItems.size()==2);
 		
-		wim.deleteByPerson(200004);
-		List<WorkItem> workItems2 = wim.findByPerson(200004);
+		wim.deleteByPerson(conn, 200004);
+		List<WorkItem> workItems2 = wim.findByPerson(conn, 200004);
 		assert(workItems2.size()==0);
 		
 	}
@@ -181,21 +205,21 @@ public class WorkItemTest {
 	public void testDeleteNoPerson() throws MpiException {
 		WorkItemManager wim = new WorkItemManager();
 		exception.expect(MpiException.class);
-		wim.deleteByPerson(0);
+		wim.deleteByPerson(conn, 0);
 		assert(true);
 	}
 
 	@Test
 	public void testDeleteByMaster() throws MpiException {
 		WorkItemManager wim = new WorkItemManager();
-		wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200004, 2, "test");
-		wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200004, 3, "test2");
+		wim.create(conn, WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200004, 2, "test");
+		wim.create(conn, WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200004, 3, "test2");
 		assert(true);
-		List<WorkItem> workItems = wim.findByPerson(200004);
+		List<WorkItem> workItems = wim.findByPerson(conn, 200004);
 		assert(workItems.size()==2);
 		
-		wim.deleteByMaster(3);
-		List<WorkItem> workItems2 = wim.findByPerson(200004);
+		wim.deleteByMaster(conn, 3);
+		List<WorkItem> workItems2 = wim.findByPerson(conn, 200004);
 		assert(workItems2.size()==1);
 		
 	}
@@ -203,34 +227,34 @@ public class WorkItemTest {
 	public void testDeleteyMasterNoMaster() throws MpiException {
 		WorkItemManager wim = new WorkItemManager();
 		exception.expect(MpiException.class);
-		wim.deleteByMaster(0);
+		wim.deleteByMaster(conn, 0);
 		assert(true);
 	}
 	@Test
 	public void testCreateNoPerson() throws MpiException {
 		WorkItemManager wim = new WorkItemManager();
 		exception.expect(MpiException.class);
-		wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL,0,1,"test");
+		wim.create(conn, WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL,0,1,"test");
 	}
 
 	@Test
 	public void testCreateNoMaster() throws MpiException {
 		WorkItemManager wim = new WorkItemManager();
 		exception.expect(MpiException.class);
-		wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL,0,0,"test");
+		wim.create(conn, WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL,0,0,"test");
 	}
 	@Test
 	public void testCreateNullDesc() throws MpiException {
 		WorkItemManager wim = new WorkItemManager();
 		exception.expect(MpiException.class);
-		wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL,1,2,null);
+		wim.create(conn, WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL,1,2,null);
 	}
 
 	@Test
 	public void testCreateEmptyDesc() throws MpiException {
 		WorkItemManager wim = new WorkItemManager();
 		exception.expect(MpiException.class);
-		wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL,1,3,"");
+		wim.create(conn, WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL,1,3,"");
 	}
 	@Test
 	public void testCreateWithAttributes() throws MpiException {
@@ -238,10 +262,10 @@ public class WorkItemTest {
 		Map<String,String> attr = new HashMap<String, String>();
 		attr.put("TestK1", "TestV1");
 		attr.put("TestK2", "TestV2");
-		WorkItem wi1 = wim.create(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200006, 1, "test", attr);
+		WorkItem wi1 = wim.create(conn, WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200006, 1, "test", attr);
 		assert(true);
 
-		List<WorkItem> workItems = wim.findByPerson(200006);
+		List<WorkItem> workItems = wim.findByPerson(conn, 200006);
 		assert(workItems.size()==1);
 		
 		WorkItem wi2 = workItems.get(0);

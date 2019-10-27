@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.agiloak.mpi.MpiException;
-import com.agiloak.mpi.SimpleConnectionManager;
 import com.agiloak.mpi.normalization.NormalizationManager;
 import com.agiloak.mpi.trace.TraceRequest;
 import com.agiloak.mpi.trace.TraceResponse;
@@ -23,7 +22,7 @@ public class TraceDAO {
 
 	private final static Logger logger = LoggerFactory.getLogger(TraceDAO.class);
 
-	public static List<TraceResponseLine> findCandidatesByDOB(TraceRequest request, Properties config) throws MpiException {
+	public static List<TraceResponseLine> findCandidatesByDOB(Connection conn, TraceRequest request, Properties config) throws MpiException {
 		
 		logger.info("start of findCandidatesByDOB");
 		
@@ -32,13 +31,10 @@ public class TraceDAO {
 		String traceDOBSQL = "select * from person where dateofbirth = ? ";
 		
 		PreparedStatement preparedStatement = null;
-		Connection conn = null;
 		ResultSet rs = null;
 		
 		try {
 
-			conn = SimpleConnectionManager.getDBConnection();
-			
 			preparedStatement = conn.prepareStatement(traceDOBSQL);
 			preparedStatement.setDate(1,getSqlDate(request.getDateOfBirthStart()));
 
@@ -85,21 +81,12 @@ public class TraceDAO {
 					logger.error("Failure closing prepared statement.",e);
 				}
 			}
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing Connection",e);
-					throw new MpiException("Trace read failed. "+e.getMessage());
-				}
-			}
-
 		}
 		
 		return candidates;		
 	}
 
-	public static List<TraceResponseLine> findCandidates(TraceRequest request, Properties config) throws MpiException {
+	public static List<TraceResponseLine> findCandidates(Connection conn, TraceRequest request, Properties config) throws MpiException {
 
 		logger.debug("Starting");
 
@@ -221,13 +208,10 @@ public class TraceDAO {
 		logger.debug("FullSQL:"+fullSQL);
 		
 		PreparedStatement queryStmt = null;
-		Connection conn = null;
 		ResultSet rs = null;
 		
 		try {
 
-			conn = SimpleConnectionManager.getDBConnection();
-			
 			queryStmt = conn.prepareStatement(fullSQL);
 			
 			Iterator<Object> pIt = parms.iterator();
@@ -287,14 +271,6 @@ public class TraceDAO {
 					queryStmt.close();
 				} catch (SQLException e) {
 					logger.error("Failure closing prepared statement.",e);
-				}
-			}
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing Connection",e);
-					throw new MpiException("Trace read failed. "+e.getMessage());
 				}
 			}
 		}
@@ -364,7 +340,7 @@ public class TraceDAO {
 		return value;
 	}
 	
-	public static void saveRequest(TraceRequest request) throws MpiException {
+	public static void saveRequest(Connection conn, TraceRequest request) throws MpiException {
 
 		logger.debug("Starting");
 
@@ -379,11 +355,8 @@ public class TraceDAO {
 				" ?,?,?)";
 
 		PreparedStatement preparedStatement = null;
-		Connection conn = null;
 		
 		try {
-
-			conn = SimpleConnectionManager.getDBConnection();
 			
 			preparedStatement = conn.prepareStatement(insertSQL);
 			preparedStatement.setString(1, request.getTraceId());
@@ -421,19 +394,11 @@ public class TraceDAO {
 					throw new MpiException("TraceRequest insert failed");
 				}
 			}
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing Connection",e);
-					throw new MpiException("Trace insert failed. "+e.getMessage());
-				}
-			}
 		}
 
 	}
 	
-	public static TraceResponse getResponse(String traceId) throws MpiException {
+	public static TraceResponse getResponse(Connection conn, String traceId) throws MpiException {
 
 		logger.debug("Starting");
 
@@ -443,13 +408,10 @@ public class TraceDAO {
 		String readSQL = "Select * from traceresponse where traceid = ? ";
 
 		PreparedStatement preparedStatement = null;
-		Connection conn = null;
 		ResultSet rs = null;
 		
 		try {
 
-			conn = SimpleConnectionManager.getDBConnection();
-			
 			preparedStatement = conn.prepareStatement(readSQL);
 			preparedStatement.setString(1, traceId);
 
@@ -464,7 +426,7 @@ public class TraceDAO {
 				response.setMatchCount(rs.getInt("matchcount"));
 			}
 			
-			getResponseLines(response);
+			getResponseLines(conn, response);
 			
 		} catch (SQLException e) {
 			logger.error("Failure reading TraceResponse.",e);
@@ -488,32 +450,21 @@ public class TraceDAO {
 					throw new MpiException("TraceResponse read failed");
 				}
 			}
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing Connection",e);
-					throw new MpiException("TraceResponse read failed. "+e.getMessage());
-				}
-			}
 		}
 
 		return response;
 	}
 
-	private static TraceResponse getResponseLines(TraceResponse response) throws MpiException {
+	private static TraceResponse getResponseLines(Connection conn, TraceResponse response) throws MpiException {
 
 		logger.debug("Starting");
 
 		String readSQL = "Select * from traceresponseline where traceid = ? ";
 
 		PreparedStatement preparedStatement = null;
-		Connection conn = null;
 		ResultSet rs = null;
 		
 		try {
-
-			conn = SimpleConnectionManager.getDBConnection();
 			
 			preparedStatement = conn.prepareStatement(readSQL);
 			preparedStatement.setString(1, response.getTraceId());
@@ -560,20 +511,12 @@ public class TraceDAO {
 					throw new MpiException("TraceResponseLine read failed");
 				}
 			}
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing Connection",e);
-					throw new MpiException("TraceResponseLine read failed. "+e.getMessage());
-				}
-			}
 		}
 
 		return response;
 	}
 	
-	public static void saveResponse(TraceResponse response) throws MpiException {
+	public static void saveResponse(Connection conn, TraceResponse response) throws MpiException {
 
 		logger.debug("Starting");
 
@@ -582,11 +525,8 @@ public class TraceDAO {
 				" values (?,?,?,?,?,?,?)";
 
 		PreparedStatement preparedStatement = null;
-		Connection conn = null;
 		
 		try {
-
-			conn = SimpleConnectionManager.getDBConnection();
 			
 			preparedStatement = conn.prepareStatement(insertSQL);
 			preparedStatement.setString(1, response.getTraceId());
@@ -603,7 +543,7 @@ public class TraceDAO {
 			Iterator<TraceResponseLine> it = response.getResponseLines().iterator();
 			while (it.hasNext()){
 				TraceResponseLine trl = it.next();
-				saveResponseLine(trl, response.getTraceId());
+				saveResponseLine(conn, trl, response.getTraceId());
 			}
 			
 		} catch (SQLException e) {
@@ -619,18 +559,10 @@ public class TraceDAO {
 					throw new MpiException("TraceResponse insert failed");
 				}
 			}
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing Connection",e);
-					throw new MpiException("TraceResponse insert failed. "+e.getMessage());
-				}
-			}
 		}
 
 	}
-	public static void saveResponseLine(TraceResponseLine responseLine, String traceId) throws MpiException {
+	public static void saveResponseLine(Connection conn, TraceResponseLine responseLine, String traceId) throws MpiException {
 
 		logger.debug("Starting");
 
@@ -643,11 +575,8 @@ public class TraceDAO {
 				"         ?)";
 				
 		PreparedStatement preparedStatement = null;
-		Connection conn = null;
 		
 		try {
-
-			conn = SimpleConnectionManager.getDBConnection();
 			
 			preparedStatement = conn.prepareStatement(insertSQL);
 			preparedStatement.setString(1, traceId);
@@ -680,19 +609,11 @@ public class TraceDAO {
 					throw new MpiException("TraceResponseLine insert failed");
 				}
 			}
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing Connection",e);
-					throw new MpiException("TraceResponseLine insert failed. "+e.getMessage());
-				}
-			}
 		}
 
 	}
 	
-	public static void clearByTraceId(String traceId) throws MpiException {
+	public static void clearByTraceId(Connection conn, String traceId) throws MpiException {
 
 		logger.debug("Starting");
 
@@ -703,11 +624,8 @@ public class TraceDAO {
 		String deleteSQL3 = "delete from traceresponseline where traceid = ?";
 
 		PreparedStatement preparedStatement = null;
-		Connection conn = null;
 		
 		try {
-
-			conn = SimpleConnectionManager.getDBConnection();
 			
 			preparedStatement = conn.prepareStatement(deleteSQL1);
 			preparedStatement.setString(1, traceId);
@@ -741,33 +659,22 @@ public class TraceDAO {
 					throw new MpiException("trace delete failed");
 				}
 			}
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing Connection",e);
-					throw new MpiException("Trace delete failed. "+e.getMessage());
-				}
-			}
 		}
 
 	}	
 	
-	public static String getTraceId(String localId, String localIdType, String originator, String traceType) throws MpiException {
+	public static String getTraceId(Connection conn, String localId, String localIdType, String originator, String traceType) throws MpiException {
 
 		logger.debug("Starting");
 
 		String readSQL = "Select * from tracerequest where tracetype = ? and localid = ? and localidtype = ? and originator = ? ";
 
 		PreparedStatement preparedStatement = null;
-		Connection conn = null;
 		ResultSet rs = null;
 		
 		String traceId = null;
 		
 		try {
-
-			conn = SimpleConnectionManager.getDBConnection();
 			
 			preparedStatement = conn.prepareStatement(readSQL);
 			preparedStatement.setString(1, traceType);
@@ -802,14 +709,6 @@ public class TraceDAO {
 				} catch (SQLException e) {
 					logger.error("Failure closing prepared statement.",e);
 					throw new MpiException("TraceRequest read failed");
-				}
-			}
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing Connection",e);
-					throw new MpiException("TraceRequest read failed. "+e.getMessage());
 				}
 			}
 		}

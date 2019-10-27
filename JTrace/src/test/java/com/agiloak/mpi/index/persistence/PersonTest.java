@@ -1,11 +1,15 @@
 package com.agiloak.mpi.index.persistence;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
+import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -15,80 +19,96 @@ import com.agiloak.mpi.SimpleConnectionManager;
 import com.agiloak.mpi.index.LinkRecord;
 import com.agiloak.mpi.index.MasterRecord;
 import com.agiloak.mpi.index.Person;
+import com.agiloak.mpi.index.TestIds;
+import com.agiloak.mpi.workitem.persistence.WorkItemDAO;
 
 public class PersonTest {
 
 	public static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-	
 	@Rule
 	public final ExpectedException exception = ExpectedException.none();
 
+	public static Connection conn = null;
+
 	@Before
-	public void setup()  throws MpiException {
-		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE");
-		
-		int masterId = 0;
-		MasterRecord mr = MasterRecordDAO.findByNationalId("NHS0000001","NHS");
-		if (mr !=null) {
-			masterId = mr.getId();
-			MasterRecordDAO.deleteByNationalId("NHS0000001","NHS");
+	public void openConnection() throws MpiException {
+		conn = SimpleConnectionManager.getDBConnection();
+	}
+
+	@After
+	public void closeConnection() throws MpiException {
+		try {
+			conn.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new MpiException("FAILED TO CLOSE CONNECTION");
 		}
+	}
+
+	protected static void clear(Connection conn, String localId, String originator) throws MpiException {
 		
-		Person person = PersonDAO.findByLocalId("MR", "TST1000001", "TST");
+		Person person = PersonDAO.findByLocalId(conn, "MR", localId, originator);
 		if (person != null) {
-			PersonDAO.delete(person);
-			if (mr !=null) {
-				LinkRecord lr = LinkRecordDAO.find(masterId, person.getId());
-				if (lr != null) {
-					LinkRecordDAO.delete(lr);
-				}
-			}
+			LinkRecordDAO.deleteByPerson(conn, person.getId());
+			WorkItemDAO.deleteByPerson(conn, person.getId());
+			PersonDAO.delete(conn, person);
 		}
-		Person person2 = PersonDAO.findByLocalId("MR", "TST1000002", "TST");
-		if (person2 != null) {
-			PersonDAO.delete(person2);
-			if (mr !=null) {
-				LinkRecord lr = LinkRecordDAO.find(masterId, person2.getId());
-				if (lr != null) {
-					LinkRecordDAO.delete(lr);
-				}
-			}
-		}
+	
+	}
+
+	@BeforeClass
+	public static void setupWrapper()  throws MpiException, SQLException {
+		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE");
+		conn = SimpleConnectionManager.getDBConnection();
+		setup();
+		conn.close();
+	}
+
+	public static void setup()  throws MpiException {
+		clear(conn, TestIds.TEST_LOCALID_1, TestIds.ORIG_TEST1);
+		clear(conn, TestIds.TEST_LOCALID_2, TestIds.ORIG_TEST1);
+		clear(conn, TestIds.TEST_LOCALID_3, TestIds.ORIG_TEST1);
+		clear(conn, TestIds.TEST_LOCALID_4, TestIds.ORIG_TEST1);
+		clear(conn, TestIds.TEST_LOCALID_5, TestIds.ORIG_TEST1);
+		clear(conn, TestIds.TEST_LOCALID_6, TestIds.ORIG_TEST1);
+		clear(conn, TestIds.TEST_LOCALID_7, TestIds.ORIG_TEST1);
+		clear(conn, TestIds.TEST_LOCALID_8, TestIds.ORIG_TEST1);
+		MasterRecordDAO.deleteByNationalId(conn, TestIds.TEST_NHS_1, TestIds.TYPE_NHS);
 	}
 
 	@Test
 	public void testFindByMasterId() throws MpiException {
 		
 		Person person = new Person();
-		person.setOriginator("TST").setLocalId("TST1000001").setLocalIdType("MR");
-		person.setPrimaryIdType("NHS").setPrimaryId("NHS0000001");
+		person.setOriginator(TestIds.ORIG_TEST1).setLocalId(TestIds.TEST_LOCALID_1).setLocalIdType(TestIds.LOCAL_TYPE_MR);
+		person.setPrimaryIdType(TestIds.TYPE_NHS).setPrimaryId(TestIds.TEST_NHS_1);
 		person.setTitle("MR").setGivenName("Nick").setOtherGivenNames("Ioan").setSurname("JONES");
 		person.setDateOfBirth(getDate("1962-08-31"));
 		person.setDateOfDeath(getDate("2062-08-31"));
 		person.setGender("1");
 		person.setPostcode("CH1 6LB").setStreet("Oakdene, Townfield Lane");
-		PersonDAO.create(person);
+		PersonDAO.create(conn, person);
 		assert(true);
 		Person person2 = new Person();
-		person2.setOriginator("TST").setLocalId("TST1000002").setLocalIdType("MR");
-		person2.setPrimaryIdType("NHS").setPrimaryId("NHS0000001");
+		person2.setOriginator(TestIds.ORIG_TEST1).setLocalId(TestIds.TEST_LOCALID_2).setLocalIdType(TestIds.LOCAL_TYPE_MR);
+		person.setPrimaryIdType(TestIds.TYPE_NHS).setPrimaryId(TestIds.TEST_NHS_1);
 		person2.setTitle("MR").setGivenName("Nick").setOtherGivenNames("Ioan").setSurname("JONES");
 		person2.setDateOfBirth(getDate("1962-08-31"));
 		person2.setDateOfDeath(getDate("2062-08-31"));
 		person2.setGender("1");
 		person2.setPostcode("CH1 6LB").setStreet("Oakdene, Townfield Lane");
-		PersonDAO.create(person2);
+		PersonDAO.create(conn, person2);
 		assert(true);
 
 		MasterRecord master = new MasterRecord(person);
 		master.setEffectiveDate(new Date());
-		MasterRecordDAO.create(master);
+		MasterRecordDAO.create(conn, master);
 		LinkRecord l1 = new LinkRecord(master.getId(), person.getId());
 		LinkRecord l2 = new LinkRecord(master.getId(), person2.getId());
-		LinkRecordDAO.create(l1);
-		LinkRecordDAO.create(l2);
+		LinkRecordDAO.create(conn, l1);
+		LinkRecordDAO.create(conn, l2);
 		
-		List<Person> personList = PersonDAO.findByMasterId(master.getId());
+		List<Person> personList = PersonDAO.findByMasterId(conn, master.getId());
 		assert(personList != null);
 		assert(personList.size()==2);
 		
@@ -97,16 +117,16 @@ public class PersonTest {
 	@Test
 	public void testRead() throws MpiException {
 		Person person = new Person();
-		person.setOriginator("TST").setLocalId("TST1000001").setLocalIdType("MR");
+		person.setOriginator(TestIds.ORIG_TEST1).setLocalId(TestIds.TEST_LOCALID_3).setLocalIdType(TestIds.LOCAL_TYPE_MR);
 		person.setTitle("MR").setGivenName("Nick").setOtherGivenNames("Ioan").setSurname("JONES");
 		person.setDateOfBirth(getDate("1962-08-31"));
 		person.setDateOfDeath(getDate("2062-08-31"));
 		person.setGender("1");
 		person.setPostcode("CH1 6LB").setStreet("Oakdene, Townfield Lane");
-		PersonDAO.create(person);
+		PersonDAO.create(conn, person);
 		assert(true);
 		
-		Person person2 = PersonDAO.findByLocalId("MR", "TST1000001", "TST");
+		Person person2 = PersonDAO.findByLocalId(conn, TestIds.LOCAL_TYPE_MR, TestIds.TEST_LOCALID_3, TestIds.ORIG_TEST1);
 		assert(person2 != null);
 		
 		assert(safeCompare(person2.getOriginator(),person.getOriginator()));
@@ -133,47 +153,46 @@ public class PersonTest {
 	@Test
 	public void testReadNTF() throws MpiException {
 		Person person = new Person();
-		person.setOriginator("TST").setLocalId("TST1000001").setLocalIdType("MR");
+		person.setOriginator(TestIds.ORIG_TEST1).setLocalId(TestIds.TEST_LOCALID_4).setLocalIdType(TestIds.LOCAL_TYPE_MR);
 		person.setTitle("MR").setGivenName("Nick").setOtherGivenNames("Ioan").setSurname("JONES");
 		person.setDateOfBirth(getDate("1962-08-31"));
 		person.setDateOfDeath(getDate("2062-08-31"));
 		person.setGender("1");
 		person.setPostcode("CH1 6LB").setStreet("Oakdene, Townfield Lane");
-		PersonDAO.create(person);
-		assert(true);
+		PersonDAO.create(conn, person);
 		
-		Person person2 = PersonDAO.findByLocalId("MR", "TST1000001", "ANO");
+		Person person2 = PersonDAO.findByLocalId(conn, TestIds.LOCAL_TYPE_MR, TestIds.TEST_LOCALID_4, TestIds.ORIG_ANO);
 		assert(person2 == null);
 	}
 
 	@Test
 	public void testDelete() throws MpiException {
 		Person person = new Person();
-		person.setOriginator("TST").setLocalId("TST1000001").setLocalIdType("MR");
+		person.setOriginator(TestIds.ORIG_TEST1).setLocalId(TestIds.TEST_LOCALID_5).setLocalIdType(TestIds.LOCAL_TYPE_MR);
 		person.setTitle("MR").setGivenName("Nick").setOtherGivenNames("Ioan").setSurname("JONES");
 		person.setDateOfBirth(getDate("1962-08-31"));
 		person.setDateOfDeath(getDate("2062-08-31"));
 		person.setGender("1");
 		person.setPostcode("CH1 6LB").setStreet("Oakdene, Townfield Lane");
-		PersonDAO.create(person);
-		assert(true);
-		PersonDAO.delete(person);
-		assert(true);
+		PersonDAO.create(conn, person);
+		
+		PersonDAO.delete(conn, person);
+		Person person2 = PersonDAO.findByLocalId(conn, TestIds.LOCAL_TYPE_MR, TestIds.TEST_LOCALID_5, TestIds.ORIG_TEST1);
+		assert(person2 ==null);
 	}
 
 	@Test
 	public void testStore() throws MpiException {
 		Person person = new Person();
-		person.setOriginator("TST").setLocalId("TST1000001").setLocalIdType("MR");
+		person.setOriginator(TestIds.ORIG_TEST1).setLocalId(TestIds.TEST_LOCALID_6).setLocalIdType(TestIds.LOCAL_TYPE_MR);
 		person.setTitle("MR").setGivenName("Nick").setOtherGivenNames("Ioan").setSurname("JONES");
 		person.setDateOfBirth(getDate("1962-08-31"));
 		person.setDateOfDeath(getDate("2062-08-31"));
 		person.setGender("1");
 		person.setPostcode("CH1 6LB").setStreet("Oakdene, Townfield Lane");
-		PersonDAO.create(person);
-		assert(true);
+		PersonDAO.create(conn, person);
 
-		Person person2 = PersonDAO.findByLocalId("MR", "TST1000001", "TST");
+		Person person2 = PersonDAO.findByLocalId(conn, TestIds.LOCAL_TYPE_MR, TestIds.TEST_LOCALID_6, TestIds.ORIG_TEST1);
 		assert(safeCompare(person2.getOriginator(),person.getOriginator()));
 		assert(safeCompare(person2.getLocalId(),person.getLocalId()));
 		assert(safeCompare(person2.getLocalIdType(),person.getLocalIdType()));
@@ -198,21 +217,20 @@ public class PersonTest {
 	@Test
 	public void testStoreWithNationalId() throws MpiException {
 		Person person = new Person();
-		person.setOriginator("TST").setLocalId("TST1000001").setLocalIdType("MR");
+		person.setOriginator(TestIds.ORIG_TEST1).setLocalId(TestIds.TEST_LOCALID_7).setLocalIdType(TestIds.LOCAL_TYPE_MR);
 		person.setTitle("MR").setGivenName("Nick").setOtherGivenNames("Ioan").setSurname("JONES");
 		person.setDateOfBirth(getDate("1962-08-31"));
 		person.setDateOfDeath(getDate("2062-08-31"));
 		person.setGender("1");
 		person.setPostcode("CH1 6LB").setStreet("Oakdene, Townfield Lane");
 		person.setPrimaryIdType("NHS").setPrimaryId("900000001");
+		PersonDAO.create(conn, person);
 		
-		PersonDAO.create(person);
-		assert(true);
-		
-		Person person2 = PersonDAO.findByLocalId("MR", "TST1000001", "TST");
+		Person person2 = PersonDAO.findByLocalId(conn, TestIds.LOCAL_TYPE_MR, TestIds.TEST_LOCALID_7, TestIds.ORIG_TEST1);
 		assert(safeCompare(person2.getOriginator(),person.getOriginator()));
 		assert(safeCompare(person2.getLocalId(),person.getLocalId()));
 		assert(safeCompare(person2.getLocalIdType(),person.getLocalIdType()));
+
 		assert(safeCompare(person2.getPrimaryId(),person.getPrimaryId()));
 		assert(safeCompare(person2.getPrimaryIdType(),person.getPrimaryIdType()));
 		
@@ -235,21 +253,21 @@ public class PersonTest {
 	public void testUpdate() throws MpiException {
 
 		Person person = new Person();
-		person.setOriginator("TST").setLocalId("TST1000001").setLocalIdType("MR");
+		person.setOriginator(TestIds.ORIG_TEST1).setLocalId(TestIds.TEST_LOCALID_8).setLocalIdType(TestIds.LOCAL_TYPE_MR);
 		person.setTitle("MR").setGivenName("NICK").setOtherGivenNames("IOAN").setSurname("JONES");
 		person.setDateOfBirth(getDate("1962-08-31"));
 		person.setDateOfDeath(getDate("2062-08-31"));
 		person.setGender("1");
 		person.setPostcode("CH1 6LB").setStreet("OAKDENE, TOWNFIELD LANE");
-		PersonDAO.create(person);
+		PersonDAO.create(conn, person);
 		assert(person != null);
 
 		person.setGivenName("NICHOLAS");
 		person.setPostcode("IA52245");
-		PersonDAO.update(person);
+		PersonDAO.update(conn, person);
 		assert(person != null);
 		
-		Person person2 = PersonDAO.findByLocalId("MR", "TST1000001", "TST");
+		Person person2 = PersonDAO.findByLocalId(conn, TestIds.LOCAL_TYPE_MR, TestIds.TEST_LOCALID_8, TestIds.ORIG_TEST1);
 		assert(safeCompare(person2.getOriginator(),person.getOriginator()));
 		assert(safeCompare(person2.getLocalId(),person.getLocalId()));
 		assert(safeCompare(person2.getLocalIdType(),person.getLocalIdType()));
@@ -270,6 +288,7 @@ public class PersonTest {
 		assert(safeCompare(person2.getDateOfDeath(),person.getDateOfDeath()));
 
 	}
+	
 	private boolean safeCompare(String a, String b) {
 		boolean match = true;
 		boolean nomatch = false;

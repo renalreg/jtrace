@@ -1,5 +1,6 @@
 package com.agiloak.mpi.index;
 
+import java.sql.Connection;
 import java.util.Date;
 
 import org.junit.BeforeClass;
@@ -19,43 +20,44 @@ public class UKRDCIndexManagerTest extends UKRDCIndexManagerBaseTest {
 	@BeforeClass
 	public static void setup()  throws MpiException {
 		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE");
-		
-		int masterId1 = getAndDeleteMasterId("NHS0000001","NHS");
-		clear( "TST1000001", "TST1", masterId1);
-		clear( "TST2000001", "TST2", masterId1);
-		clear( "TST3000001", "TST3", masterId1);
-		clear( "TST4000001", "TST4", masterId1);
+		conn = SimpleConnectionManager.getDBConnection();
 
-		int masterId2 = getAndDeleteMasterId("NHS0000010","NHS");
-		clear( "TST5000001", "TST5", masterId2);
+		int masterId1 = getAndDeleteMasterId(conn, "NHS0000001","NHS");
+		clear(conn, "TST1000001", "TST1", masterId1);
+		clear(conn, "TST2000001", "TST2", masterId1);
+		clear(conn,  "TST3000001", "TST3", masterId1);
+		clear(conn,  "TST4000001", "TST4", masterId1);
+
+		int masterId2 = getAndDeleteMasterId(conn, "NHS0000010","NHS");
+		clear(conn,  "TST5000001", "TST5", masterId2);
 		
-		int masterId3 = getAndDeleteMasterId("NHS0000010","NHS");
-		clear( "UPD1000001", "UPD1", masterId3);
-		int masterId4 = getAndDeleteMasterId("NHS0000011","NHS");
-		clear( "UPD1000002", "UPD2", masterId4);
+		int masterId3 = getAndDeleteMasterId(conn, "NHS0000010","NHS");
+		clear(conn,  "UPD1000001", "UPD1", masterId3);
+		int masterId4 = getAndDeleteMasterId(conn, "NHS0000011","NHS");
+		clear(conn,  "UPD1000002", "UPD2", masterId4);
 		
 	}
 
-	public static int getAndDeleteMasterId(String id, String type) throws MpiException {
+	public static int getAndDeleteMasterId(Connection conn, String id, String type) throws MpiException {
 		int masterId = 0;
-		MasterRecord mr = MasterRecordDAO.findByNationalId(id,type);
+		MasterRecord mr = MasterRecordDAO.findByNationalId(conn, id, type);
 		if (mr !=null) {
 			masterId = mr.getId();
-			MasterRecordDAO.deleteByNationalId(id, type);
+			MasterRecordDAO.deleteByNationalId(conn, id, type);
 		}
 		return masterId;
 		
 	}
 	
-	public static void clear(String localId, String localIdType, int masterId)  throws MpiException {
+	public static void clear(Connection conn, String localId, String localIdType, int masterId)  throws MpiException {
 		
-		Person person = PersonDAO.findByLocalId("MR", localId, localIdType);
+		Person person = PersonDAO.findByLocalId(conn, "MR", localId, localIdType);
 		if (person != null) {
-			PersonDAO.delete(person);
+			PersonDAO.delete(conn, person);
 			if (masterId > 0) {
-				LinkRecord lr = LinkRecordDAO.find(masterId, person.getId());
+				LinkRecord lr = LinkRecordDAO.find(conn, masterId, person.getId());
 				if (lr != null) {
-					LinkRecordDAO.delete(lr);
+					LinkRecordDAO.delete(conn, lr);
 				}
 			}
 		}

@@ -1,7 +1,6 @@
 package com.agiloak.mpi;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 
 import javax.sql.DataSource;
@@ -118,7 +117,7 @@ public class SimpleConnectionManager {
         ConnectionFactory cf = new DriverManagerConnectionFactory(dbURL, DB_USER, DB_PASSWORD);
 
 		// Creates a PoolableConnectionFactory That Will Wraps the Connection Object Created by the ConnectionFactory to Add Object Pooling Functionality!
-        PoolableConnectionFactory pcf = new PoolableConnectionFactory(cf, gPool, null, null, false, true);
+        new PoolableConnectionFactory(cf, gPool, null, null, false, true);
         return new PoolingDataSource(gPool);
 
 	}
@@ -140,5 +139,31 @@ public class SimpleConnectionManager {
 		logger.debug("Returning Connection:"+((Object)conn).hashCode());
 		return conn;
 	}
+	/* 
+	 * Helper methods to streamline the connection management and error response handling in API functions
+	 */
+	public static void closeConnection(Connection conn) throws MpiException {
+		// Tidy up the connection
+		if( conn != null) {
+			try {
+				conn.close();
+			} catch (SQLException e) {
+				logger.error("Failure closing Connection",e);
+				throw new MpiException("Failure closing Connection"+e.getMessage());
+			}
+		}
+	}
+	public static void rollback(Connection conn, Exception ex) throws Exception {
+		conn.rollback();
+		throw ex;
+	}
+	public static Connection getConnection() throws Exception {
+		Connection conn = SimpleConnectionManager.getDBConnection();
+		conn.setAutoCommit(false);
+		return conn;
+	}
+	/*
+	 * End of Helper methods
+	 */	
 
 }

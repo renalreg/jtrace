@@ -1,5 +1,7 @@
 package com.agiloak.mpi.index;
 
+import java.sql.Connection;
+
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
@@ -24,6 +26,7 @@ public class UKRDCIndexManagerGetLocalPidUnitTest extends JTraceTest {
 	
 	@Rule
 	public final ExpectedException exception = ExpectedException.none();
+	public static Connection conn = null;
 
 	public final static String TEST_EXTRACT  = "TEST";
 	public final static String TEST_FACILITY_1  = "GLP01";  
@@ -39,19 +42,24 @@ public class UKRDCIndexManagerGetLocalPidUnitTest extends JTraceTest {
 	@BeforeClass
 	public static void setup()  throws MpiException {
 		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE");
+		
+		// Get a connection. This will be used for all test setup. 
+		// UKRDC Index Manager will get and manage it's own connection
+		conn = SimpleConnectionManager.getDBConnection();
+
 		// delete test data
-		PidXREFDAO.deleteByLocalId(TEST_FACILITY_1,TEST_EXTRACT, TEST_LOCALID_6);
-		PidXREFDAO.deleteByLocalId(TEST_FACILITY_1,TEST_EXTRACT, TEST_LOCALID_7);
-		PidXREFDAO.deleteByLocalId(TEST_FACILITY_1,TEST_EXTRACT, TEST_LOCALID_7A);
-		PidXREFDAO.deleteByLocalId(TEST_FACILITY_1,TEST_EXTRACT, TEST_LOCALID_8);
-		PidXREFDAO.deleteByLocalId(TEST_FACILITY_1,TEST_EXTRACT, TEST_LOCALID_8A);
-		PidXREFDAO.deleteByLocalId(TEST_FACILITY_1,TEST_EXTRACT, TEST_LOCALID_9);
-		PidXREFDAO.deleteByLocalId(TEST_FACILITY_1,TEST_EXTRACT, TEST_LOCALID_9A);
-		MasterRecordDAO.deleteByNationalId("NHSX000006", "NHS");
-		MasterRecordDAO.deleteByNationalId("NHSX000007", "NHS");
-		MasterRecordDAO.deleteByNationalId("NHSX000008", "NHS");
-		MasterRecordDAO.deleteByNationalId("NHSX000009", "NHS");
-		MasterRecordDAO.deleteByNationalId("NHSX00009A", "NHS");
+		PidXREFDAO.deleteByLocalId(conn, TEST_FACILITY_1, TEST_EXTRACT, TEST_LOCALID_6);
+		PidXREFDAO.deleteByLocalId(conn, TEST_FACILITY_1, TEST_EXTRACT, TEST_LOCALID_7);
+		PidXREFDAO.deleteByLocalId(conn, TEST_FACILITY_1, TEST_EXTRACT, TEST_LOCALID_7A);
+		PidXREFDAO.deleteByLocalId(conn, TEST_FACILITY_1, TEST_EXTRACT, TEST_LOCALID_8);
+		PidXREFDAO.deleteByLocalId(conn, TEST_FACILITY_1, TEST_EXTRACT, TEST_LOCALID_8A);
+		PidXREFDAO.deleteByLocalId(conn, TEST_FACILITY_1, TEST_EXTRACT, TEST_LOCALID_9);
+		PidXREFDAO.deleteByLocalId(conn, TEST_FACILITY_1, TEST_EXTRACT, TEST_LOCALID_9A);
+		MasterRecordDAO.deleteByNationalId(conn, "NHSX000006", "NHS");
+		MasterRecordDAO.deleteByNationalId(conn, "NHSX000007", "NHS");
+		MasterRecordDAO.deleteByNationalId(conn, "NHSX000008", "NHS");
+		MasterRecordDAO.deleteByNationalId(conn, "NHSX000009", "NHS");
+		MasterRecordDAO.deleteByNationalId(conn, "NHSX00009A", "NHS");
 		
 	}
 	
@@ -66,8 +74,8 @@ public class UKRDCIndexManagerGetLocalPidUnitTest extends JTraceTest {
 	public void testFindMatchExisting() throws MpiException {
 		
 		PidXREF pidx = new PidXREF(TEST_FACILITY_1, TEST_EXTRACT, TEST_LOCALID_6);
-		PidXREFDAO.create(pidx);
-		assert(pidx.getId()>0);
+		PidXREFDAO.create(conn, pidx);
+		assert(pidx.getId() > 0);
 
 		Person person = new Person();
 		person.setOriginator(TEST_FACILITY_1).setLocalId(pidx.getPid()).setLocalIdType("MR");
@@ -75,21 +83,21 @@ public class UKRDCIndexManagerGetLocalPidUnitTest extends JTraceTest {
 		person.setTitle("MR").setGivenName("Nick").setOtherGivenNames("Ioan").setSurname("JONES");
 		person.setDateOfBirth(getDate("1962-08-31"));
 		person.setGender("1");
-		PersonDAO.create(person);
+		PersonDAO.create(conn, person);
 
 		MasterRecord mr = new MasterRecord();
 		mr.setDateOfBirth(getDate("1962-08-31")).setGender("M");
 		mr.setGivenName("Nick").setSurname("Jones");
 		mr.setNationalId("NHSX000006").setNationalIdType("NHS");
 		mr.setEffectiveDate(getDate("2017-08-22"));
-		MasterRecordDAO.create(mr);
+		MasterRecordDAO.create(conn, mr);
 		
 		LinkRecord lr = new LinkRecord(mr.getId(), person.getId());
 		lr.setUpdatedBy("Nick");
 		lr.setLinkCode(1);
 		lr.setLinkType(2);
 		lr.setLinkDesc("XYZ uses preferred name of patient");
-		LinkRecordDAO.create(lr);
+		LinkRecordDAO.create(conn, lr);
 
 		// TEST 1
 		Person person2 = new Person();
@@ -118,8 +126,8 @@ public class UKRDCIndexManagerGetLocalPidUnitTest extends JTraceTest {
 	public void testFindMatchReject() throws MpiException {
 		
 		PidXREF pidx = new PidXREF(TEST_FACILITY_1, TEST_EXTRACT, TEST_LOCALID_7);
-		PidXREFDAO.create(pidx);
-		assert(pidx.getId()>0);
+		PidXREFDAO.create(conn, pidx);
+		assert(pidx.getId() > 0);
 
 		Person person = new Person();
 		person.setOriginator(TEST_FACILITY_1).setLocalId(pidx.getPid()).setLocalIdType("MR");
@@ -127,21 +135,21 @@ public class UKRDCIndexManagerGetLocalPidUnitTest extends JTraceTest {
 		person.setTitle("MR").setGivenName("Nick").setOtherGivenNames("Ioan").setSurname("JONES");
 		person.setDateOfBirth(getDate("1962-08-31"));
 		person.setGender("1");
-		PersonDAO.create(person);
+		PersonDAO.create(conn, person);
 
 		MasterRecord mr = new MasterRecord();
 		mr.setDateOfBirth(getDate("1962-08-31")).setGender("M");
 		mr.setGivenName("Nick").setSurname("Jones");
 		mr.setNationalId("NHSX000007").setNationalIdType("NHS");
 		mr.setEffectiveDate(getDate("2017-08-22"));
-		MasterRecordDAO.create(mr);
+		MasterRecordDAO.create(conn, mr);
 		
 		LinkRecord lr = new LinkRecord(mr.getId(), person.getId());
 		lr.setUpdatedBy("Nick");
 		lr.setLinkCode(1);
 		lr.setLinkType(2);
 		lr.setLinkDesc("XYZ uses preferred name of patient");
-		LinkRecordDAO.create(lr);
+		LinkRecordDAO.create(conn, lr);
 
 		// TEST 1
 		Person person2 = new Person();
@@ -169,7 +177,7 @@ public class UKRDCIndexManagerGetLocalPidUnitTest extends JTraceTest {
 	public void testFindMatchMatch() throws MpiException {
 		
 		PidXREF pidx = new PidXREF(TEST_FACILITY_1, TEST_EXTRACT, TEST_LOCALID_8);
-		PidXREFDAO.create(pidx);
+		PidXREFDAO.create(conn, pidx);
 		assert(pidx.getId()>0);
 
 		Person person = new Person();
@@ -178,21 +186,21 @@ public class UKRDCIndexManagerGetLocalPidUnitTest extends JTraceTest {
 		person.setTitle("MR").setGivenName("NICK").setOtherGivenNames("IOAN").setSurname("JONES");
 		person.setDateOfBirth(getDate("1962-08-31"));
 		person.setGender("1");
-		PersonDAO.create(person);
+		PersonDAO.create(conn, person);
 
 		MasterRecord mr = new MasterRecord();
 		mr.setDateOfBirth(getDate("1962-08-31")).setGender("M");
 		mr.setGivenName("NICK").setSurname("JONES");
 		mr.setNationalId("NHSX000008").setNationalIdType("NHS");
 		mr.setEffectiveDate(getDate("2017-08-22"));
-		MasterRecordDAO.create(mr);
+		MasterRecordDAO.create(conn, mr);
 		
 		LinkRecord lr = new LinkRecord(mr.getId(), person.getId());
 		lr.setUpdatedBy("NICK");
 		lr.setLinkCode(1);
 		lr.setLinkType(2);
 		lr.setLinkDesc("XYZ uses preferred name of patient");
-		LinkRecordDAO.create(lr);
+		LinkRecordDAO.create(conn, lr);
 
 		// TEST 1
 		Person person2 = new Person();
@@ -220,8 +228,8 @@ public class UKRDCIndexManagerGetLocalPidUnitTest extends JTraceTest {
 	public void testFindMatchNoMatch() throws MpiException {
 		
 		PidXREF pidx = new PidXREF(TEST_FACILITY_1, TEST_EXTRACT, TEST_LOCALID_9);
-		PidXREFDAO.create(pidx);
-		assert(pidx.getId()>0);
+		PidXREFDAO.create(conn, pidx);
+		assert(pidx.getId() > 0);
 
 		Person person = new Person();
 		person.setOriginator(TEST_FACILITY_1).setLocalId(pidx.getPid()).setLocalIdType("MR");
@@ -229,21 +237,21 @@ public class UKRDCIndexManagerGetLocalPidUnitTest extends JTraceTest {
 		person.setTitle("MR").setGivenName("Nick").setOtherGivenNames("Ioan").setSurname("JONES");
 		person.setDateOfBirth(getDate("1962-08-31"));
 		person.setGender("1");
-		PersonDAO.create(person);
+		PersonDAO.create(conn, person);
 
 		MasterRecord mr = new MasterRecord();
 		mr.setDateOfBirth(getDate("1962-08-31")).setGender("M");
 		mr.setGivenName("Nick").setSurname("Jones");
 		mr.setNationalId("NHSX000009").setNationalIdType("NHS");
 		mr.setEffectiveDate(getDate("2017-08-22"));
-		MasterRecordDAO.create(mr);
+		MasterRecordDAO.create(conn, mr);
 		
 		LinkRecord lr = new LinkRecord(mr.getId(), person.getId());
 		lr.setUpdatedBy("Nick");
 		lr.setLinkCode(1);
 		lr.setLinkType(2);
 		lr.setLinkDesc("XYZ uses preferred name of patient");
-		LinkRecordDAO.create(lr);
+		LinkRecordDAO.create(conn, lr);
 
 		// TEST 1
 		Person person2 = new Person();

@@ -1,6 +1,5 @@
 package com.agiloak.mpi.index;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -13,7 +12,6 @@ import com.agiloak.mpi.SimpleConnectionManager;
 import com.agiloak.mpi.index.persistence.LinkRecordDAO;
 import com.agiloak.mpi.index.persistence.MasterRecordDAO;
 import com.agiloak.mpi.index.persistence.PersonDAO;
-import com.agiloak.mpi.trace.persistence.TraceDAO;
 import com.agiloak.mpi.workitem.WorkItem;
 import com.agiloak.mpi.workitem.persistence.WorkItemDAO;
 
@@ -22,7 +20,7 @@ import com.agiloak.mpi.workitem.persistence.WorkItemDAO;
  * @author Nick
  *
  */
-public class UKRDCIndexManagerMultiUnitLinkSystemTest {
+public class UKRDCIndexManagerMultiUnitLinkSystemTest extends UKRDCIndexManagerBaseTest {
 	
 	private Date d1 = getDate("1962-08-31");
 
@@ -31,10 +29,11 @@ public class UKRDCIndexManagerMultiUnitLinkSystemTest {
 	@BeforeClass
 	public static void setup()  throws MpiException {
 		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE");
-
-		clear("MUST100001", "MUST1");
-		clear("MUST200001", "MUST2");
-		clear("MUST300001", "MUST3");
+		conn = SimpleConnectionManager.getDBConnection();
+		
+		clear(conn, "MR", "MUST100001", "MUST1");
+		clear(conn, "MR", "MUST200001", "MUST2");
+		clear(conn, "MR", "MUST300001", "MUST3");
 
 	}
 
@@ -62,13 +61,13 @@ public class UKRDCIndexManagerMultiUnitLinkSystemTest {
 		assert(natId1.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(natId1.getId().startsWith("50")); // Allocated numbers will start with 10 whereas numbers sent in from test stub begin RR 
 		assert(natId1.getId().length()==9);      // Allocated numbers are 9 characters long 
-		Person person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
+		Person person = PersonDAO.findByLocalId(conn, p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		MasterRecord master = MasterRecordDAO.findByNationalId(natId1.getId(), NationalIdentity.UKRDC_TYPE);
+		MasterRecord master = MasterRecordDAO.findByNationalId(conn, natId1.getId(), NationalIdentity.UKRDC_TYPE);
 		assert(master!=null);
-		List<LinkRecord> links = LinkRecordDAO.findByPerson(person.getId());
+		List<LinkRecord> links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==2);
-		List<WorkItem> items = WorkItemDAO.findByPerson(person.getId());
+		List<WorkItem> items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==0);
 
 		// T1-2 - New + NationalId + NationalId exists + Matches. New Person & Link to existing Master
@@ -82,13 +81,13 @@ public class UKRDCIndexManagerMultiUnitLinkSystemTest {
 		assert(natId2!=null);
 		assert(natId2.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(natId2.getId().equals(natId1.getId()));
-		person = PersonDAO.findByLocalId(p2.getLocalIdType(), p2.getLocalId(), p2.getOriginator());
+		person = PersonDAO.findByLocalId(conn, p2.getLocalIdType(), p2.getLocalId(), p2.getOriginator());
 		assert(person!=null);
-		master = MasterRecordDAO.findByNationalId(natId2.getId(), NationalIdentity.UKRDC_TYPE);
+		master = MasterRecordDAO.findByNationalId(conn, natId2.getId(), NationalIdentity.UKRDC_TYPE);
 		assert(master!=null);
-		links = LinkRecordDAO.findByPerson(person.getId());
+		links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==2);
-		items = WorkItemDAO.findByPerson(person.getId());
+		items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==0);
 		
 		// T1-3 - Third record for the same NHS Number from a different trust
@@ -102,46 +101,15 @@ public class UKRDCIndexManagerMultiUnitLinkSystemTest {
 		assert(natId3!=null);
 		assert(natId3.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(natId3.getId().equals(natId1.getId()));
-		person = PersonDAO.findByLocalId(p3.getLocalIdType(), p3.getLocalId(), p3.getOriginator());
+		person = PersonDAO.findByLocalId(conn, p3.getLocalIdType(), p3.getLocalId(), p3.getOriginator());
 		assert(person!=null);
-		master = MasterRecordDAO.findByNationalId(natId3.getId(), NationalIdentity.UKRDC_TYPE);
+		master = MasterRecordDAO.findByNationalId(conn, natId3.getId(), NationalIdentity.UKRDC_TYPE);
 		assert(master!=null);
-		links = LinkRecordDAO.findByPerson(person.getId());
+		links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==2);
-		items = WorkItemDAO.findByPerson(person.getId());
+		items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==0);
 
 	}
 
-	private static java.util.Date getDate(String sDate){
-		
-		java.util.Date uDate = null;
-	    try {
-		   uDate = formatter.parse(sDate);
-		} catch (ParseException e) {
-			e.printStackTrace();
-			assert(false);
-		}	
-	    return uDate;
-	    
-	}
-	
-	public static void clear(String localId, String originator)  throws MpiException {
-		
-		Person person = PersonDAO.findByLocalId("MR", localId, originator);
-		if (person != null) {
-			List<LinkRecord> links = LinkRecordDAO.findByPerson(person.getId());
-			for (LinkRecord link : links) {
-				MasterRecordDAO.delete(link.getMasterId());
-			}
-			LinkRecordDAO.deleteByPerson(person.getId());
-			WorkItemDAO.deleteByPerson(person.getId());
-			PersonDAO.delete(person);
-			String traceId = TraceDAO.getTraceId(localId, "MR", originator, "AUTO");
-			if (traceId != null) {
-				TraceDAO.clearByTraceId(traceId);
-			}
-		}
-
-	}	
 }

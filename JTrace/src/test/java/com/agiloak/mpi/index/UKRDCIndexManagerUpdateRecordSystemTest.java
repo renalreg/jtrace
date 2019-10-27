@@ -29,12 +29,14 @@ public class UKRDCIndexManagerUpdateRecordSystemTest extends UKRDCIndexManagerBa
 	public static void setup()  throws MpiException {
 		
 		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE");
+		conn = SimpleConnectionManager.getDBConnection();
+
 		//  Revised
-		clear( "UPDT10001", "UPDT1");
-		clear( "UPDT20001", "UPDT2");
-		clear( "UPDT30001", "UPDT3");
-		clear( "UPDT3A001", "UPDT3A");
-		clear( "UPDT40001", "UPDT4");
+		clear(conn, "MR", "UPDT10001", "UPDT1");
+		clear(conn, "MR", "UPDT20001", "UPDT2");
+		clear(conn, "MR", "UPDT30001", "UPDT3");
+		clear(conn, "MR", "UPDT3A001", "UPDT3A");
+		clear(conn, "MR", "UPDT40001", "UPDT4");
 
 	}
 
@@ -56,11 +58,11 @@ public class UKRDCIndexManagerUpdateRecordSystemTest extends UKRDCIndexManagerBa
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(natId.getId().startsWith("50")); // Allocated numbers will start with 50 whereas numbers sent in from test stub begin RR 
 		assert(natId.getId().length()==9);      // Allocated numbers are 9 characters long 
-		Person person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
+		Person person = PersonDAO.findByLocalId(conn, p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		List<LinkRecord> links = LinkRecordDAO.findByPerson(person.getId());
+		List<LinkRecord> links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==1);
-		MasterRecord allocatedMr = MasterRecordDAO.get(links.get(0).getMasterId());
+		MasterRecord allocatedMr = MasterRecordDAO.get(conn, links.get(0).getMasterId());
 		assert(allocatedMr.getNationalIdType().equals(NationalIdentity.UKRDC_TYPE));
 
 		logger.debug("************* test1SimpleUpdateNoNationalIds ********UT1-1********");
@@ -73,11 +75,11 @@ public class UKRDCIndexManagerUpdateRecordSystemTest extends UKRDCIndexManagerBa
 		assert(natId2.getId().equals(natId.getId()));
 		assert(natId2.getId().startsWith("50")); // Allocated numbers will start with 50 whereas numbers sent in from test stub begin RR 
 		assert(natId2.getId().length()==9);      // Allocated numbers are 9 characters long 
-		person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
+		person = PersonDAO.findByLocalId(conn, p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		links = LinkRecordDAO.findByPerson(person.getId());
+		links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==1);
-		allocatedMr = MasterRecordDAO.get(links.get(0).getMasterId());
+		allocatedMr = MasterRecordDAO.get(conn, links.get(0).getMasterId());
 		assert(allocatedMr.getNationalIdType().equals(NationalIdentity.UKRDC_TYPE));
 		assert(person.getSurname().equals("ANT2"));
 		assert(person.getPrevSurname().equals("ANT"));
@@ -111,14 +113,14 @@ public class UKRDCIndexManagerUpdateRecordSystemTest extends UKRDCIndexManagerBa
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(natId.getId().equals(ukrdcId));
-		Person person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
+		Person person = PersonDAO.findByLocalId(conn, p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		MasterRecord master = MasterRecordDAO.findByNationalId(idBase+"R1",NationalIdentity.UKRDC_TYPE);
+		MasterRecord master = MasterRecordDAO.findByNationalId(conn, idBase+"R1",NationalIdentity.UKRDC_TYPE);
 		assert(master!=null);
-		List<LinkRecord> links = LinkRecordDAO.findByPerson(person.getId());
+		List<LinkRecord> links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==1);
 		assert(links.get(0).getMasterId()==master.getId());
-		List<WorkItem> items = WorkItemDAO.findByPerson(person.getId());
+		List<WorkItem> items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==0);
 
 		logger.debug("************* test2UpdateAddingUKRDCId ********UT2-2********");
@@ -130,14 +132,14 @@ public class UKRDCIndexManagerUpdateRecordSystemTest extends UKRDCIndexManagerBa
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(natId.getId().equals(ukrdcId));
-		person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
+		person = PersonDAO.findByLocalId(conn, p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		master = MasterRecordDAO.findByNationalId(idBase+"R1",NationalIdentity.UKRDC_TYPE);
+		master = MasterRecordDAO.findByNationalId(conn, idBase+"R1",NationalIdentity.UKRDC_TYPE);
 		assert(master!=null);
-		links = LinkRecordDAO.findByPerson(person.getId());
+		links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==1);
 		assert(links.get(0).getMasterId()==master.getId());
-		items = WorkItemDAO.findByPerson(person.getId());
+		items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==0);
 
 		logger.debug("************* test2UpdateAddingUKRDCId ********UT2-2A********");
@@ -149,14 +151,14 @@ public class UKRDCIndexManagerUpdateRecordSystemTest extends UKRDCIndexManagerBa
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(natId.getId().equals(ukrdcId));
-		person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
+		person = PersonDAO.findByLocalId(conn, p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		master = MasterRecordDAO.findByNationalId(idBase+"R1",NationalIdentity.UKRDC_TYPE);
+		master = MasterRecordDAO.findByNationalId(conn, idBase+"R1",NationalIdentity.UKRDC_TYPE);
 		assert(master!=null);
-		links = LinkRecordDAO.findByPerson(person.getId());
+		links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==1);
 		assert(links.get(0).getMasterId()==master.getId());
-		items = WorkItemDAO.findByPerson(person.getId());
+		items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==0);
 
 		logger.debug("************* test2UpdateAddingUKRDCId ********UT2-3********");
@@ -169,16 +171,16 @@ public class UKRDCIndexManagerUpdateRecordSystemTest extends UKRDCIndexManagerBa
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(natId.getId().equals(ukrdcId));
-		person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
+		person = PersonDAO.findByLocalId(conn, p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		master = MasterRecordDAO.findByNationalId(idBase+"R1",NationalIdentity.UKRDC_TYPE);
+		master = MasterRecordDAO.findByNationalId(conn, idBase+"R1",NationalIdentity.UKRDC_TYPE);
 		assert(master!=null);
 		assert(master.getGivenName().equals("BELINDA"));
 		assert(master.getEffectiveDate().compareTo(p1.getEffectiveDate())==0);
-		links = LinkRecordDAO.findByPerson(person.getId());
+		links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==1);
 		assert(links.get(0).getMasterId()==master.getId());
-		items = WorkItemDAO.findByPerson(person.getId());
+		items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==0);
 
 		logger.debug("************* test2UpdateAddingUKRDCId ********UT2-4********");
@@ -192,17 +194,17 @@ public class UKRDCIndexManagerUpdateRecordSystemTest extends UKRDCIndexManagerBa
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(natId.getId().equals(ukrdcId));
-		person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
+		person = PersonDAO.findByLocalId(conn, p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		master = MasterRecordDAO.findByNationalId(idBase+"R1",NationalIdentity.UKRDC_TYPE);
+		master = MasterRecordDAO.findByNationalId(conn, idBase+"R1",NationalIdentity.UKRDC_TYPE);
 		assert(master!=null);
 		//Chcek that the master has not been updated
 		assert(master.getGivenName().equals("BELINDA"));
 		assert(master.getDateOfBirth().compareTo(d1)==0);
-		links = LinkRecordDAO.findByPerson(person.getId());
+		links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==1);
 		assert(links.get(0).getMasterId()==master.getId());
-		items = WorkItemDAO.findByPerson(person.getId());
+		items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==0);
 
 		logger.debug("************* test2UpdateAddingUKRDCId ********UT2-5********");
@@ -217,18 +219,18 @@ public class UKRDCIndexManagerUpdateRecordSystemTest extends UKRDCIndexManagerBa
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(natId.getId().equals(ukrdcId));
-		person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
+		person = PersonDAO.findByLocalId(conn, p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		master = MasterRecordDAO.findByNationalId(idBase+"R1",NationalIdentity.UKRDC_TYPE);
+		master = MasterRecordDAO.findByNationalId(conn, idBase+"R1",NationalIdentity.UKRDC_TYPE);
 		assert(master!=null);
 		//Check that the master has not been updated
 		assert(master.getGivenName().equals("BELINDA"));
 		assert(master.getDateOfBirth().compareTo(d1)==0);
 		assert(master.getStatus()==MasterRecord.INVESTIGATE);
-		links = LinkRecordDAO.findByPerson(person.getId());
+		links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==1);
 		assert(links.get(0).getMasterId()==master.getId());
-		items = WorkItemDAO.findByPerson(person.getId());
+		items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==1);
 		assert(items.get(0).getType()==(WorkItemType.TYPE_STALE_DEMOGS_NOT_VERIFIED_PRIMARY));
 
@@ -268,16 +270,16 @@ public class UKRDCIndexManagerUpdateRecordSystemTest extends UKRDCIndexManagerBa
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(natId.getId().equals(ukrdcId2));
-		Person person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
+		Person person = PersonDAO.findByLocalId(conn, p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		MasterRecord master = MasterRecordDAO.findByNationalId(ukrdcId1,NationalIdentity.UKRDC_TYPE);
+		MasterRecord master = MasterRecordDAO.findByNationalId(conn, ukrdcId1,NationalIdentity.UKRDC_TYPE);
 		assert(master==null);
-		MasterRecord master2 = MasterRecordDAO.findByNationalId(ukrdcId2,NationalIdentity.UKRDC_TYPE);
+		MasterRecord master2 = MasterRecordDAO.findByNationalId(conn, ukrdcId2,NationalIdentity.UKRDC_TYPE);
 		assert(master2!=null);
-		List<LinkRecord> links = LinkRecordDAO.findByPerson(person.getId());
+		List<LinkRecord> links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==1);
 		assert(links.get(0).getMasterId()==master2.getId());
-		List<WorkItem> items = WorkItemDAO.findByPerson(person.getId());
+		List<WorkItem> items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==0);
 		
 		logger.debug("************* test3UpdateChangingUKRDCId ********SETUP-2********");
@@ -301,16 +303,16 @@ public class UKRDCIndexManagerUpdateRecordSystemTest extends UKRDCIndexManagerBa
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(natId.getId().equals(ukrdcId3));
-		person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
+		person = PersonDAO.findByLocalId(conn, p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		master = MasterRecordDAO.findByNationalId(ukrdcId2,NationalIdentity.UKRDC_TYPE);
+		master = MasterRecordDAO.findByNationalId(conn, ukrdcId2,NationalIdentity.UKRDC_TYPE);
 		assert(master!=null);
-		master2 = MasterRecordDAO.findByNationalId(ukrdcId3,NationalIdentity.UKRDC_TYPE);
+		master2 = MasterRecordDAO.findByNationalId(conn, ukrdcId3,NationalIdentity.UKRDC_TYPE);
 		assert(master2!=null);
-		links = LinkRecordDAO.findByPerson(person.getId());
+		links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==1);
 		assert(links.get(0).getMasterId()==master2.getId());
-		items = WorkItemDAO.findByPerson(person.getId());
+		items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==0);
 	}
 	
@@ -345,21 +347,21 @@ public class UKRDCIndexManagerUpdateRecordSystemTest extends UKRDCIndexManagerBa
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(natId.getId().equals(ukrdcId1));
-		Person person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
+		Person person = PersonDAO.findByLocalId(conn, p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		MasterRecord masterUkrdc = MasterRecordDAO.findByNationalId(idBase+"R1",NationalIdentity.UKRDC_TYPE);
+		MasterRecord masterUkrdc = MasterRecordDAO.findByNationalId(conn, idBase+"R1",NationalIdentity.UKRDC_TYPE);
 		assert(masterUkrdc!=null);
-		MasterRecord masterNhs = MasterRecordDAO.findByNationalId(idBase+"N1",NationalIdentity.NHS_TYPE);
+		MasterRecord masterNhs = MasterRecordDAO.findByNationalId(conn, idBase+"N1",NationalIdentity.NHS_TYPE);
 		assert(masterNhs!=null);
-		MasterRecord masterChi = MasterRecordDAO.findByNationalId(idBase+"C1",NationalIdentity.CHI_TYPE);
+		MasterRecord masterChi = MasterRecordDAO.findByNationalId(conn, idBase+"C1",NationalIdentity.CHI_TYPE);
 		assert(masterChi!=null);
 
-		List<LinkRecord> links = LinkRecordDAO.findByPerson(person.getId());
+		List<LinkRecord> links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==3);
 		assert(links.get(0).getMasterId()==masterUkrdc.getId());
 		assert(links.get(1).getMasterId()==masterNhs.getId());
 		assert(links.get(2).getMasterId()==masterChi.getId());
-		List<WorkItem> items = WorkItemDAO.findByPerson(person.getId());
+		List<WorkItem> items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==0);
 		
 		logger.debug("************* test4AddingOtherNationalId ********UT4-2********");
@@ -373,23 +375,23 @@ public class UKRDCIndexManagerUpdateRecordSystemTest extends UKRDCIndexManagerBa
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(natId.getId().equals(ukrdcId1));
-		person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
+		person = PersonDAO.findByLocalId(conn, p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		masterUkrdc = MasterRecordDAO.findByNationalId(idBase+"R1",NationalIdentity.UKRDC_TYPE);
+		masterUkrdc = MasterRecordDAO.findByNationalId(conn, idBase+"R1",NationalIdentity.UKRDC_TYPE);
 		assert(masterUkrdc!=null);
-		masterNhs = MasterRecordDAO.findByNationalId(idBase+"N1",NationalIdentity.NHS_TYPE);
+		masterNhs = MasterRecordDAO.findByNationalId(conn, idBase+"N1",NationalIdentity.NHS_TYPE);
 		assert(masterNhs!=null);
-		masterChi = MasterRecordDAO.findByNationalId(idBase+"C1",NationalIdentity.CHI_TYPE);
+		masterChi = MasterRecordDAO.findByNationalId(conn, idBase+"C1",NationalIdentity.CHI_TYPE);
 		assert(masterChi==null);
-		MasterRecord masterHsc = MasterRecordDAO.findByNationalId(idBase+"H1",NationalIdentity.HSC_TYPE);
+		MasterRecord masterHsc = MasterRecordDAO.findByNationalId(conn, idBase+"H1",NationalIdentity.HSC_TYPE);
 		assert(masterHsc!=null);
 
-		links = LinkRecordDAO.findByPerson(person.getId());
+		links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==3);
 		assert(links.get(0).getMasterId()==masterUkrdc.getId());
 		assert(links.get(1).getMasterId()==masterNhs.getId());
 		assert(links.get(2).getMasterId()==masterHsc.getId());
-		items = WorkItemDAO.findByPerson(person.getId());
+		items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==0);
 
 		logger.debug("************* test4AddingOtherNationalId ********UT4-3********");
@@ -401,27 +403,27 @@ public class UKRDCIndexManagerUpdateRecordSystemTest extends UKRDCIndexManagerBa
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(natId.getId().equals(ukrdcId1));
-		person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
+		person = PersonDAO.findByLocalId(conn, p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
 		assert(person.getSurname().equals("DARBY"));
-		masterUkrdc = MasterRecordDAO.findByNationalId(idBase+"R1",NationalIdentity.UKRDC_TYPE);
+		masterUkrdc = MasterRecordDAO.findByNationalId(conn, idBase+"R1",NationalIdentity.UKRDC_TYPE);
 		assert(masterUkrdc!=null);
 		assert(masterUkrdc.getSurname().equals("DARBY"));
-		masterNhs = MasterRecordDAO.findByNationalId(idBase+"N1",NationalIdentity.NHS_TYPE);
+		masterNhs = MasterRecordDAO.findByNationalId(conn, idBase+"N1",NationalIdentity.NHS_TYPE);
 		assert(masterNhs!=null);
 		assert(masterNhs.getSurname().equals("DARBY"));
-		masterChi = MasterRecordDAO.findByNationalId(idBase+"C1",NationalIdentity.CHI_TYPE);
+		masterChi = MasterRecordDAO.findByNationalId(conn, idBase+"C1",NationalIdentity.CHI_TYPE);
 		assert(masterChi==null);
-		masterHsc = MasterRecordDAO.findByNationalId(idBase+"H1",NationalIdentity.HSC_TYPE);
+		masterHsc = MasterRecordDAO.findByNationalId(conn, idBase+"H1",NationalIdentity.HSC_TYPE);
 		assert(masterHsc!=null);
 		assert(masterHsc.getSurname().equals("DARBY"));
 
-		links = LinkRecordDAO.findByPerson(person.getId());
+		links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==3);
 		assert(links.get(0).getMasterId()==masterUkrdc.getId());
 		assert(links.get(1).getMasterId()==masterNhs.getId());
 		assert(links.get(2).getMasterId()==masterHsc.getId());
-		items = WorkItemDAO.findByPerson(person.getId());
+		items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==0);		
 
 		logger.debug("************* test4AddingOtherNationalId ********UT4-4********");
@@ -434,27 +436,27 @@ public class UKRDCIndexManagerUpdateRecordSystemTest extends UKRDCIndexManagerBa
 		assert(natId!=null);
 		assert(natId.getType()==NationalIdentity.UKRDC_TYPE);
 		assert(natId.getId().equals(ukrdcId1));
-		person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
+		person = PersonDAO.findByLocalId(conn, p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
 		assert(person.getSurname().equals("DARBEY"));
-		masterUkrdc = MasterRecordDAO.findByNationalId(idBase+"R1",NationalIdentity.UKRDC_TYPE);
+		masterUkrdc = MasterRecordDAO.findByNationalId(conn, idBase+"R1",NationalIdentity.UKRDC_TYPE);
 		assert(masterUkrdc!=null);
 		assert(masterUkrdc.getSurname().equals("DARBY"));
-		masterNhs = MasterRecordDAO.findByNationalId(idBase+"N1",NationalIdentity.NHS_TYPE);
+		masterNhs = MasterRecordDAO.findByNationalId(conn, idBase+"N1",NationalIdentity.NHS_TYPE);
 		assert(masterNhs!=null);
 		assert(masterNhs.getSurname().equals("DARBY"));
-		masterChi = MasterRecordDAO.findByNationalId(idBase+"C1",NationalIdentity.CHI_TYPE);
+		masterChi = MasterRecordDAO.findByNationalId(conn, idBase+"C1",NationalIdentity.CHI_TYPE);
 		assert(masterChi==null);
-		masterHsc = MasterRecordDAO.findByNationalId(idBase+"H1",NationalIdentity.HSC_TYPE);
+		masterHsc = MasterRecordDAO.findByNationalId(conn, idBase+"H1",NationalIdentity.HSC_TYPE);
 		assert(masterHsc!=null);
 		assert(masterHsc.getSurname().equals("DARBY"));
 
-		links = LinkRecordDAO.findByPerson(person.getId());
+		links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==3);
 		assert(links.get(0).getMasterId()==masterUkrdc.getId());
 		assert(links.get(1).getMasterId()==masterNhs.getId());
 		assert(links.get(2).getMasterId()==masterHsc.getId());
-		items = WorkItemDAO.findByPerson(person.getId());
+		items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==0);		
 
 	}
