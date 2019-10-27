@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.agiloak.mpi.MpiException;
-import com.agiloak.mpi.SimpleConnectionManager;
 import com.agiloak.mpi.index.MasterRecord;
 import com.agiloak.mpi.index.Person;
 
