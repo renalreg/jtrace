@@ -12,6 +12,7 @@ CREATE TABLE jtrace.workitem
     attributes character varying(1024),
     status integer NOT NULL,
     lastupdated timestamp NOT NULL,
+    creationdate timestamp without time zone NOT NULL DEFAULT Now(),
     updatedBy character varying(20) ,
     updatedesc character varying(100),
     CONSTRAINT workitem_pkey PRIMARY KEY (id)

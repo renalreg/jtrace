@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -182,8 +183,8 @@ public class MasterRecordDAO {
 		logger.debug("Starting");
 
 		String insertSQL = "Insert into masterrecord "+
-				"(dateofbirth, gender, givenname, surname, lastupdated, nationalid, nationalidtype, status, effectivedate)"+
-				" values (?,?,?,?,?,?,?,?,?)";
+				"(dateofbirth, gender, givenname, surname, nationalid, nationalidtype, status, effectivedate)"+
+				" values (?,?,?,?,?,?,?,?)";
 		
 		PreparedStatement preparedStatement = null;
 		
@@ -197,8 +198,9 @@ public class MasterRecordDAO {
 			
 		    try (ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
 	            if (generatedKeys.next()) {
-	            	master.setId(generatedKeys.getInt(1));
-	            	logger.debug("MASTERID:"+master.getId());
+	            	master.setId(generatedKeys.getInt("id"));
+	            	master.setCreationDate(generatedKeys.getTimestamp("creationdate"));
+	            	master.setLastUpdated(generatedKeys.getTimestamp("lastupdated"));
 	            }
 	            else {
 	    			logger.error("Creating MasterRecord failed, no ID obtained.");
@@ -228,9 +230,11 @@ public class MasterRecordDAO {
 
 		logger.debug("Starting");
 
+		master.setLastUpdated(new Timestamp(System.currentTimeMillis()));
 		String updateSQL = "Update masterrecord "+
-				"set dateofbirth=?, gender=?, givenname=?, surname=?, lastupdated=?, "+
-				   " nationalid=?, nationalidtype=?, status=?, effectivedate=? where id =? ";
+				"set dateofbirth=?, gender=?, givenname=?, surname=?, "+
+				   " nationalid=?, nationalidtype=?, status=?, effectivedate=?, lastupdated=? "+
+				   " where id =? ";
 		
 		PreparedStatement preparedStatement = null;
 		
@@ -238,6 +242,7 @@ public class MasterRecordDAO {
 
 			preparedStatement = conn.prepareStatement(updateSQL);
 			populateStatement(preparedStatement, master);
+			preparedStatement.setTimestamp(9, master.getLastUpdated());
 			preparedStatement.setInt(10, master.getId());
 
 			int affectedRows = preparedStatement.executeUpdate();
@@ -394,6 +399,7 @@ public class MasterRecordDAO {
 			master.setGender(rs.getString("gender"));
 			master.setDateOfBirth(rs.getDate("dateofbirth"));
 			master.setLastUpdated(rs.getTimestamp("lastupdated"));
+			master.setCreationDate(rs.getTimestamp("creationdate"));
 			master.setStatus(rs.getInt("status"));
 			master.setEffectiveDate(rs.getTimestamp("effectivedate"));
 
@@ -414,10 +420,9 @@ public class MasterRecordDAO {
 		ps.setString(2, master.getGender());
 		ps.setString(3, master.getGivenName());
 		ps.setString(4, master.getSurname());
-		ps.setTimestamp(5,new Timestamp(master.getLastUpdated().getTime()));
-		ps.setString(6, master.getNationalId());
-		ps.setString(7, master.getNationalIdType());
-		ps.setInt(8, master.getStatus());
-		ps.setTimestamp(9,new Timestamp(master.getEffectiveDate().getTime()));
+		ps.setString(5, master.getNationalId());
+		ps.setString(6, master.getNationalIdType());
+		ps.setInt(7, master.getStatus());
+		ps.setTimestamp(8,new Timestamp(master.getEffectiveDate().getTime()));
 	}
 }
