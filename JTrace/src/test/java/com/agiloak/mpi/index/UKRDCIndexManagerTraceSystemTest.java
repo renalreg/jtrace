@@ -1,5 +1,6 @@
 package com.agiloak.mpi.index;
 
+import java.sql.Connection;
 import java.util.Date;
 import java.util.List;
 
@@ -19,9 +20,10 @@ public class UKRDCIndexManagerTraceSystemTest extends UKRDCIndexManagerBaseTest 
 	@BeforeClass
 	public static void setup()  throws MpiException {
 		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE");
-		
-		clear( "TUP1000001", "TRC");
-		clear( "TUP1000002", "TRC");
+		conn = SimpleConnectionManager.getDBConnection();
+
+		clear(conn, "TUP1000001", "TRC");
+		clear(conn, "TUP1000002", "TRC");
 
 	}
 	
@@ -43,9 +45,9 @@ public class UKRDCIndexManagerTraceSystemTest extends UKRDCIndexManagerBaseTest 
 		p2.setPostcode("WK7 1AZ").setStreet("Townfield Lane");
 		p2.setLocalId("TUP1000002").setLocalIdType("MR").setOriginator("TRC");
 		store(p2);
-		List<WorkItem> workItems = WorkItemDAO.findByPerson(p2.getId());
+		List<WorkItem> workItems = WorkItemDAO.findByPerson(conn, p2.getId());
 		assert(workItems.size()==0);
-		List<LinkRecord> linkRecords = LinkRecordDAO.findByPerson(p2.getId());
+		List<LinkRecord> linkRecords = LinkRecordDAO.findByPerson(conn, p2.getId());
 		assert(linkRecords.size()==0);
 		
 		// P2 - change the details to force a match
@@ -53,22 +55,22 @@ public class UKRDCIndexManagerTraceSystemTest extends UKRDCIndexManagerBaseTest 
 		p2.setPostcode("CH1 5AB").setStreet("Townfield Lane");
 		p2.setLocalId("TUP1000002").setLocalIdType("MR").setOriginator("TRC");
 		store(p2);
-		List<WorkItem> workItems2 = WorkItemDAO.findByPerson(p2.getId());
+		List<WorkItem> workItems2 = WorkItemDAO.findByPerson(conn, p2.getId());
 		assert(workItems2.size()==1);
-		List<LinkRecord> linkRecords2 = LinkRecordDAO.findByPerson(p2.getId());
+		List<LinkRecord> linkRecords2 = LinkRecordDAO.findByPerson(conn, p2.getId());
 		assert(linkRecords2.size()==0);
 		
 	}
 	
 	
 
-	public static void clear(String localId, String localIdType)  throws MpiException {
+	public static void clear(Connection conn, String localId, String localIdType)  throws MpiException {
 		
-		Person person = PersonDAO.findByLocalId("MR", localId, localIdType);
+		Person person = PersonDAO.findByLocalId(conn, "MR", localId, localIdType);
 		if (person != null) {
-			LinkRecordDAO.deleteByPerson(person.getId());
-			WorkItemDAO.deleteByPerson(person.getId());
-			PersonDAO.delete(person);
+			LinkRecordDAO.deleteByPerson(conn, person.getId());
+			WorkItemDAO.deleteByPerson(conn, person.getId());
+			PersonDAO.delete(conn, person);
 		}
 
 	}	

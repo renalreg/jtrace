@@ -1,5 +1,6 @@
 package com.agiloak.mpi.audit;
 
+import java.sql.Connection;
 import java.util.List;
 import java.util.Map;
 
@@ -25,7 +26,7 @@ public class AuditManager {
 	
 	private final static Logger logger = LoggerFactory.getLogger(AuditManager.class);
 	
-	public Audit create(int type, int personId, int masterId, String desc, Map<String,String> attributes) throws MpiException {
+	public Audit create(Connection conn, int type, int personId, int masterId, String desc, Map<String,String> attributes) throws MpiException {
 
 		if ( personId==0 ) {
 			throw new MpiException("Person Id must be provided");
@@ -38,50 +39,50 @@ public class AuditManager {
 		}
 		logger.debug("New Work Item");
 		
-		NationalIdentity mainNationalId = getMainNationalIdentity(personId);
+		NationalIdentity mainNationalId = getMainNationalIdentity(conn, personId);
 		
 		Audit audit = new Audit(type, personId, masterId, desc, mainNationalId, attributes);
-		AuditDAO.create(audit);
+		AuditDAO.create(conn, audit);
 			
 		return audit;
 		
 	}
 	
 	// Convenience method when no attributes
-	public Audit create(int type, int personId, int masterId, String desc) throws MpiException {
+	public Audit create(Connection conn, int type, int personId, int masterId, String desc) throws MpiException {
 
-		return create(type, personId, masterId, desc, null);		
+		return create(conn, type, personId, masterId, desc, null);		
 	}
 	
-	private NationalIdentity getMainNationalIdentity(int personId) throws MpiException {
+	private NationalIdentity getMainNationalIdentity(Connection conn, int personId) throws MpiException {
 		
-		NationalIdentity mainNationalIdentity = getMainNationalIdentity(personId, NationalIdentity.NHS_TYPE);
-		if (mainNationalIdentity==null) mainNationalIdentity = getMainNationalIdentity(personId, NationalIdentity.CHI_TYPE);
-		if (mainNationalIdentity==null) mainNationalIdentity = getMainNationalIdentity(personId, NationalIdentity.HSC_TYPE);
+		NationalIdentity mainNationalIdentity = getMainNationalIdentity(conn, personId, NationalIdentity.NHS_TYPE);
+		if (mainNationalIdentity==null) mainNationalIdentity = getMainNationalIdentity(conn, personId, NationalIdentity.CHI_TYPE);
+		if (mainNationalIdentity==null) mainNationalIdentity = getMainNationalIdentity(conn, personId, NationalIdentity.HSC_TYPE);
 		
 		// If none of the main ids are present, just get the first NI on the person
-		if (mainNationalIdentity==null) mainNationalIdentity = getFirstNationalIdentity(personId);
+		if (mainNationalIdentity==null) mainNationalIdentity = getFirstNationalIdentity(conn, personId);
 		
 		return mainNationalIdentity;
 	}
 	
-	private NationalIdentity getMainNationalIdentity(int personId, String idType) throws MpiException {
+	private NationalIdentity getMainNationalIdentity(Connection conn, int personId, String idType) throws MpiException {
 		
 		NationalIdentity mainNationalIdentity = null;
-		LinkRecord link = LinkRecordDAO.findByPersonAndType(personId, idType);
+		LinkRecord link = LinkRecordDAO.findByPersonAndType(conn, personId, idType);
 		if (link != null) {
-			MasterRecord master = MasterRecordDAO.get(link.getMasterId());
+			MasterRecord master = MasterRecordDAO.get(conn, link.getMasterId());
 			mainNationalIdentity = new NationalIdentity(idType, master.getNationalId());
 		}
 		
 		return mainNationalIdentity;
 	}
-	private NationalIdentity getFirstNationalIdentity(int personId) throws MpiException {
+	private NationalIdentity getFirstNationalIdentity(Connection conn, int personId) throws MpiException {
 		
 		NationalIdentity mainNationalIdentity = null;
-		List<LinkRecord> links = LinkRecordDAO.findByPerson(personId);
+		List<LinkRecord> links = LinkRecordDAO.findByPerson(conn, personId);
 		if (links.size() > 0) {
-			MasterRecord master = MasterRecordDAO.get(links.get(0).getMasterId());
+			MasterRecord master = MasterRecordDAO.get(conn, links.get(0).getMasterId());
 			mainNationalIdentity = new NationalIdentity(master.getNationalIdType(), master.getNationalId());
 		}
 		

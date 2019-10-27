@@ -27,22 +27,19 @@ public class PidXREFDAO extends NumberAllocatingDAO {
 	
 	final static Logger logger = LoggerFactory.getLogger(PidXREFDAO.class);
 	
-	public static PidXREF get(int id) throws MpiException {
+	public static PidXREF get(Connection conn, int id) throws MpiException {
 
 		logger.debug("Starting");
 
 		String getSQL = "select * from pidxref where id = ? ";
 		
 		PreparedStatement preparedStatement = null;
-		Connection conn = null;
 		ResultSet rs = null;
 		
 		PidXREF pidxref = null;
 		
 		try {
 
-			conn = SimpleConnectionManager.getDBConnection();
-			
 			preparedStatement = conn.prepareStatement(getSQL);
 			preparedStatement.setInt(1, id);
 
@@ -74,15 +71,6 @@ public class PidXREFDAO extends NumberAllocatingDAO {
 					throw new MpiException("Failure closing prepared statement. "+e.getMessage());
 				}
 			}
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing Connection",e);
-					throw new MpiException("PidXREF read failed. "+e.getMessage());
-				}
-			}
-
 		}
 		
 		return pidxref;
@@ -90,12 +78,12 @@ public class PidXREFDAO extends NumberAllocatingDAO {
 	}
 
 
-	public static void create(PidXREF xref) throws MpiException {
+	public static void create(Connection conn, PidXREF xref) throws MpiException {
 
 		logger.debug("Starting");
 		
 		if (xref.getPid()==null) {
-			String pid = allocate();
+			String pid = allocate(conn);
 			xref.setPid(pid);
 		}
 
@@ -104,12 +92,9 @@ public class PidXREFDAO extends NumberAllocatingDAO {
 				" values (?,?,?,?)";
 		
 		PreparedStatement preparedStatement = null;
-		Connection conn = null;
 		
 		try {
 
-			conn = SimpleConnectionManager.getDBConnection();
-			
 			preparedStatement = conn.prepareStatement(insertSQL, Statement.RETURN_GENERATED_KEYS);
 			preparedStatement.setString(1, xref.getPid());
 			preparedStatement.setString(2, xref.getSendingFacility());
@@ -144,35 +129,23 @@ public class PidXREFDAO extends NumberAllocatingDAO {
 					throw new MpiException("PidXREF insert failed");
 				}
 			}
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing Connection",e);
-					throw new MpiException("PidXREF insert failed. "+e.getMessage());
-				}
-			}
-
 		}
 
 	}
 
-	public static PidXREF findByLocalId(String sendingFacility, String sendingExtract, String localId) throws MpiException {
+	public static PidXREF findByLocalId(Connection conn, String sendingFacility, String sendingExtract, String localId) throws MpiException {
 		
 		logger.debug("Starting");
 
 		String findSQL = "select * from pidxref where sendingFacility = ? and sendingExtract = ? and localId = ? ";
 		
 		PreparedStatement preparedStatement = null;
-		Connection conn = null;
 		ResultSet rs = null;
 		
 		PidXREF xref = null;
 		
 		try {
 
-			conn = SimpleConnectionManager.getDBConnection();
-			
 			preparedStatement = conn.prepareStatement(findSQL);
 			preparedStatement.setString(1, sendingFacility);
 			preparedStatement.setString(2, sendingExtract);
@@ -206,22 +179,13 @@ public class PidXREFDAO extends NumberAllocatingDAO {
 					throw new MpiException("Failure closing prepared statement. "+e.getMessage());
 				}
 			}
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing Connection",e);
-					throw new MpiException("PidXREF read failed. "+e.getMessage());
-				}
-			}
-
 		}
 		
 		return xref;
 
 	}
 	
-	public static List<Person> FindByNationalIdAndFacility(String sendingFacility, String sendingExtract, String nationalIdType, String nationalId) throws MpiException {
+	public static List<Person> FindByNationalIdAndFacility(Connection conn, String sendingFacility, String sendingExtract, String nationalIdType, String nationalId) throws MpiException {
 
 		logger.debug("Starting");
 
@@ -231,15 +195,12 @@ public class PidXREFDAO extends NumberAllocatingDAO {
 
 		
 		PreparedStatement preparedStatement = null;
-		Connection conn = null;
 		ResultSet rs = null;
 		
 		List<Person> personList = new ArrayList<Person>();
 		
 		try {
 
-			conn = SimpleConnectionManager.getDBConnection();
-			
 			preparedStatement = conn.prepareStatement(findSQL);
 			preparedStatement.setString(1, sendingFacility);
 			preparedStatement.setString(2, sendingExtract);
@@ -305,14 +266,6 @@ public class PidXREFDAO extends NumberAllocatingDAO {
 				}
 			}
 
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing connection.",e);
-					throw new MpiException("Person read failed. "+e.getMessage());
-				}
-			}
 		}
 		
 		return personList;
@@ -320,27 +273,25 @@ public class PidXREFDAO extends NumberAllocatingDAO {
 	}
 
 	
-	public static String allocate() throws MpiException {
+	public static String allocate(Connection conn) throws MpiException {
 
 		logger.debug("Starting");
-		String patientId = allocateSequence("patient_id");
+		String patientId = allocateSequence(conn, "patient_id");
 		logger.debug("Complete");
 		return patientId;
 		
 	}
 	
-	public static void deleteByLocalId(String sendingFacility, String sendingExtract, String localId) throws MpiException {
+	public static void deleteByLocalId(Connection conn, String sendingFacility, String sendingExtract, String localId) throws MpiException {
 		
 		logger.debug("Starting");
 
 		String deleteSQL = "delete from pidxref where sendingFacility = ? and sendingExtract = ? and localId = ?";
 		
 		PreparedStatement preparedStatement = null;
-		Connection conn = null;
 		
 		try {
 
-			conn = SimpleConnectionManager.getDBConnection();
 			preparedStatement = conn.prepareStatement(deleteSQL);
 			preparedStatement.setString(1, sendingFacility);
 			preparedStatement.setString(2, sendingExtract);
@@ -360,14 +311,6 @@ public class PidXREFDAO extends NumberAllocatingDAO {
 				} catch (SQLException e) {
 					logger.error("Failure closing Prepared Statement:",e);
 					throw new MpiException("PIDXREF delete failed");
-				}
-			}
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing Connection",e);
-					throw new MpiException("PIDXREF delete failed. "+e.getMessage());
 				}
 			}
 

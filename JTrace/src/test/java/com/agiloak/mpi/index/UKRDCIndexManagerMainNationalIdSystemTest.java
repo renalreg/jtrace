@@ -29,14 +29,16 @@ public class UKRDCIndexManagerMainNationalIdSystemTest extends UKRDCIndexManager
 	public static void setup()  throws MpiException {
 		logger.debug("***************START OF SETUP****************");
 		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE");
-		clear("LOCALHOSP", "ASYS100001", "ASYS1");
-		clear("LOCALHOSP", "ASYS100002", "ASYS1");
-		clear("LOCALHOSP", "ASYS100003", "ASYS1");
-		clear("LOCALHOSP", "ASYS100004", "ASYS1");
-		clear("LOCALHOSP", "ASYS100005", "ASYS1");
-		clear("LOCALHOSP", "ASYS100006", "ASYS1");
-		clear("LOCALHOSP", "ASYS100007", "ASYS1");
-		clear("LOCALHOSP", "ASYS100008", "ASYS1");
+		conn = SimpleConnectionManager.getDBConnection();
+		
+		clear(conn, "LOCALHOSP", "ASYS100001", "ASYS1");
+		clear(conn, "LOCALHOSP", "ASYS100002", "ASYS1");
+		clear(conn, "LOCALHOSP", "ASYS100003", "ASYS1");
+		clear(conn, "LOCALHOSP", "ASYS100004", "ASYS1");
+		clear(conn, "LOCALHOSP", "ASYS100005", "ASYS1");
+		clear(conn, "LOCALHOSP", "ASYS100006", "ASYS1");
+		clear(conn, "LOCALHOSP", "ASYS100007", "ASYS1");
+		clear(conn, "LOCALHOSP", "ASYS100008", "ASYS1");
 		logger.debug("***************END OF SETUP****************");
 	}
 
@@ -52,7 +54,7 @@ public class UKRDCIndexManagerMainNationalIdSystemTest extends UKRDCIndexManager
 		p1.addNationalId(new NationalIdentity(NationalIdentity.NHS_TYPE,"NHSA100001"));
 		NationalIdentity natId = store(p1);
 		// Check that audit has been created with the NHS Number
-		List<Audit> audits = AuditDAO.findByPerson(p1.getId());
+		List<Audit> audits = AuditDAO.findByPerson(conn, p1.getId());
 		assert(audits.size()==1);
 		for (Audit audit : audits) {
 			assert(audit.getType()==Audit.NO_MATCH_ASSIGN_NEW);
@@ -73,7 +75,7 @@ public class UKRDCIndexManagerMainNationalIdSystemTest extends UKRDCIndexManager
 		p1.addNationalId(new NationalIdentity(NationalIdentity.CHI_TYPE,"CHIA100002"));
 		NationalIdentity natId = store(p1);
 		// Check that audit has been created with the NHS Number
-		List<Audit> audits = AuditDAO.findByPerson(p1.getId());
+		List<Audit> audits = AuditDAO.findByPerson(conn, p1.getId());
 		assert(audits.size()==1);
 		for (Audit audit : audits) {
 			assert(audit.getType()==Audit.NO_MATCH_ASSIGN_NEW);
@@ -94,7 +96,7 @@ public class UKRDCIndexManagerMainNationalIdSystemTest extends UKRDCIndexManager
 		p1.addNationalId(new NationalIdentity(NationalIdentity.HSC_TYPE,"HSCA100003"));
 		NationalIdentity natId = store(p1);
 		// Check that audit has been created with the NHS Number
-		List<Audit> audits = AuditDAO.findByPerson(p1.getId());
+		List<Audit> audits = AuditDAO.findByPerson(conn, p1.getId());
 		assert(audits.size()==1);
 		for (Audit audit : audits) {
 			assert(audit.getType()==Audit.NO_MATCH_ASSIGN_NEW);
@@ -113,7 +115,7 @@ public class UKRDCIndexManagerMainNationalIdSystemTest extends UKRDCIndexManager
 		p1.addNationalId(new NationalIdentity(NationalIdentity.RADAR_TYPE,"RADA100004"));
 		NationalIdentity natId = store(p1);
 		// Check that audit has been created with the NHS Number
-		List<Audit> audits = AuditDAO.findByPerson(p1.getId());
+		List<Audit> audits = AuditDAO.findByPerson(conn, p1.getId());
 		assert(audits.size()==1);
 		for (Audit audit : audits) {
 			assert(audit.getType()==Audit.NO_MATCH_ASSIGN_NEW);
@@ -133,7 +135,7 @@ public class UKRDCIndexManagerMainNationalIdSystemTest extends UKRDCIndexManager
 		p1.addNationalId(new NationalIdentity(NationalIdentity.CHI_TYPE,"CHIA100005"));
 		NationalIdentity natId = store(p1);
 		// Check that audit has been created with the NHS Number
-		List<Audit> audits = AuditDAO.findByPerson(p1.getId());
+		List<Audit> audits = AuditDAO.findByPerson(conn, p1.getId());
 		assert(audits.size()==1);
 		for (Audit audit : audits) {
 			assert(audit.getType()==Audit.NO_MATCH_ASSIGN_NEW);
@@ -153,7 +155,7 @@ public class UKRDCIndexManagerMainNationalIdSystemTest extends UKRDCIndexManager
 		p1.addNationalId(new NationalIdentity(NationalIdentity.HSC_TYPE,"HSCA100006"));
 		NationalIdentity natId = store(p1);
 		// Check that audit has been created with the NHS Number
-		List<Audit> audits = AuditDAO.findByPerson(p1.getId());
+		List<Audit> audits = AuditDAO.findByPerson(conn, p1.getId());
 		assert(audits.size()==1);
 		for (Audit audit : audits) {
 			assert(audit.getType()==Audit.NO_MATCH_ASSIGN_NEW);
@@ -173,7 +175,7 @@ public class UKRDCIndexManagerMainNationalIdSystemTest extends UKRDCIndexManager
 		p1.addNationalId(new NationalIdentity(NationalIdentity.RADAR_TYPE,"RADA100007"));
 		NationalIdentity natId = store(p1);
 		// Check that audit has been created with the NHS Number
-		List<Audit> audits = AuditDAO.findByPerson(p1.getId());
+		List<Audit> audits = AuditDAO.findByPerson(conn, p1.getId());
 		assert(audits.size()==1);
 		for (Audit audit : audits) {
 			assert(audit.getType()==Audit.NO_MATCH_ASSIGN_NEW);
@@ -191,7 +193,7 @@ public class UKRDCIndexManagerMainNationalIdSystemTest extends UKRDCIndexManager
 		p1.setLocalId("ASYS100008").setLocalIdType("LOCALHOSP").setOriginator(orig);
 		NationalIdentity natId = store(p1);
 		// Check that audit has been created with the NHS Number
-		List<Audit> audits = AuditDAO.findByPerson(p1.getId());
+		List<Audit> audits = AuditDAO.findByPerson(conn, p1.getId());
 		assert(audits.size()==1);
 		for (Audit audit : audits) {
 			assert(audit.getType()==Audit.NO_MATCH_ASSIGN_NEW);

@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.agiloak.mpi.MpiException;
-import com.agiloak.mpi.SimpleConnectionManager;
 import com.agiloak.mpi.index.MasterRecord;
 import com.agiloak.mpi.index.Person;
 
@@ -21,22 +20,19 @@ public class MasterRecordDAO {
 	
 	private final static Logger logger = LoggerFactory.getLogger(MasterRecordDAO.class);
 	
-	public static MasterRecord get(int id) throws MpiException {
+	public static MasterRecord get(Connection conn, int id) throws MpiException {
 
 		logger.debug("Starting");
 
 		String getSQL = "select * from masterrecord where id = ? ";
 		
 		PreparedStatement preparedStatement = null;
-		Connection conn = null;
 		ResultSet rs = null;
 		
 		MasterRecord master = null;
 		
 		try {
 
-			conn = SimpleConnectionManager.getDBConnection();
-			
 			preparedStatement = conn.prepareStatement(getSQL);
 			preparedStatement.setInt(1, id);
 
@@ -68,37 +64,25 @@ public class MasterRecordDAO {
 					throw new MpiException("Failure closing prepared statement. "+e.getMessage());
 				}
 			}
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing Connection",e);
-					throw new MpiException("MasterRecord read failed. "+e.getMessage());
-				}
-			}
-
 		}
 		
 		return master;
 
 	}
 
-	public static MasterRecord findByNationalId(String nationalId, String nationalIdType) throws MpiException {
+	public static MasterRecord findByNationalId(Connection conn, String nationalId, String nationalIdType) throws MpiException {
 
 		logger.debug("Starting");
 
 		String findSQL = "select * from masterrecord where nationalid = ? and nationalidtype = ? ";
 		
 		PreparedStatement preparedStatement = null;
-		Connection conn = null;
 		ResultSet rs = null;
 		
 		MasterRecord master = null;
 		
 		try {
 
-			conn = SimpleConnectionManager.getDBConnection();
-			
 			preparedStatement = conn.prepareStatement(findSQL);
 			preparedStatement.setString(1, nationalId);
 			preparedStatement.setString(2, nationalIdType);
@@ -131,15 +115,6 @@ public class MasterRecordDAO {
 					throw new MpiException("Failure closing prepared statement. "+e.getMessage());
 				}
 			}
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing Connection",e);
-					throw new MpiException("MasterRecord read failed. "+e.getMessage());
-				}
-			}
-
 		}
 		
 		return master;
@@ -149,22 +124,19 @@ public class MasterRecordDAO {
 	/*
 	 * Specific implementation for UKRDC, using GN, SN, DOB
 	 */
-	public static List<MasterRecord> findByDemographics(Person person) throws MpiException {
+	public static List<MasterRecord> findByDemographics(Connection conn, Person person) throws MpiException {
 
 		logger.debug("Starting");
 
 		String findSQL = "select * from masterrecord where givenname = ? and surname= ? and dateofbirth = ? ";
 		
 		PreparedStatement preparedStatement = null;
-		Connection conn = null;
 		ResultSet rs = null;
 		
 		List<MasterRecord> masterRecords = new ArrayList<MasterRecord>();
 		
 		try {
 
-			conn = SimpleConnectionManager.getDBConnection();
-			
 			preparedStatement = conn.prepareStatement(findSQL);
 			preparedStatement.setString(1, person.getGivenName());
 			preparedStatement.setString(2, person.getSurname());
@@ -199,22 +171,13 @@ public class MasterRecordDAO {
 					throw new MpiException("Failure closing prepared statement. "+e.getMessage());
 				}
 			}
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing Connection",e);
-					throw new MpiException("MasterRecord read failed. "+e.getMessage());
-				}
-			}
-
 		}
 		
 		return masterRecords;
 
 	}
 
-	public static void create(MasterRecord master) throws MpiException {
+	public static void create(Connection conn, MasterRecord master) throws MpiException {
 
 		logger.debug("Starting");
 
@@ -223,12 +186,9 @@ public class MasterRecordDAO {
 				" values (?,?,?,?,?,?,?,?,?)";
 		
 		PreparedStatement preparedStatement = null;
-		Connection conn = null;
 		
 		try {
 
-			conn = SimpleConnectionManager.getDBConnection();
-			
 			preparedStatement = conn.prepareStatement(insertSQL, Statement.RETURN_GENERATED_KEYS);
 			populateStatement(preparedStatement, master);
 
@@ -260,20 +220,11 @@ public class MasterRecordDAO {
 					throw new MpiException("MasterRecord insert failed. "+e.getMessage());
 				}
 			}
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing Connection",e);
-					throw new MpiException("MasterRecord update failed. "+e.getMessage());
-				}
-			}
-
 		}
 
 	}
 
-	public static void update(MasterRecord master) throws MpiException {
+	public static void update(Connection conn, MasterRecord master) throws MpiException {
 
 		logger.debug("Starting");
 
@@ -282,12 +233,9 @@ public class MasterRecordDAO {
 				   " nationalid=?, nationalidtype=?, status=?, effectivedate=? where id =? ";
 		
 		PreparedStatement preparedStatement = null;
-		Connection conn = null;
 		
 		try {
 
-			conn = SimpleConnectionManager.getDBConnection();
-			
 			preparedStatement = conn.prepareStatement(updateSQL);
 			populateStatement(preparedStatement, master);
 			preparedStatement.setInt(10, master.getId());
@@ -309,36 +257,25 @@ public class MasterRecordDAO {
 					throw new MpiException("MasterRecord update failed. "+e.getMessage());
 				}
 			}
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing Connection",e);
-					throw new MpiException("MasterRecord delete failed. "+e.getMessage());
-				}
-			}
 
 		}
 
 	}
 
-	public static void delete(MasterRecord master) throws MpiException {
-		delete(master.getId());
+	public static void delete(Connection conn, MasterRecord master) throws MpiException {
+		delete(conn, master.getId());
 	}
 	
-	public static void delete(int masterId) throws MpiException {
+	public static void delete(Connection conn, int masterId) throws MpiException {
 
 		logger.debug("Starting");
 
 		String deleteSQL = "delete from masterrecord where id = ? ";
 		
 		PreparedStatement preparedStatement = null;
-		Connection conn = null;
 		
 		try {
 
-			conn = SimpleConnectionManager.getDBConnection();
-			
 			preparedStatement = conn.prepareStatement(deleteSQL);
 			preparedStatement.setInt(1, masterId);
 			int affectedRows = preparedStatement.executeUpdate();
@@ -357,30 +294,19 @@ public class MasterRecordDAO {
 					throw new MpiException("MasterRecord delete failed");
 				}
 			}
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing Connection",e);
-					throw new MpiException("MasterRecord delete failed. "+e.getMessage());
-				}
-			}
-
 		}
 
 	}
-	public static void deleteByNationalId(String nationalId, String nationalIdType) throws MpiException {
+	public static void deleteByNationalId(Connection conn, String nationalId, String nationalIdType) throws MpiException {
 		
 		logger.debug("Starting");
 
 		String deleteSQL = "delete from masterrecord where nationalid = ? and nationalidtype = ? ";
 		
 		PreparedStatement preparedStatement = null;
-		Connection conn = null;
 		
 		try {
 
-			conn = SimpleConnectionManager.getDBConnection();
 			preparedStatement = conn.prepareStatement(deleteSQL);
 			preparedStatement.setString(1, nationalId);
 			preparedStatement.setString(2, nationalIdType);
@@ -400,20 +326,11 @@ public class MasterRecordDAO {
 					throw new MpiException("MasterRecord delete failed");
 				}
 			}
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing Connection",e);
-					throw new MpiException("MasterRecord delete failed. "+e.getMessage());
-				}
-			}
-
 		}
 
 	}
 	
-	public static String allocate() throws MpiException {
+	public static String allocate(Connection conn) throws MpiException {
 
 		logger.debug("Starting");
 
@@ -422,13 +339,10 @@ public class MasterRecordDAO {
 		String  ukrdcId = "";
 
 		PreparedStatement preparedStatement = null;
-		Connection conn = null;
 		ResultSet rs = null;
 		
 		try {
 
-			conn = SimpleConnectionManager.getDBConnection();
-			
 			preparedStatement = conn.prepareStatement(nextValSQL);
 
 			rs = preparedStatement.executeQuery();
@@ -459,15 +373,6 @@ public class MasterRecordDAO {
 					throw new MpiException("Failure closing prepared statement. "+e.getMessage());
 				}
 			}
-			if(conn!= null) {
-				try {
-					conn.close();
-				} catch (SQLException e) {
-					logger.error("Failure closing Connection",e);
-					throw new MpiException("MasterRecord allocate failed. "+e.getMessage());
-				}
-			}
-
 		}
 		return ukrdcId;
 		

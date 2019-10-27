@@ -29,14 +29,16 @@ public class UKRDCIndexManagerSearchSystemTest extends UKRDCIndexManagerBaseTest
 	public static void setup()  throws MpiException {
 
 		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE");
-		clear( "SRCT10001", "SRCT1");
-		MasterRecordDAO.deleteByNationalId("SRCT1000R1",NationalIdentity.UKRDC_TYPE);
-		clear( "SRCT40001", "SRCT4");
-		MasterRecordDAO.deleteByNationalId("SRCT4000R1",NationalIdentity.UKRDC_TYPE);
-		clear( "SRCT50001", "SRCT5");
-		MasterRecordDAO.deleteByNationalId("SRCT5000R1",NationalIdentity.UKRDC_TYPE);
-		clear( "SRCT60001", "SRCT6");
-		MasterRecordDAO.deleteByNationalId("SRCT6000R1",NationalIdentity.UKRDC_TYPE);
+		conn = SimpleConnectionManager.getDBConnection();
+
+		clear(conn, "MR", "SRCT10001", "SRCT1");
+		MasterRecordDAO.deleteByNationalId(conn, "SRCT1000R1",NationalIdentity.UKRDC_TYPE);
+		clear(conn, "MR",  "SRCT40001", "SRCT4");
+		MasterRecordDAO.deleteByNationalId(conn, "SRCT4000R1",NationalIdentity.UKRDC_TYPE);
+		clear(conn, "MR",  "SRCT50001", "SRCT5");
+		MasterRecordDAO.deleteByNationalId(conn, "SRCT5000R1",NationalIdentity.UKRDC_TYPE);
+		clear(conn, "MR",  "SRCT60001", "SRCT6");
+		MasterRecordDAO.deleteByNationalId(conn, "SRCT6000R1",NationalIdentity.UKRDC_TYPE);
 
 	}
 
@@ -58,14 +60,14 @@ public class UKRDCIndexManagerSearchSystemTest extends UKRDCIndexManagerBaseTest
 		p1.addNationalId(chi1);
 		store(p1);
 		// VERIFY
-		Person person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
+		Person person = PersonDAO.findByLocalId(conn, p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		MasterRecord master = MasterRecordDAO.findByNationalId(idBase+"R1", NationalIdentity.UKRDC_TYPE);
+		MasterRecord master = MasterRecordDAO.findByNationalId(conn, idBase+"R1", NationalIdentity.UKRDC_TYPE);
 		assert(master!=null);
-		List<LinkRecord> links = LinkRecordDAO.findByPerson(person.getId());
+		List<LinkRecord> links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==3);
 		//assert(links.get(0).getMasterId()==master.getId()); 
-		List<WorkItem> items = WorkItemDAO.findByPerson(person.getId());
+		List<WorkItem> items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==0);
 
 		// ST1-1 - Happy day - perfect match by NHS Number
@@ -151,13 +153,13 @@ public class UKRDCIndexManagerSearchSystemTest extends UKRDCIndexManagerBaseTest
 		p1.addNationalId(chi1);
 		store(p1);
 		// VERIFY
-		Person person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
+		Person person = PersonDAO.findByLocalId(conn, p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		MasterRecord master = MasterRecordDAO.findByNationalId(idBase+"R1", NationalIdentity.UKRDC_TYPE);
+		MasterRecord master = MasterRecordDAO.findByNationalId(conn, idBase+"R1", NationalIdentity.UKRDC_TYPE);
 		assert(master!=null);
-		List<LinkRecord> links = LinkRecordDAO.findByPerson(person.getId());
+		List<LinkRecord> links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==3);
-		List<WorkItem> items = WorkItemDAO.findByPerson(person.getId());
+		List<WorkItem> items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==0);
 
 		// ST4-1 - No match for the NHS Number
@@ -187,11 +189,11 @@ public class UKRDCIndexManagerSearchSystemTest extends UKRDCIndexManagerBaseTest
 		p1.addNationalId(chi1);
 		store(p1);
 		// VERIFY
-		Person person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
+		Person person = PersonDAO.findByLocalId(conn, p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		List<LinkRecord> links = LinkRecordDAO.findByPerson(person.getId());
+		List<LinkRecord> links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==3);
-		List<WorkItem> items = WorkItemDAO.findByPerson(person.getId());
+		List<WorkItem> items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==0);
 
 		// ST5-1 - Match on NHS Number, but no UKRDC Number is linked - NOT POSSIBLE FROM V1.1.0 as number is allocated if not found
@@ -222,13 +224,13 @@ public class UKRDCIndexManagerSearchSystemTest extends UKRDCIndexManagerBaseTest
 		p1.addNationalId(chi1);
 		store(p1);
 		// VERIFY
-		Person person = PersonDAO.findByLocalId(p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
+		Person person = PersonDAO.findByLocalId(conn, p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
-		MasterRecord master = MasterRecordDAO.findByNationalId(idBase+"R1", NationalIdentity.UKRDC_TYPE);
+		MasterRecord master = MasterRecordDAO.findByNationalId(conn, idBase+"R1", NationalIdentity.UKRDC_TYPE);
 		assert(master!=null);
-		List<LinkRecord> links = LinkRecordDAO.findByPerson(person.getId());
+		List<LinkRecord> links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==3);
-		List<WorkItem> items = WorkItemDAO.findByPerson(person.getId());
+		List<WorkItem> items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==0);
 
 		// ST6-1 - convenience methods (String DOB method and component id/ type)

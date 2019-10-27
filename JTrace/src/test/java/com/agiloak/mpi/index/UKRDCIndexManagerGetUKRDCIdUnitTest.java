@@ -1,7 +1,6 @@
 package com.agiloak.mpi.index;
 
 import java.sql.SQLException;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -24,8 +23,13 @@ public class UKRDCIndexManagerGetUKRDCIdUnitTest extends UKRDCIndexManagerBaseTe
 	@BeforeClass
 	public static void setup()  throws MpiException {
 		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE");
-		clear("NSYS100001", "NSYS1");
-		clear("NSYS100002", "NSYS1");
+		
+		// Get a connection. This will be used for all test setup. 
+		// UKRDC Index Manager will get and manage it's own connection
+		conn = SimpleConnectionManager.getDBConnection();
+		
+		clear(conn, "MR", "NSYS100001", "NSYS1");
+		clear(conn, "MR", "NSYS100002", "NSYS1");
 	}
 
 	@Test
@@ -54,7 +58,7 @@ public class UKRDCIndexManagerGetUKRDCIdUnitTest extends UKRDCIndexManagerBaseTe
 		p1.setLocalId("NSYS100001").setLocalIdType("MR").setOriginator(orig);
 		p1.addNationalId(new NationalIdentity(NationalIdentity.NHS_TYPE,"NHS0100001"));
 		NationalIdentity natId = store(p1);
-		MasterRecord master1 = MasterRecordDAO.findByNationalId("NHS0100001", NationalIdentity.NHS_TYPE);
+		MasterRecord master1 = MasterRecordDAO.findByNationalId(conn, "NHS0100001", NationalIdentity.NHS_TYPE);
 		assert(master1!=null);
 		
 		UKRDCIndexManager im = new UKRDCIndexManager();
@@ -74,9 +78,9 @@ public class UKRDCIndexManagerGetUKRDCIdUnitTest extends UKRDCIndexManagerBaseTe
 		p1.setLocalId("NSYS100002").setLocalIdType("MR").setOriginator(orig);
 		p1.addNationalId(new NationalIdentity(NationalIdentity.NHS_TYPE,"NHS0100002"));
 		NationalIdentity natId = store(p1);
-		MasterRecord master1 = MasterRecordDAO.findByNationalId("NHS0100002", NationalIdentity.NHS_TYPE);
+		MasterRecord master1 = MasterRecordDAO.findByNationalId(conn, "NHS0100002", NationalIdentity.NHS_TYPE);
 		assert(master1!=null);
-		MasterRecord master2 = MasterRecordDAO.findByNationalId(ukrdcId, NationalIdentity.UKRDC_TYPE);
+		MasterRecord master2 = MasterRecordDAO.findByNationalId(conn, ukrdcId, NationalIdentity.UKRDC_TYPE);
 		assert(master2!=null);
 		
 		UKRDCIndexManager im = new UKRDCIndexManager();
