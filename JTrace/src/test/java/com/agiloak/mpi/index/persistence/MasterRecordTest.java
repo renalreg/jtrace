@@ -2,6 +2,7 @@ package com.agiloak.mpi.index.persistence;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.List;
 
 import org.junit.After;
@@ -144,7 +145,7 @@ public class MasterRecordTest extends JTraceTest {
 		assert(mr2.getSurname().equals(mr.getSurname()));
 		assert(mr2.getNationalId().equals(mr.getNationalId()));
 		assert(mr2.getNationalIdType().trim().equals(mr.getNationalIdType().trim()));
-		assert(mr2.getLastUpdated().compareTo(mr.getLastUpdated())==0);
+		assert(mr2.getLastUpdated()!=null);
 		assert(mr2.getEffectiveDate().compareTo(mr.getEffectiveDate())==0);
 		assert(mr2.getStatus()==mr.getStatus());
 		assert(mr2.getStatus()==MasterRecord.OK);
@@ -152,15 +153,17 @@ public class MasterRecordTest extends JTraceTest {
 	}
 
 	@Test
-	public void testUpdate() throws MpiException {
+	public void testUpdate() throws MpiException, InterruptedException {
 		MasterRecord mr = new MasterRecord();
 		mr.setDateOfBirth(getDate("1962-08-31")).setGender("M");
 		mr.setGivenName("Nick").setSurname("Jones");
 		mr.setNationalId("NHS0000005").setNationalIdType("NHS");
 		mr.setEffectiveDate(getDate("2017-08-22"));
 		MasterRecordDAO.create(conn, mr);
-		assert(true);
-		
+
+		Timestamp originalUpdated = mr.getLastUpdated();
+		Thread.sleep(100); // ensure that the update time changes
+
 		mr.setGender("F");
 		mr.setGivenName("Nicholas").setSurname("James");
 		mr.setEffectiveDate(getDate("2017-08-24"));
@@ -175,7 +178,8 @@ public class MasterRecordTest extends JTraceTest {
 		assert(mr2.getSurname().equals(mr.getSurname()));
 		assert(mr2.getNationalId().equals(mr.getNationalId()));
 		assert(mr2.getNationalIdType().trim().equals(mr.getNationalIdType().trim()));
-		assert(mr2.getLastUpdated().compareTo(mr.getLastUpdated())==0);
+		assert(mr2.getLastUpdated().compareTo(originalUpdated)>0);
+		assert(mr2.getCreationDate().compareTo(mr.getCreationDate())==0);
 		assert(mr2.getEffectiveDate().compareTo(mr.getEffectiveDate())==0);
 		assert(mr2.getStatus()==mr.getStatus());
 		assert(mr2.getStatus()==MasterRecord.OK);
@@ -183,18 +187,19 @@ public class MasterRecordTest extends JTraceTest {
 	}
 
 	@Test
-	public void testUpdateInvestigate() throws MpiException {
+	public void testUpdateInvestigate() throws MpiException, InterruptedException, SQLException {
 		MasterRecord mr = new MasterRecord();
 		mr.setDateOfBirth(getDate("1962-08-31")).setGender("M");
 		mr.setGivenName("Nick").setSurname("Jones");
 		mr.setNationalId("NHS0000010").setNationalIdType("NHS");
 		mr.setEffectiveDate(getDate("2017-08-22"));
 		MasterRecordDAO.create(conn, mr);
-		assert(true);
-		
+
+		Timestamp originalUpdated = mr.getLastUpdated();
+		Thread.sleep(100); // ensure that the update time changes
+
 		mr.setStatus(MasterRecord.INVESTIGATE);
 		MasterRecordDAO.update(conn, mr);
-		assert(true);
 		
 		MasterRecord mr2 = MasterRecordDAO.findByNationalId(conn, "NHS0000010","NHS");
 		assert(mr2.getId()==(mr.getId()));
@@ -204,7 +209,8 @@ public class MasterRecordTest extends JTraceTest {
 		assert(mr2.getSurname().equals(mr.getSurname()));
 		assert(mr2.getNationalId().equals(mr.getNationalId()));
 		assert(mr2.getNationalIdType().trim().equals(mr.getNationalIdType().trim()));
-		assert(mr2.getLastUpdated().compareTo(mr.getLastUpdated())==0);
+		assert(mr2.getLastUpdated().compareTo(originalUpdated)>0);
+		assert(mr2.getCreationDate().compareTo(mr.getCreationDate())==0);
 		assert(mr2.getEffectiveDate().compareTo(mr.getEffectiveDate())==0);
 		assert(mr2.getStatus()==mr.getStatus());
 		assert(mr2.getStatus()==MasterRecord.INVESTIGATE);
@@ -255,6 +261,7 @@ public class MasterRecordTest extends JTraceTest {
 		assert(mr2.getSurname().equals(mr.getSurname()));
 		assert(mr2.getNationalId().equals(mr.getNationalId()));
 		assert(mr2.getNationalIdType().trim().equals(mr.getNationalIdType().trim()));
+		assert(mr2.getCreationDate().compareTo(mr.getCreationDate())==0);
 		assert(mr2.getLastUpdated().compareTo(mr.getLastUpdated())==0);
 		assert(mr2.getEffectiveDate().compareTo(mr.getEffectiveDate())==0);
 		assert(mr2.getStatus()==mr.getStatus());
@@ -282,7 +289,7 @@ public class MasterRecordTest extends JTraceTest {
 		assert(mr2.getDateOfBirth().compareTo(mr.getDateOfBirth())==0);
 		assert(mr2.getGivenName().equals(mr.getGivenName()));
 		assert(mr2.getSurname().equals(mr.getSurname()));
-		assert(mr2.getLastUpdated().compareTo(mr.getLastUpdated())==0);
+		assert(mr2.getLastUpdated()!=null);
 		assert(mr2.getEffectiveDate().compareTo(mr.getEffectiveDate())==0);
 		assert(mr2.getStatus()==mr.getStatus());
 		assert(mr2.getStatus()==MasterRecord.OK);
@@ -314,7 +321,7 @@ public class MasterRecordTest extends JTraceTest {
 			assert(mr2.getDateOfBirth().compareTo(mr.getDateOfBirth())==0);
 			assert(mr2.getGivenName().equals(mr.getGivenName()));
 			assert(mr2.getSurname().equals(mr.getSurname()));
-			assert(mr2.getLastUpdated().compareTo(mr.getLastUpdated())==0);
+			assert(mr2.getLastUpdated()!=null);
 			assert(mr2.getEffectiveDate().compareTo(mr.getEffectiveDate())==0);
 			assert(mr2.getStatus()==mr.getStatus());
 			assert(mr2.getStatus()==MasterRecord.OK);

@@ -3,6 +3,8 @@ DROP TABLE IF EXISTS jtrace.person;
 CREATE TABLE jtrace.person
 (
   id SERIAL UNIQUE,
+  creationdate timestamp without time zone NOT NULL DEFAULT Now(),
+  lastupdated timestamp without time zone NOT NULL DEFAULT Now(),
   originator character varying(50) NOT NULL,
   localid character varying(17) NOT NULL,
   localidtype character varying(10) NOT NULL,

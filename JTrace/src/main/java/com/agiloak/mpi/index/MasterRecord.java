@@ -1,5 +1,6 @@
 package com.agiloak.mpi.index;
 
+import java.sql.Timestamp;
 import java.util.Date;
 
 public class MasterRecord {
@@ -7,7 +8,8 @@ public class MasterRecord {
 	public static final int OK = 0;
 	public static final int INVESTIGATE = 1;
 	
-	private Date lastUpdated;
+	private Timestamp lastUpdated;
+	private Timestamp creationDate;
 	private int id;
 	private String nationalId;
 	private String nationalIdType;
@@ -19,10 +21,8 @@ public class MasterRecord {
 	private Date effectiveDate;
 
 	public MasterRecord() {
-		this.lastUpdated = new Date();
 	}
 	public MasterRecord(Person person) {
-		this.lastUpdated = new Date();
 		this.dateOfBirth = person.getDateOfBirth();
 		this.gender=person.getGender();
 		this.givenName=person.getGivenName();
@@ -33,7 +33,6 @@ public class MasterRecord {
 	}
 	
 	public void updateDemographics(Person person) {
-		this.lastUpdated = new Date();
 		this.dateOfBirth = person.getDateOfBirth();
 		this.gender=person.getGender();
 		this.givenName=person.getGivenName();
@@ -41,11 +40,19 @@ public class MasterRecord {
 		this.effectiveDate=person.getEffectiveDate();
 	}
 
-	public Date getLastUpdated() {
+	public Timestamp getLastUpdated() {
 		return lastUpdated;
 	}
-	public MasterRecord setLastUpdated(Date lastUpdated) {
+	public MasterRecord setLastUpdated(Timestamp lastUpdated) {
 		this.lastUpdated = lastUpdated;
+		return this;
+	}
+
+	public Timestamp getCreationDate() {
+		return creationDate;
+	}
+	public MasterRecord setCreationDate(Timestamp creationDate) {
+		this.creationDate = creationDate;
 		return this;
 	}
 

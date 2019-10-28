@@ -2,6 +2,7 @@ package com.agiloak.mpi.workitem;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -80,10 +81,12 @@ public class WorkItemTest {
 	}
 
 	@Test
-	public void testExplicitUpdate() throws MpiException {
+	public void testExplicitUpdate() throws MpiException, InterruptedException {
 		WorkItemManager wim = new WorkItemManager();
 		WorkItem wi1 = wim.create(conn, WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL, 200002, 1, "test");
-		assert(true);
+		Timestamp originalUpdated = wi1.getLastUpdated();
+		Thread.sleep(100); // ensure that the update time changes
+
 
 		List<WorkItem> workItems = wim.findByPerson(conn, 200002);
 		assert(workItems.size()==1);
@@ -94,7 +97,7 @@ public class WorkItemTest {
 		assert(wi2.getStatus()==wi1.getStatus());
 		assert(wi2.getType()==wi1.getType());
 		assert(wi2.getDescription().equals(wi1.getDescription()));
-		assert(wi2.getLastUpdated().compareTo(wi1.getLastUpdated())==0);
+		assert(wi2.getLastUpdated().compareTo(originalUpdated)==0);
 		
 		WorkItemManagerResponse resp = wim.update(Integer.toString(wi2.getId()), Integer.toString(WorkItemStatus.STATUS_CLOSED), "Not a match - do not try to resolve", "NJONES02" );
 		assert(resp.getStatus()==WorkItemManagerResponse.SUCCESS);
@@ -113,7 +116,7 @@ public class WorkItemTest {
 		assert(wi2.getStatus()==WorkItemStatus.STATUS_CLOSED);
 		assert(wi2.getUpdateDesc().equals("Not a match - do not try to resolve"));
 		assert(wi2.getUpdatedBy().equals("NJONES02"));
-		assert(wi2.getLastUpdated().compareTo(wi1.getLastUpdated()) > 0);
+		assert(wi2.getLastUpdated().compareTo(originalUpdated) > 0);
 		
 	}
 

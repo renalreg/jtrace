@@ -1,20 +1,21 @@
 package com.agiloak.mpi.index;
 
-import java.util.Date;
+import java.sql.Timestamp;
 
 public class LinkRecord {
 	
 	public static final int AUTOMATIC_TYPE = 0;
 	public static final int MANUAL_TYPE = 1;
 
+	private Timestamp lastUpdated;
+	private Timestamp creationDate;
+
 	public LinkRecord(int masterId, int personId) {
 		this.masterId = masterId;
 		this.personId  = personId;
-		this.lastUpdated = new Date();
 	}
 	
 	private int id;
-	private Date lastUpdated;
 	private int masterId;
 	private int personId;
 	
@@ -30,12 +31,18 @@ public class LinkRecord {
 		this.id = id;
 		return this;
 	}
-	public Date getLastUpdated() {
+	public Timestamp getLastUpdated() {
 		return lastUpdated;
 	}
-	public LinkRecord setLastUpdated(Date lastUpdated) {
+	public LinkRecord setLastUpdated(Timestamp lastUpdated) {
 		this.lastUpdated = lastUpdated;
 		return this;
+	}
+	public Timestamp getCreationDate() {
+		return creationDate;
+	}
+	public void setCreationDate(Timestamp creationDate) {
+		this.creationDate = creationDate;
 	}
 	public int getMasterId() {
 		return masterId;
