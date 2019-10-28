@@ -79,6 +79,8 @@ public class PidXREFTest extends JTraceTest {
 		PidXREFDAO.create(conn, pidx);
 		assert(pidx.getId()>0);
 		assert(pidx.getPid().length()==10);
+		assert(pidx.getCreationDate()!=null);
+		assert(pidx.getLastUpdated()!=null);
 	}
 	
 	@Test
@@ -88,6 +90,8 @@ public class PidXREFTest extends JTraceTest {
 		PidXREFDAO.create(conn, pidx);
 		assert(pidx.getId()>0);
 		assert(pidx.getPid().equals("TEST1"));
+		assert(pidx.getCreationDate()!=null);
+		assert(pidx.getLastUpdated()!=null);
 	}
 
 	@Test
@@ -95,6 +99,8 @@ public class PidXREFTest extends JTraceTest {
 		PidXREF pidx = new PidXREF(TestIds.FACILITY_PIDX, TestIds.EXTRACT_TEST1, TestIds.TEST_LOCALID_2);
 		PidXREFDAO.create(conn, pidx);
 		assert(pidx.getId()>0);
+		assert(pidx.getCreationDate()!=null);
+		assert(pidx.getLastUpdated()!=null);
 		
 		PidXREF pidx2 = PidXREFDAO.get(conn, pidx.getId());
 		assert(pidx2.getId()==(pidx.getId()));
@@ -102,8 +108,11 @@ public class PidXREFTest extends JTraceTest {
 		assert(pidx2.getSendingFacility().equals(pidx.getSendingFacility()));
 		assert(pidx2.getSendingExtract().equals(pidx.getSendingExtract()));
 		assert(pidx2.getLocalId().equals(pidx.getLocalId()));
+		assert(pidx2.getCreationDate().compareTo(pidx.getCreationDate())==0);
+		assert(pidx2.getLastUpdated().compareTo(pidx.getLastUpdated())==0);
 		
 	}
+
 	@Test
 	public void testDeleteByLocalId() throws MpiException {
 		PidXREF pidx = new PidXREF(TestIds.FACILITY_PIDX, TestIds.EXTRACT_TEST1, TestIds.TEST_LOCALID_3);
@@ -124,6 +133,8 @@ public class PidXREFTest extends JTraceTest {
 		PidXREF pidx = new PidXREF(TestIds.FACILITY_PIDX, TestIds.EXTRACT_TEST1, TestIds.TEST_LOCALID_4);
 		PidXREFDAO.create(conn, pidx);
 		assert(pidx.getId()>0);
+		assert(pidx.getCreationDate()!=null);
+		assert(pidx.getLastUpdated()!=null);
 
 		// Creating a record with the same details should still create a new PidXREF with an allocated PID
 		PidXREF pidx2 = new PidXREF(TestIds.FACILITY_PIDX, TestIds.EXTRACT_TEST1, TestIds.TEST_LOCALID_4);
@@ -133,14 +144,18 @@ public class PidXREFTest extends JTraceTest {
 		assert(pidx2.getSendingFacility().equals(pidx.getSendingFacility()));
 		assert(pidx2.getSendingExtract().equals(pidx.getSendingExtract()));
 		assert(pidx2.getLocalId().equals(pidx.getLocalId()));
-
+		assert(pidx2.getCreationDate().compareTo(pidx.getCreationDate())>0);
+		assert(pidx2.getLastUpdated().compareTo(pidx.getLastUpdated())>0);
 	}
+
 	@Test
 	public void testFindByLocalId() throws MpiException {
 		
 		PidXREF pidx = new PidXREF(TestIds.FACILITY_PIDX, TestIds.EXTRACT_TEST1, TestIds.TEST_LOCALID_5);
 		PidXREFDAO.create(conn, pidx);
 		assert(pidx.getId()>0);
+		assert(pidx.getCreationDate()!=null);
+		assert(pidx.getLastUpdated()!=null);
 		
 		PidXREF pidx2 = PidXREFDAO.findByLocalId(conn, TestIds.FACILITY_PIDX, TestIds.EXTRACT_TEST1, TestIds.TEST_LOCALID_5);
 		assert(pidx2.getId()==(pidx.getId()));
@@ -148,6 +163,8 @@ public class PidXREFTest extends JTraceTest {
 		assert(pidx2.getSendingFacility().equals(pidx.getSendingFacility()));
 		assert(pidx2.getSendingExtract().equals(pidx.getSendingExtract()));
 		assert(pidx2.getLocalId().equals(pidx.getLocalId()));
+		assert(pidx2.getCreationDate().compareTo(pidx.getCreationDate())==0);
+		assert(pidx2.getLastUpdated().compareTo(pidx.getLastUpdated())==0);
 
 	}
 	

@@ -13,10 +13,10 @@ public class PidXREF {
 	}
 	
 	private int id;
-	
-	private String pid;
 	private Timestamp lastUpdated;
 	private Timestamp creationDate;
+	
+	private String pid;
 	private String sendingFacility;
 	private String sendingExtract;
 	private String localId;

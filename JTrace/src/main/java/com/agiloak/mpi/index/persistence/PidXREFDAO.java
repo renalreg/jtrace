@@ -105,7 +105,9 @@ public class PidXREFDAO extends NumberAllocatingDAO {
 			
 		    try (ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
 	            if (generatedKeys.next()) {
-	            	xref.setId(generatedKeys.getInt(1));
+	            	xref.setId(generatedKeys.getInt("id"));
+	            	xref.setCreationDate(generatedKeys.getTimestamp("creationdate"));
+	            	xref.setLastUpdated(generatedKeys.getTimestamp("lastupdated"));
 	            	logger.debug("LINKID:"+xref.getId());
 	            }
 	            else {
@@ -330,6 +332,8 @@ public class PidXREFDAO extends NumberAllocatingDAO {
 			xref.setSendingFacility(rs.getString("sendingfacility"));
 			xref.setSendingExtract(rs.getString("sendingextract"));
 			xref.setLocalId(rs.getString("localid"));
+			xref.setLastUpdated(rs.getTimestamp("lastupdated"));
+			xref.setCreationDate(rs.getTimestamp("creationdate"));
 
 		} catch (Exception e) {
 			logger.error("Failure querying PidXREF.",e);
