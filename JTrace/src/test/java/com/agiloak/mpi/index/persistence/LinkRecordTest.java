@@ -49,23 +49,23 @@ public class LinkRecordTest {
 		conn.close();
 	}
 	public static void setup()  throws MpiException {
-		LinkRecordDAO.deleteByPerson(conn, 1);
-		LinkRecordDAO.deleteByPerson(conn, 2);
-		LinkRecordDAO.deleteByPerson(conn, 3);
-		LinkRecordDAO.deleteByPerson(conn, 4);
-		LinkRecordDAO.deleteByPerson(conn, 5);
-		LinkRecordDAO.deleteByPerson(conn, 6);
-		LinkRecordDAO.deleteByPerson(conn, 7);
-		LinkRecordDAO.deleteByPerson(conn, 8);
-		LinkRecordDAO.deleteByPerson(conn, 9);
-		LinkRecordDAO.deleteByPerson(conn, 10);
+		LinkRecordDAO.deleteByPerson(conn, 1001);
+		LinkRecordDAO.deleteByPerson(conn, 1002);
+		LinkRecordDAO.deleteByPerson(conn, 1003);
+		LinkRecordDAO.deleteByPerson(conn, 1004);
+		LinkRecordDAO.deleteByPerson(conn, 1005);
+		LinkRecordDAO.deleteByPerson(conn, 1006);
+		LinkRecordDAO.deleteByPerson(conn, 1007);
+		LinkRecordDAO.deleteByPerson(conn, 1008);
+		LinkRecordDAO.deleteByPerson(conn, 1009);
+		LinkRecordDAO.deleteByPerson(conn, 1010);
 		MasterRecordDAO.deleteByNationalId(conn, RR1, UKRDC_TYPE);
 		MasterRecordDAO.deleteByNationalId(conn, RR2, UKRDC_TYPE);
 	}
 		
 	@Test
 	public void testCreate() throws MpiException {
-		int personToTest = 9;
+		int personToTest = 1009;
 		LinkRecord lr = new LinkRecord(1, personToTest);
 		LinkRecordDAO.create(conn,lr);
 		
@@ -79,7 +79,7 @@ public class LinkRecordTest {
 	
 	@Test
 	public void testCreateAllFields() throws MpiException {
-		int personToTest = 1;
+		int personToTest = 1001;
 		LinkRecord lr = new LinkRecord(1,personToTest);
 		lr.setUpdatedBy("Nick");
 		lr.setLinkCode(1);
@@ -97,7 +97,7 @@ public class LinkRecordTest {
 	
 	@Test
 	public void testFind() throws MpiException {
-		int personToTest = 2;
+		int personToTest = 1002;
 		LinkRecord lr = new LinkRecord(1,personToTest);
 		LinkRecordDAO.create(conn, lr);
 		List<LinkRecord> links = LinkRecordDAO.findByPerson(conn, personToTest);
@@ -109,7 +109,7 @@ public class LinkRecordTest {
 	
 	@Test
 	public void testFindByPerson() throws MpiException {
-		int personToTest = 3;
+		int personToTest = 1003;
 		LinkRecord lr = new LinkRecord(1,personToTest);
 		LinkRecordDAO.create(conn, lr);
 		
@@ -120,7 +120,7 @@ public class LinkRecordTest {
 	
 	@Test
 	public void testNoFindByPerson() throws MpiException {
-		int personToTest = 4;
+		int personToTest = 1004;
 		LinkRecord lr = new LinkRecord(1,personToTest);
 		LinkRecordDAO.create(conn, lr);
 		List<LinkRecord> links = LinkRecordDAO.findByPerson(conn, personToTest);
@@ -132,7 +132,7 @@ public class LinkRecordTest {
 
 	@Test
 	public void testNoFind() throws MpiException {
-		int personToTest = 5;
+		int personToTest = 1005;
 		LinkRecord lr = new LinkRecord(1,personToTest);
 		LinkRecordDAO.create(conn, lr);
 		List<LinkRecord> links = LinkRecordDAO.findByPerson(conn, personToTest);
@@ -144,7 +144,7 @@ public class LinkRecordTest {
 
 	@Test
 	public void testDelete() throws MpiException {
-		int personToTest = 6;
+		int personToTest = 1006;
 		LinkRecord lr = new LinkRecord(1,personToTest);
 		LinkRecordDAO.create(conn, lr);
 		List<LinkRecord> links = LinkRecordDAO.findByPerson(conn, personToTest);
@@ -157,7 +157,7 @@ public class LinkRecordTest {
 	
 	@Test
 	public void testDeleteByPerson() throws MpiException {
-		int personToTest = 7;
+		int personToTest = 1007;
 		LinkRecord lr = new LinkRecord(1,personToTest);
 		LinkRecordDAO.create(conn, lr);
 		List<LinkRecord> links = LinkRecordDAO.findByPerson(conn, personToTest);
@@ -226,6 +226,7 @@ public class LinkRecordTest {
 		assert(lr2.getPersonId()==lr1.getPersonId());
 		// Note the following assertion fails if coded the other way around! looks like a bug in compareTo - beware
 		assert(lr2.getLastUpdated().compareTo(lr1.getLastUpdated())==0);
+		assert(lr2.getCreationDate().compareTo(lr1.getCreationDate())==0);
 		assert(lr2.getLinkCode()==lr1.getLinkCode());
 		assert(lr2.getLinkType()==lr1.getLinkType());
 		if (lr2.getUpdatedBy()==null) {

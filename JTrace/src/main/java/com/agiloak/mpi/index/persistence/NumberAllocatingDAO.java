@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.agiloak.mpi.MpiException;
-import com.agiloak.mpi.SimpleConnectionManager;
 
 public abstract class NumberAllocatingDAO {
 

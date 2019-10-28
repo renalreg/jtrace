@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.agiloak.mpi.MpiException;
-import com.agiloak.mpi.SimpleConnectionManager;
 import com.agiloak.mpi.workitem.WorkItem;
 
 public class WorkItemDAO {
@@ -25,8 +24,8 @@ public class WorkItemDAO {
 		logger.debug("Starting");
 		
 		String insertSQL = "Insert into workitem "+
-				"(personid, masterid, type, description, attributes, status, lastupdated, updatedby, updatedesc)"+ 
-				" values (?,?,?,?,?,?,?,?,?)";
+				"(personid, masterid, type, description, attributes, status, updatedby, updatedesc)"+ 
+				" values (?,?,?,?,?,?,?,?)";
 		
 		PreparedStatement preparedStatement = null;
 		
@@ -38,11 +37,9 @@ public class WorkItemDAO {
 			preparedStatement.setInt(3, workItem.getType());
 			preparedStatement.setString(4, workItem.getDescription());
 			preparedStatement.setString(5, workItem.getAttributesJson());
-			
 			preparedStatement.setInt(6, workItem.getStatus());
-			preparedStatement.setTimestamp(7,new Timestamp(workItem.getLastUpdated().getTime()));
-			preparedStatement.setString(8, workItem.getUpdatedBy());
-			preparedStatement.setString(9, workItem.getUpdateDesc());
+			preparedStatement.setString(7, workItem.getUpdatedBy());
+			preparedStatement.setString(8, workItem.getUpdateDesc());
 
 			int affectedRows = preparedStatement.executeUpdate();
 			logger.debug("Affected Rows:"+affectedRows);
@@ -50,7 +47,9 @@ public class WorkItemDAO {
 		    try (ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
 	            if (generatedKeys.next()) {
 	            	logger.debug("WorkItem ID:"+generatedKeys.getInt(1));
-	            	workItem.setId(generatedKeys.getInt(1));
+	            	workItem.setId(generatedKeys.getInt("id"));
+	            	workItem.setCreationDate(generatedKeys.getTimestamp("creationdate"));
+	            	workItem.setLastUpdated(generatedKeys.getTimestamp("lastupdated"));
 	            }
 	            else {
 	    			logger.error("Creating WorkItem failed, no ID obtained.");
@@ -80,6 +79,7 @@ public class WorkItemDAO {
 
 		logger.debug("Starting");
 
+		workItem.setLastUpdated(new Timestamp(System.currentTimeMillis()));
 		String updateSQL = "update workitem "
 				+"set status =?, lastupdated=?, updatedby=?, updatedesc=? "
 				+"where personid=? and masterid=?"; 
@@ -90,7 +90,7 @@ public class WorkItemDAO {
 
 			preparedStatement = conn.prepareStatement(updateSQL);
 			preparedStatement.setInt(1, workItem.getStatus());
-			preparedStatement.setTimestamp(2,new Timestamp(workItem.getLastUpdated().getTime()));
+			preparedStatement.setTimestamp(2, workItem.getLastUpdated());
 			preparedStatement.setString(3, workItem.getUpdatedBy());
 			preparedStatement.setString(4, workItem.getUpdateDesc());
 			preparedStatement.setInt(5, workItem.getPersonId());
@@ -215,6 +215,7 @@ public class WorkItemDAO {
 				workItem.setStatus(rs.getInt("status"));
 				workItem.setId(rs.getInt("id"));
 				workItem.setLastUpdated(rs.getTimestamp("lastUpdated"));
+				workItem.setCreationDate(rs.getTimestamp("creationDate"));
 				workItem.setUpdatedBy(rs.getString("updatedby"));
 				workItem.setUpdateDesc(rs.getString("updatedesc"));
 			}
@@ -276,6 +277,7 @@ public class WorkItemDAO {
 				item.setStatus(rs.getInt("status"));
 				item.setId(rs.getInt("id"));
 				item.setLastUpdated(rs.getTimestamp("lastUpdated"));
+				item.setCreationDate(rs.getTimestamp("creationDate"));
 				item.setUpdatedBy(rs.getString("updatedby"));
 				item.setUpdateDesc(rs.getString("updatedesc"));
 				
@@ -339,6 +341,7 @@ public class WorkItemDAO {
 				workItem.setStatus(rs.getInt("status"));
 				workItem.setId(rs.getInt("id"));
 				workItem.setLastUpdated(rs.getTimestamp("lastUpdated"));
+				workItem.setCreationDate(rs.getTimestamp("creationDate"));
 				workItem.setUpdatedBy(rs.getString("updatedby"));
 				workItem.setUpdateDesc(rs.getString("updatedesc"));
 			}
