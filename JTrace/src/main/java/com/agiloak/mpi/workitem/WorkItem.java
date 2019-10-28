@@ -1,7 +1,7 @@
 package com.agiloak.mpi.workitem;
 
 import java.lang.reflect.Type;
-import java.util.Date;
+import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,7 +25,6 @@ public class WorkItem {
 		this.description = desc;
 		this.attributes = attributes;
 		this.status = WorkItemStatus.STATUS_OPEN;
-		this.lastUpdated = new Date();
 	}
 
 	/**
@@ -40,7 +39,6 @@ public class WorkItem {
 		this.masterId = masterId;
 		this.description = desc;
 		this.status = WorkItemStatus.STATUS_OPEN;
-		this.lastUpdated = new Date();
 	}
 	
 	/**
@@ -65,7 +63,8 @@ public class WorkItem {
 	}
 
 	private int id;
-	private Date lastUpdated;
+	private Timestamp lastUpdated;
+	private Timestamp creationDate;
 	private String description;
 	private int status;
 	private int personId;
@@ -103,12 +102,19 @@ public class WorkItem {
 		this.type = type;
 		return this;
 	}
-	public Date getLastUpdated() {
+	public Timestamp getLastUpdated() {
 		return lastUpdated;
 	}
-	public WorkItem setLastUpdated(Date lastUpdated) {
+	public WorkItem setLastUpdated(Timestamp lastUpdated) {
 		this.lastUpdated = lastUpdated;
 		return this;
+	}
+	public Timestamp getCreationDate() {
+		return creationDate;
+	}
+
+	public void setCreationDate(Timestamp creationDate) {
+		this.creationDate = creationDate;
 	}
 	public String getDescription() {
 		return description;

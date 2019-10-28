@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.agiloak.mpi.MpiException;
-import com.agiloak.mpi.SimpleConnectionManager;
 import com.agiloak.mpi.index.Person;
 
 public class PersonDAO {
@@ -69,6 +68,9 @@ public class PersonDAO {
 				person.setStdPostcode(rs.getString("stdpostcode"));
 			
 				person.setSkipDuplicateCheck(rs.getBoolean("skipduplicatecheck"));
+
+				person.setLastUpdated(rs.getTimestamp("lastupdated"));
+				person.setCreationDate(rs.getTimestamp("creationdate"));
 
 			}
 			
@@ -147,6 +149,9 @@ public class PersonDAO {
 				person.setStdPostcode(rs.getString("stdpostcode"));
 				
 				person.setSkipDuplicateCheck(rs.getBoolean("skipduplicatecheck"));
+
+				person.setLastUpdated(rs.getTimestamp("lastupdated"));
+				person.setCreationDate(rs.getTimestamp("creationdate"));
 				
 				personList.add(person);
 				
@@ -216,7 +221,9 @@ public class PersonDAO {
 			
 		    try (ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
 	            if (generatedKeys.next()) {
-	            	person.setId(generatedKeys.getInt(1));
+	            	person.setId(generatedKeys.getInt("id"));
+	            	person.setCreationDate(generatedKeys.getTimestamp("creationdate"));
+	            	person.setLastUpdated(generatedKeys.getTimestamp("lastupdated"));
 	            	logger.debug("PERSONID:"+person.getId());
 	            }
 	            else {
@@ -251,13 +258,14 @@ public class PersonDAO {
 			logger.error("Person has no ID - cannot update.");
 			throw new MpiException("Person has no ID - cannot update.");
 		}
-		
+
+		person.setLastUpdated(new Timestamp(System.currentTimeMillis()));
 		String updateSQL = "Update person SET "+
 			   "dateofbirth=?, gender=?,"+ 
 		       "dateofdeath=?, givenname=?, surname=?, othergivennames=?,"+ 
 		       "title=?, postcode=?, street=?, stdsurname=?,"+ 
 		       "stdgivenname=?, stdpostcode=?, nationalid=?, nationalidtype=?, skipduplicatecheck = ?, "+
-		       "prevsurname=?, stdprevsurname=? "+
+		       "prevsurname=?, stdprevsurname=?, lastupdated=? "+
 		       "WHERE id = ? ";
 		
 		PreparedStatement preparedStatement = null;
@@ -269,7 +277,8 @@ public class PersonDAO {
 			populatePersonStatement(preparedStatement, person);
 			preparedStatement.setString(16, person.getPrevSurname());
 			preparedStatement.setString(17, person.getStdPrevSurname());
-			preparedStatement.setInt(18, person.getId());
+			preparedStatement.setTimestamp(18, person.getLastUpdated());
+			preparedStatement.setInt(19, person.getId());
 
 			int affectedRows = preparedStatement.executeUpdate();
 			logger.debug("Affected Rows:"+affectedRows);

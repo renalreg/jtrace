@@ -160,9 +160,10 @@ public class MasterRecordTest extends JTraceTest {
 		mr.setNationalId("NHS0000005").setNationalIdType("NHS");
 		mr.setEffectiveDate(getDate("2017-08-22"));
 		MasterRecordDAO.create(conn, mr);
+
 		Timestamp originalUpdated = mr.getLastUpdated();
-		
 		Thread.sleep(100); // ensure that the update time changes
+
 		mr.setGender("F");
 		mr.setGivenName("Nicholas").setSurname("James");
 		mr.setEffectiveDate(getDate("2017-08-24"));
@@ -193,9 +194,10 @@ public class MasterRecordTest extends JTraceTest {
 		mr.setNationalId("NHS0000010").setNationalIdType("NHS");
 		mr.setEffectiveDate(getDate("2017-08-22"));
 		MasterRecordDAO.create(conn, mr);
-		Timestamp originalUpdated = mr.getLastUpdated();
 
+		Timestamp originalUpdated = mr.getLastUpdated();
 		Thread.sleep(100); // ensure that the update time changes
+
 		mr.setStatus(MasterRecord.INVESTIGATE);
 		MasterRecordDAO.update(conn, mr);
 		

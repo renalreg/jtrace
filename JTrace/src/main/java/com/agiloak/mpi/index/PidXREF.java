@@ -1,5 +1,7 @@
 package com.agiloak.mpi.index;
 
+import java.sql.Timestamp;
+
 public class PidXREF {
 	
 	public PidXREF(String sendingFacility, String sendingExtract, String localId) {
@@ -13,6 +15,8 @@ public class PidXREF {
 	private int id;
 	
 	private String pid;
+	private Timestamp lastUpdated;
+	private Timestamp creationDate;
 	private String sendingFacility;
 	private String sendingExtract;
 	private String localId;
@@ -32,6 +36,24 @@ public class PidXREF {
 
 	public PidXREF setPid(String pid) {
 		this.pid = pid;
+		return this;
+	}
+
+	public Timestamp getLastUpdated() {
+		return lastUpdated;
+	}
+
+	public PidXREF setLastUpdated(Timestamp lastUpdated) {
+		this.lastUpdated = lastUpdated;
+		return this;
+	}
+
+	public Timestamp getCreationDate() {
+		return creationDate;
+	}
+
+	public PidXREF setCreationDate(Timestamp creationDate) {
+		this.creationDate = creationDate;
 		return this;
 	}
 

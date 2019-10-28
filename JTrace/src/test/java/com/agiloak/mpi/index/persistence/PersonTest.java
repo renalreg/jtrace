@@ -2,6 +2,7 @@ package com.agiloak.mpi.index.persistence;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -250,7 +251,7 @@ public class PersonTest {
 	}
 
 	@Test
-	public void testUpdate() throws MpiException {
+	public void testUpdate() throws MpiException, InterruptedException {
 
 		Person person = new Person();
 		person.setOriginator(TestIds.ORIG_TEST1).setLocalId(TestIds.TEST_LOCALID_8).setLocalIdType(TestIds.LOCAL_TYPE_MR);
@@ -260,7 +261,8 @@ public class PersonTest {
 		person.setGender("1");
 		person.setPostcode("CH1 6LB").setStreet("OAKDENE, TOWNFIELD LANE");
 		PersonDAO.create(conn, person);
-		assert(person != null);
+		Timestamp originalUpdated = person.getLastUpdated();
+		Thread.sleep(100); // ensure that the update time changes
 
 		person.setGivenName("NICHOLAS");
 		person.setPostcode("IA52245");
@@ -286,6 +288,8 @@ public class PersonTest {
 		assert(safeCompare(person2.getGender(),person.getGender()));
 		assert(safeCompare(person2.getDateOfBirth(),person.getDateOfBirth()));
 		assert(safeCompare(person2.getDateOfDeath(),person.getDateOfDeath()));
+		assert(person2.getLastUpdated().compareTo(originalUpdated)>0);
+		assert(person2.getCreationDate().compareTo(originalUpdated)==0);
 
 	}
 	

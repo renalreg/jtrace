@@ -11,7 +11,7 @@ CREATE TABLE jtrace.workitem
     description character varying(100) NOT NULL,
     attributes character varying(1024),
     status integer NOT NULL,
-    lastupdated timestamp NOT NULL,
+    lastupdated timestamp NOT NULL DEFAULT Now(),
     creationdate timestamp without time zone NOT NULL DEFAULT Now(),
     updatedBy character varying(20) ,
     updatedesc character varying(100),

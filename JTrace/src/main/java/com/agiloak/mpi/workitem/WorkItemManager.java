@@ -1,7 +1,6 @@
 package com.agiloak.mpi.workitem;
 
 import java.sql.Connection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -145,7 +144,6 @@ public class WorkItemManager {
 			throw new MpiException("Cannot update - work item does not exist");
 		} else {
 			//only update the allowable fields
-			workItem.setLastUpdated(new Date());
 			workItem.setStatus(status);
 			workItem.setUpdatedBy(updatedBy);
 			workItem.setUpdateDesc(updateDesc);

@@ -1,5 +1,6 @@
 package com.agiloak.mpi.index;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -8,7 +9,9 @@ public class Person {
 
 	private int id;
 	private Date effectiveDate;
-	
+	private Timestamp lastUpdated;
+	private Timestamp creationDate;
+
 	private String unconsolidatedLocalId;
 	private String localId;
 	private String localIdType;
@@ -63,6 +66,24 @@ public class Person {
 
 	public Person setEffectiveDate(Date effectiveDate) {
 		this.effectiveDate = effectiveDate;
+		return this;
+	}
+
+	public Timestamp getLastUpdated() {
+		return lastUpdated;
+	}
+
+	public Person setLastUpdated(Timestamp lastUpdated) {
+		this.lastUpdated = lastUpdated;
+		return this;
+	}
+
+	public Timestamp getCreationDate() {
+		return creationDate;
+	}
+
+	public Person setCreationDate(Timestamp creationDate) {
+		this.creationDate = creationDate;
 		return this;
 	}
 

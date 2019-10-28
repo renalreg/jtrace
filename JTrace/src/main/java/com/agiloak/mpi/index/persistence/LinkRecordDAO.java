@@ -5,7 +5,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.agiloak.mpi.MpiException;
-import com.agiloak.mpi.SimpleConnectionManager;
 import com.agiloak.mpi.index.LinkRecord;
 
 /**
@@ -35,8 +33,8 @@ public class LinkRecordDAO {
 		logger.debug("Starting");
 
 		String insertSQL = "Insert into linkrecord "+
-				"(masterid, personid, lastupdated, linktype, linkcode, linkdesc, updatedby)"+
-				" values (?,?,?,?,?,?,?)";
+				"(masterid, personid, linktype, linkcode, linkdesc, updatedby)"+
+				" values (?,?,?,?,?,?)";
 		
 		PreparedStatement preparedStatement = null;
 		
@@ -45,18 +43,19 @@ public class LinkRecordDAO {
 			preparedStatement = conn.prepareStatement(insertSQL, Statement.RETURN_GENERATED_KEYS);
 			preparedStatement.setInt(1, link.getMasterId());
 			preparedStatement.setInt(2, link.getPersonId());
-			preparedStatement.setTimestamp(3,new Timestamp(link.getLastUpdated().getTime()));
-			preparedStatement.setInt(4, link.getLinkType());
-			preparedStatement.setInt(5, link.getLinkCode());
-			preparedStatement.setString(6, link.getLinkDesc());
-			preparedStatement.setString(7, link.getUpdatedBy());
+			preparedStatement.setInt(3, link.getLinkType());
+			preparedStatement.setInt(4, link.getLinkCode());
+			preparedStatement.setString(5, link.getLinkDesc());
+			preparedStatement.setString(6, link.getUpdatedBy());
 
 			int affectedRows = preparedStatement.executeUpdate();
 			logger.debug("Affected Rows:"+affectedRows);
 			
 		    try (ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
 	            if (generatedKeys.next()) {
-	            	link.setId(generatedKeys.getInt(1));
+	            	link.setId(generatedKeys.getInt("id"));
+	            	link.setCreationDate(generatedKeys.getTimestamp("creationdate"));
+	            	link.setLastUpdated(generatedKeys.getTimestamp("lastupdated"));
 	            	logger.debug("LINKID:"+link.getId());
 	            }
 	            else {
@@ -489,6 +488,7 @@ public class LinkRecordDAO {
 				int mid = rs.getInt("masterid");
 				linkRecord = new LinkRecord(mid,pid);
 				linkRecord.setLastUpdated(rs.getTimestamp("lastupdated"));
+				linkRecord.setCreationDate(rs.getTimestamp("creationdate"));
 				linkRecord.setId(rs.getInt("id"));
 				linkRecord.setLinkType(rs.getInt("linktype"));
 				linkRecord.setLinkCode(rs.getInt("linkcode"));
