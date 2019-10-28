@@ -15,5 +15,6 @@ WITH (
 );
 
 ALTER TABLE jtrace.pidxref OWNER TO ukrdc;
-
+ALTER TABLE jtrace.pidxref
+    ADD CONSTRAINT pidxref_compound UNIQUE (sendingfacility, sendingextract, localid);
 GRANT ALL PRIVILEGES ON TABLE jtrace.pidxref to ukrdc;

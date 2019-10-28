@@ -9,6 +9,7 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import static org.hamcrest.CoreMatchers.containsString;
 
 import com.agiloak.mpi.MpiException;
 import com.agiloak.mpi.SimpleConnectionManager;
@@ -128,6 +129,7 @@ public class PidXREFTest extends JTraceTest {
 		assert(pidx3==null);
 		
 	}
+
 	@Test
 	public void testCreateDuplicate() throws MpiException {
 		PidXREF pidx = new PidXREF(TestIds.FACILITY_PIDX, TestIds.EXTRACT_TEST1, TestIds.TEST_LOCALID_4);
@@ -136,16 +138,11 @@ public class PidXREFTest extends JTraceTest {
 		assert(pidx.getCreationDate()!=null);
 		assert(pidx.getLastUpdated()!=null);
 
-		// Creating a record with the same details should still create a new PidXREF with an allocated PID
+		// Creating a record with the same details should error
 		PidXREF pidx2 = new PidXREF(TestIds.FACILITY_PIDX, TestIds.EXTRACT_TEST1, TestIds.TEST_LOCALID_4);
+		exception.expect(MpiException.class);
+		exception.expectMessage(containsString("PidXREF insert failed"));
 		PidXREFDAO.create(conn, pidx2);
-		assert(pidx2.getId()!=(pidx.getId()));
-		assert(!pidx2.getPid().equals(pidx.getPid()));
-		assert(pidx2.getSendingFacility().equals(pidx.getSendingFacility()));
-		assert(pidx2.getSendingExtract().equals(pidx.getSendingExtract()));
-		assert(pidx2.getLocalId().equals(pidx.getLocalId()));
-		assert(pidx2.getCreationDate().compareTo(pidx.getCreationDate())>0);
-		assert(pidx2.getLastUpdated().compareTo(pidx.getLastUpdated())>0);
 	}
 
 	@Test
