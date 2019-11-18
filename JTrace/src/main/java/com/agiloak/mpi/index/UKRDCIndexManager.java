@@ -1,7 +1,6 @@
 package com.agiloak.mpi.index;
 
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -11,12 +10,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.agiloak.mpi.MpiException;
-import com.agiloak.mpi.SimpleConnectionManager;
 import com.agiloak.mpi.audit.Audit;
 import com.agiloak.mpi.audit.AuditManager;
 import com.agiloak.mpi.audit.persistence.AuditDAO;
@@ -84,6 +81,52 @@ public class UKRDCIndexManager {
 		
 	}
 	
+	protected void unlinkInternal(Connection conn, int personId, int masterId, String user, String reason) throws MpiException {
+
+		if (personId==0 || masterId==0 || reason==null || reason.length()==0 || user==null || user.length()==0 ) { 
+			logger.error("Incomplete parameters for unlink");
+			throw new MpiException("Incomplete parameters for unlink");
+		}
+		
+		LinkRecord link = LinkRecordDAO.find(conn, masterId, personId);
+		
+		if (link==null) {
+			logger.error("Link Record does not exist");
+			throw new MpiException("Link Record does not exists");
+		}
+		LinkRecordDAO.delete(conn, link);
+		AuditManager am = new AuditManager();
+		am.create(conn, Audit.LINK_DELETED, personId, masterId, reason);
+	}
+
+	protected void updateMaster(Connection conn, MasterRecord master, String user, String reason) throws MpiException {
+
+		if (master== null || master.getId()==0 || reason==null || reason.length()==0 || user==null || user.length()==0 ) { 
+			logger.error("Incomplete parameters for master record update");
+			throw new MpiException("Incomplete parameters for master record update");
+		}
+		
+		MasterRecord dbMaster = MasterRecordDAO.get(conn, master.getId());
+		if (dbMaster==null) {
+			logger.error("Master Record does not exist");
+			throw new MpiException("Master Record does not exists");
+		}
+		
+		// reset demographics from incoming record
+		dbMaster.setGender(master.getGender());
+		dbMaster.setDateOfBirth(master.getDateOfBirth());
+		dbMaster.setGivenName(master.getGivenName());
+		dbMaster.setSurname(master.getSurname());
+		
+		// reset status
+		dbMaster.setStatus(MasterRecord.OK);
+		dbMaster.setEffectiveDate(new Date());
+		
+		MasterRecordDAO.update(conn, dbMaster);
+		AuditManager am = new AuditManager();
+		am.create(conn, Audit.MASTER_RECORD_UPDATED, 0, master.getId(), reason);
+	}
+
 	/**
 	 * Search for a UKRDC Identity for these patient details.
 	 * @param psr
@@ -282,6 +325,20 @@ public class UKRDCIndexManager {
 
 	public UKRDCIndexManagerResponse merge(int superceedingId, int supercededId) {
 		MergeCommand cmd = new MergeCommand(superceedingId, supercededId);
+		UKRDCIndexManagerResponse resp = cmd.executeAPICommand(this);
+		return resp;		
+	}
+
+	/**
+	 * Allow manual unlinking of records and optionally reset of Master Demographics
+	 * @param patientId
+	 * @param masterId
+	 * @param master -(optional) master record with demographics to be updated
+	 * @param user - user requesting the update
+	 * @param reason - reason for the update
+	 */
+	public UKRDCIndexManagerResponse unlink(int personId, int masterId, MasterRecord master, String user, String reason) {
+		UnlinkCommand cmd = new UnlinkCommand(personId, masterId, master, user, reason);
 		UKRDCIndexManagerResponse resp = cmd.executeAPICommand(this);
 		return resp;		
 	}

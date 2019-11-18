@@ -24,6 +24,10 @@ public class Audit {
 
 	// PIDXREF
 	public final static int NEW_PIDXREF = 31;
+	
+	// ADMIN AUDITS
+	public final static int LINK_DELETED = 41;
+	public final static int MASTER_RECORD_UPDATED = 42;
 
 	Gson gson = new Gson();
 
