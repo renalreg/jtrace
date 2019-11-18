@@ -26,7 +26,9 @@ public class UnlinkCommand extends APICommand {
 		im.unlinkInternal(conn, personId, masterId, user, reason);
 		
 		// correct the master record
-		im.updateMaster(conn, master, user, reason);
+		if (master!=null) {
+			im.updateMaster(conn, master, user, reason);
+		}
 		
 		resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
 		return resp;
