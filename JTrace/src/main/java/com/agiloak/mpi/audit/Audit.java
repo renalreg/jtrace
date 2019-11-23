@@ -28,6 +28,7 @@ public class Audit {
 	// ADMIN AUDITS
 	public final static int LINK_DELETED = 41;
 	public final static int MASTER_RECORD_UPDATED = 42;
+	public final static int MASTER_RECORD_DELETED_REDUNDANT_ADMIN = 43;
 
 	Gson gson = new Gson();
 

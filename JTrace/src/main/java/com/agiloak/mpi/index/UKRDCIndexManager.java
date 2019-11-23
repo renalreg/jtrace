@@ -99,32 +99,53 @@ public class UKRDCIndexManager {
 		am.create(conn, Audit.LINK_DELETED, personId, masterId, reason);
 	}
 
-	protected void updateMaster(Connection conn, MasterRecord master, String user, String reason) throws MpiException {
+	protected void resetMaster(Connection conn, int masterId, String user, String reason) throws MpiException {
 
-		if (master== null || master.getId()==0 || reason==null || reason.length()==0 || user==null || user.length()==0 ) { 
-			logger.error("Incomplete parameters for master record update");
-			throw new MpiException("Incomplete parameters for master record update");
+		if (masterId==0 || reason==null || reason.length()==0 || user==null || user.length()==0 ) { 
+			logger.error("Incomplete parameters for master record reset");
+			throw new MpiException("Incomplete parameters for master record reset");
 		}
 		
-		MasterRecord dbMaster = MasterRecordDAO.get(conn, master.getId());
+		MasterRecord dbMaster = MasterRecordDAO.get(conn, masterId);
 		if (dbMaster==null) {
 			logger.error("Master Record does not exist");
 			throw new MpiException("Master Record does not exists");
 		}
 		
-		// reset demographics from incoming record
-		dbMaster.setGender(master.getGender());
-		dbMaster.setDateOfBirth(master.getDateOfBirth());
-		dbMaster.setGivenName(master.getGivenName());
-		dbMaster.setSurname(master.getSurname());
+		// Get last linked patient
+		List<LinkRecord> links = LinkRecordDAO.findByMaster(conn, masterId);
 		
-		// reset status
-		dbMaster.setStatus(MasterRecord.OK);
-		dbMaster.setEffectiveDate(new Date());
+		// Delete if records remain linked
+		if (links.size()==0) {
+			MasterRecordDAO.delete(conn, masterId);
+			AuditManager am = new AuditManager();
+			am.create(conn, Audit.MASTER_RECORD_DELETED_REDUNDANT_ADMIN, -1, masterId, reason);
+		} else {
+			// findByMaster is ordered so the first is the latest
+			LinkRecord latestLink = links.get(0);
+			Person lastLinkedPerson = PersonDAO.get(conn, latestLink.getPersonId());
+			
+			if (lastLinkedPerson==null) {
+				logger.error("Linked Person Record does not exist");
+				throw new MpiException("Linked Person Record does not exists");
+			}
+			
+			// reset demographics from incoming record
+			dbMaster.setGender(lastLinkedPerson.getGender());
+			dbMaster.setDateOfBirth(lastLinkedPerson.getDateOfBirth());
+			dbMaster.setGivenName(lastLinkedPerson.getGivenName());
+			dbMaster.setSurname(lastLinkedPerson.getSurname());
+			
+			// reset status
+			dbMaster.setStatus(MasterRecord.OK);
+			dbMaster.setEffectiveDate(new Date());
+			
+			MasterRecordDAO.update(conn, dbMaster);
+			AuditManager am = new AuditManager();
+			am.create(conn, Audit.MASTER_RECORD_UPDATED, -1, masterId, reason);
+		}
+			
 		
-		MasterRecordDAO.update(conn, dbMaster);
-		AuditManager am = new AuditManager();
-		am.create(conn, Audit.MASTER_RECORD_UPDATED, 0, master.getId(), reason);
 	}
 
 	/**
@@ -337,8 +358,8 @@ public class UKRDCIndexManager {
 	 * @param user - user requesting the update
 	 * @param reason - reason for the update
 	 */
-	public UKRDCIndexManagerResponse unlink(int personId, int masterId, MasterRecord master, String user, String reason) {
-		UnlinkCommand cmd = new UnlinkCommand(personId, masterId, master, user, reason);
+	public UKRDCIndexManagerResponse unlink(int personId, int masterId, String user, String reason) {
+		UnlinkCommand cmd = new UnlinkCommand(personId, masterId, user, reason);
 		UKRDCIndexManagerResponse resp = cmd.executeAPICommand(this);
 		return resp;		
 	}

@@ -22,57 +22,54 @@ public class UKRDCIndexManagerUnlinkSystemTest extends UKRDCIndexManagerBaseTest
 	public final ExpectedException exception = ExpectedException.none();
 
 	private Date d1 = getDate("1962-08-31");
+	private Date d2 = getDate("1963-08-30");
 
 	@BeforeClass
 	public static void setup()  throws MpiException {
 		SimpleConnectionManager.configure("postgres", "postgres","localhost", "5432", "JTRACE");
 		conn = SimpleConnectionManager.getDBConnection();
 
-//		clear(conn, "MR", "ULNKT1001", "LNKT1");
-//		MasterRecordDAO.deleteByNationalId(conn, "LNKT1000R1",NationalIdentity.UKRDC_TYPE);
-//		MasterRecordDAO.deleteByNationalId(conn, "LNKT1000N1",NationalIdentity.NHS_TYPE);
-//		MasterRecordDAO.deleteByNationalId(conn, "LNKT1000C1",NationalIdentity.CHI_TYPE);
-//		clear(conn, "MR", "LNKT20001", "LNKT2");
-//
-//		clear(conn, "MR", "LNKT10002", "LNKT1");
-//		MasterRecordDAO.deleteByNationalId(conn, "LNKT1000R2",NationalIdentity.UKRDC_TYPE);
-//		MasterRecordDAO.deleteByNationalId(conn, "LNKT1000N2",NationalIdentity.NHS_TYPE);
-//		MasterRecordDAO.deleteByNationalId(conn, "LNKT1000C2",NationalIdentity.CHI_TYPE);
-//		clear(conn, "MR", "LNKT20002", "LNKT2");
+		clearAll(conn);
 	}
 
-	@Test
-	public void testUnlink() throws MpiException {
+	// CASE 1A - 2nd record matches on NHS Number but demographics don't match (different DOB). Records linked with workrecord and master marked
+	//@Test
+	public void testUnlinkCase1A() throws MpiException {
 
 		String originator = "LNKT1";
 		String originator2 = "LNKT2";
 		String idBase = originator+"000";
 		String idBase2 = originator2+"000";
+		NationalIdentity nhs = new NationalIdentity(NationalIdentity.NHS_TYPE,idBase+"N1");
 
 		UKRDCIndexManager im = new UKRDCIndexManager();
-		NationalIdentity nhs1 = new NationalIdentity(NationalIdentity.NHS_TYPE,idBase+"N1");
 		
 		// Setup person with NHS Number - will allocate UKRDC
 		Person p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICHOLAS").setGender("1");
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId(idBase+"1").setLocalIdType("MR").setOriginator(originator);
-		p1.addNationalId(nhs1);
+		p1.addNationalId(nhs);
 		UKRDCIndexManagerResponse resp = im.store(p1);
 		// VERIFY
 		Person person = PersonDAO.findByLocalId(conn, p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
 		assert(person!=null);
 		MasterRecord ukrdcMaster = MasterRecordDAO.findByNationalId(conn, resp.getNationalIdentity().getId(), NationalIdentity.UKRDC_TYPE);
 		assert(ukrdcMaster!=null);
+		MasterRecord nhsMaster = MasterRecordDAO.findByNationalId(conn, nhs.getId(), NationalIdentity.NHS_TYPE);
+		assert(nhsMaster!=null);
 		List<LinkRecord> links = LinkRecordDAO.findByPerson(conn, person.getId());
 		assert(links.size()==2);
 		List<WorkItem> items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==0);
 
-		// Setup person 2 with same NHS Number - will link to record above
-		Person p2 = new Person().setDateOfBirth(d1).setSurname("JOHNSON").setGivenName("NICK").setGender("2");
+		// Setup person 2 with same NHS Number - will link to record above with Work Items for 
+		// 1 Claimed to NHS Number not verified
+		// 2 Inferred claim to UKRDC Number not verified
+		// Sets up a new UKRDC Number
+		Person p2 = new Person().setDateOfBirth(d2).setSurname("JONES").setGivenName("NICHOLAS").setGender("1");
 		p2.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p2.setLocalId(idBase2+"1").setLocalIdType("MR").setOriginator(originator2);
-		p2.addNationalId(nhs1);
+		p2.addNationalId(nhs);
 		im.store(p2);
 		// VERIFY
 		person = PersonDAO.findByLocalId(conn, p2.getLocalIdType(), p2.getLocalId(), p2.getOriginator());
@@ -80,89 +77,99 @@ public class UKRDCIndexManagerUnlinkSystemTest extends UKRDCIndexManagerBaseTest
 		links = LinkRecordDAO.findByPerson(conn, p2.getId());
 		assert(links.size()==2);
 		items = WorkItemDAO.findByPerson(conn, person.getId());
-		assert(items.size()==0);
+		assert(items.size()==2);
 
 		// UNLINK
-		MasterRecord updateMR = new MasterRecord();
-		updateMR.setId(ukrdcMaster.getId());
-		updateMR.setGender("1");
-		updateMR.setSurname("JONES");
-		updateMR.setGivenName("NICHOLAS");
-		updateMR.setDateOfBirth(p1.getDateOfBirth());
-		resp=im.unlink(p2.getId(), ukrdcMaster.getId(), updateMR, "NJONES01", "Verified with Saughall Medical Centre.");
-		// VERIFY
-		assert(resp.getStatus()==UKRDCIndexManagerResponse.SUCCESS);
-		LinkRecord oldLink = LinkRecordDAO.find(conn, ukrdcMaster.getId(), p2.getId());
-		assert(oldLink!=null);
+//		MasterRecord updateMR = new MasterRecord();
+//		updateMR.setId(ukrdcMaster.getId());
+//		updateMR.setGender("1");
+//		updateMR.setSurname("JONES");
+//		updateMR.setGivenName("NICHOLAS");
+//		updateMR.setDateOfBirth(p1.getDateOfBirth());
+//		resp=im.unlink(p2.getId(), ukrdcMaster.getId(), updateMR, "NJONES01", "Verified with Saughall Medical Centre.");
+//		// VERIFY
+//		assert(resp.getStatus()==UKRDCIndexManagerResponse.SUCCESS);
+//		LinkRecord oldLink = LinkRecordDAO.find(conn, ukrdcMaster.getId(), p2.getId());
+//		assert(oldLink!=null);
 
 	}
-//
-//	@Test
-//	public void testManualLinkFailure() throws MpiException {
-//
-//		String originator = "LNKT1";
-//		String originator2 = "LNKT2";
-//		String idBase = originator+"000";
-//		String idBase2 = originator2+"000";
-//
-//		UKRDCIndexManager im = new UKRDCIndexManager();
-//		NationalIdentity nhs1 = new NationalIdentity(NationalIdentity.NHS_TYPE,idBase+"N2");
-//		NationalIdentity chi1 = new NationalIdentity(NationalIdentity.CHI_TYPE,idBase+"C2");
-//		
-//		// Setup person with UKRR number, CHI and NHS numbers
-//		Person p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICHOLAS").setGender("1");
-//		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
-//		p1.setLocalId(idBase+"2").setLocalIdType("MR").setOriginator(originator);
-//		p1.setPrimaryIdType(NationalIdentity.UKRDC_TYPE).setPrimaryId(idBase+"R2");
-//		p1.addNationalId(nhs1);
-//		p1.addNationalId(chi1);
-//		im.store(p1);
-//		// VERIFY
-//		Person person = PersonDAO.findByLocalId(conn, p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
-//		assert(person!=null);
-//		MasterRecord ukrdcMaster = MasterRecordDAO.findByNationalId(conn, idBase+"R2", NationalIdentity.UKRDC_TYPE);
-//		assert(ukrdcMaster!=null);
-//		List<LinkRecord> links = LinkRecordDAO.findByPerson(conn, person.getId());
-//		assert(links.size()==3);
-//		List<WorkItem> items = WorkItemDAO.findByPerson(conn, person.getId());
-//		assert(items.size()==0);
-//
-//		// Setup person with no national links - will allocate the UKRDC Number
-//		Person p2 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICHOLAS").setGender("1");
-//		p2.setPostcode("CH1 6LB").setStreet("Townfield Lane");
-//		p2.setLocalId(idBase2+"2").setLocalIdType("MR").setOriginator(originator2);
-//		im.store(p2);
-//		// VERIFY
-//		person = PersonDAO.findByLocalId(conn, p2.getLocalIdType(), p2.getLocalId(), p2.getOriginator());
-//		assert(person!=null);
-//		links = LinkRecordDAO.findByPerson(conn, person.getId());
-//		assert(links.size()==1);
-//		MasterRecord allocatedMr = MasterRecordDAO.get(conn, links.get(0).getMasterId());
-//		assert(allocatedMr.getNationalIdType().equals(NationalIdentity.UKRDC_TYPE));
-//		items = WorkItemDAO.findByPerson(conn, person.getId());
-//		assert(items.size()==0);
-//
-//		// LT1-1 - Link to UKRDC
-//		// LT1-3 - Deletes prior link
-//		// FORCE ERROR ON LINK - MAKE THE updatedBy > 20
-//		UKRDCIndexManagerResponse resp = im.link(p2.getId(), ukrdcMaster.getId(), "1234567890123456789012345", 1, "Verified with Saughall Medical Centre.");
-//		// VERIFY
-//		assert(resp.getStatus()==UKRDCIndexManagerResponse.FAIL);
-//		LinkRecord newLink = LinkRecordDAO.find(conn, ukrdcMaster.getId(), p2.getId());
-//		assert(newLink==null);
-//		// LT1-4 - Deletes prior link
-//		MasterRecord mr = MasterRecordDAO.get(conn, allocatedMr.getId());
-//		assert(mr!=null);
-//		LinkRecord oldLink = LinkRecordDAO.find(conn, allocatedMr.getId(), p2.getId());
-//		assert(oldLink!=null);
-//
-//	}
 	
+	// CASE 1B - 2nd record matches on NHS Number but demographics don't match (different DOB and SURNAME). Records linked with work record and master marked
+	//           NHS Master now has incorrect SURNAME because of the mismatch
+	@Test
+	public void testUnlinkCase1B() throws MpiException {
+
+		String originator = "LNKT1";
+		String originator2 = "LNKT2";
+		String idBase = originator+"001";
+		String idBase2 = originator2+"001";
+		NationalIdentity nhs = new NationalIdentity(NationalIdentity.NHS_TYPE,idBase+"N2");
+
+		UKRDCIndexManager im = new UKRDCIndexManager();
+		
+		// Setup person with NHS Number - will allocate UKRDC
+		Person p1 = new Person().setDateOfBirth(d1).setSurname("JONES").setGivenName("NICHOLAS").setGender("1");
+		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
+		p1.setLocalId(idBase+"1").setLocalIdType("MR").setOriginator(originator);
+		p1.addNationalId(nhs);
+		UKRDCIndexManagerResponse resp1 = im.store(p1);
+		// VERIFY
+		Person person = PersonDAO.findByLocalId(conn, p1.getLocalIdType(), p1.getLocalId(), p1.getOriginator());
+		assert(person!=null);
+		MasterRecord ukrdcMaster1 = MasterRecordDAO.findByNationalId(conn, resp1.getNationalIdentity().getId(), NationalIdentity.UKRDC_TYPE);
+		assert(ukrdcMaster1!=null);
+		MasterRecord nhsMaster1 = MasterRecordDAO.findByNationalId(conn, nhs.getId(), NationalIdentity.NHS_TYPE);
+		assert(nhsMaster1!=null);
+		List<LinkRecord> links = LinkRecordDAO.findByPerson(conn, person.getId());
+		assert(links.size()==2);
+		List<WorkItem> items = WorkItemDAO.findByPerson(conn, person.getId());
+		assert(items.size()==0);
+
+		// Setup person 2 with same NHS Number - will link to record above with Work Items for 
+		// 1 Claimed to NHS Number not verified
+		// 2 Inferred claim to UKRDC Number not verified
+		// Sets up a new UKRDC Number
+		Person p2 = new Person().setDateOfBirth(d2).setSurname("JOHNSON").setGivenName("NICHOLAS").setGender("2");
+		p2.setPostcode("CH1 6LB").setStreet("Townfield Lane");
+		p2.setLocalId(idBase2+"1").setLocalIdType("MR").setOriginator(originator2);
+		p2.addNationalId(nhs);
+		UKRDCIndexManagerResponse resp2 = im.store(p2);
+		// VERIFY
+		person = PersonDAO.findByLocalId(conn, p2.getLocalIdType(), p2.getLocalId(), p2.getOriginator());
+		assert(person!=null);
+		links = LinkRecordDAO.findByPerson(conn, p2.getId());
+		assert(links.size()==2);
+		items = WorkItemDAO.findByPerson(conn, person.getId());
+		assert(items.size()==2);
+		MasterRecord ukrdcMaster2 = MasterRecordDAO.findByNationalId(conn, resp2.getNationalIdentity().getId(), NationalIdentity.UKRDC_TYPE);
+		assert(ukrdcMaster2!=null);
+		MasterRecord nhsMaster2 = MasterRecordDAO.findByNationalId(conn, nhs.getId(), NationalIdentity.NHS_TYPE);
+		assert(nhsMaster2!=null);
+		assert(nhsMaster2.getSurname().equals(p2.getSurname()));
+		assert(nhsMaster2.getStatus()==MasterRecord.INVESTIGATE);
+		assert(ukrdcMaster1.getId()!=ukrdcMaster2.getId());
+		assert(nhsMaster1.getId()==nhsMaster2.getId());
+
+		// UNLINK
+		UKRDCIndexManagerResponse unlinkResp = im.unlink(p2.getId(), nhsMaster1.getId(), "NJONES01", "Verified with Saughall Medical Centre.");
+		// VERIFY
+		assert(unlinkResp.getStatus()==UKRDCIndexManagerResponse.SUCCESS);
+		LinkRecord oldLink = LinkRecordDAO.find(conn, nhsMaster1.getId(), p2.getId()); // 2nd record has matched to previous NHS Number
+		assert(oldLink==null);
+		nhsMaster2 = MasterRecordDAO.findByNationalId(conn, nhs.getId(), NationalIdentity.NHS_TYPE);
+		assert(nhsMaster2!=null);
+		assert(nhsMaster2.getStatus()==MasterRecord.OK);
+		assert(nhsMaster2.getSurname().equals(p1.getSurname()));
+		assert(nhsMaster2.getGivenName().equals(p1.getGivenName()));
+		assert(nhsMaster2.getGender().equals(p1.getGender()));
+		assert(nhsMaster2.getDateOfBirth().compareTo(p1.getDateOfBirth())==0);
+
+	}
+
 	@Test
 	public void testUnlinkValidationUser1() {
 		UKRDCIndexManager im = new UKRDCIndexManager();
-		MasterRecord testMr = new MasterRecord();
-		UKRDCIndexManagerResponse resp = im.unlink(1,1, testMr,  null, "Verified with Saughall Medical Centre.");
+		UKRDCIndexManagerResponse resp = im.unlink(1,1, null, "Verified with Saughall Medical Centre.");
 		assert(resp.getStatus()==UKRDCIndexManagerResponse.FAIL);
 		assert(resp.getMessage().contains("Incomplete parameters"));
 	}
@@ -170,8 +177,7 @@ public class UKRDCIndexManagerUnlinkSystemTest extends UKRDCIndexManagerBaseTest
 	@Test
 	public void testUnlinkValidationUser2() throws MpiException {
 		UKRDCIndexManager im = new UKRDCIndexManager();
-		MasterRecord testMr = new MasterRecord();
-		UKRDCIndexManagerResponse resp = im.unlink(1,1, testMr, "", "Verified with Saughall Medical Centre.");
+		UKRDCIndexManagerResponse resp = im.unlink(1,1, "", "Verified with Saughall Medical Centre.");
 		assert(resp.getStatus()==UKRDCIndexManagerResponse.FAIL);
 		assert(resp.getMessage().contains("Incomplete parameters"));
 	}
@@ -179,8 +185,7 @@ public class UKRDCIndexManagerUnlinkSystemTest extends UKRDCIndexManagerBaseTest
 	@Test
 	public void testUnlinkValidationDesc1() throws MpiException {
 		UKRDCIndexManager im = new UKRDCIndexManager();
-		MasterRecord testMr = new MasterRecord();
-		UKRDCIndexManagerResponse resp = im.unlink(1,1, testMr, "NJONES01", null);
+		UKRDCIndexManagerResponse resp = im.unlink(1,1, "NJONES01", null);
 		assert(resp.getStatus()==UKRDCIndexManagerResponse.FAIL);
 		assert(resp.getMessage().contains("Incomplete parameters"));
 	}
@@ -188,8 +193,7 @@ public class UKRDCIndexManagerUnlinkSystemTest extends UKRDCIndexManagerBaseTest
 	@Test
 	public void testUnlinkValidationDesc2() throws MpiException {
 		UKRDCIndexManager im = new UKRDCIndexManager();
-		MasterRecord testMr = new MasterRecord();
-		UKRDCIndexManagerResponse resp = im.unlink(1,1, testMr, "NJONES01", "");
+		UKRDCIndexManagerResponse resp = im.unlink(1,1, "NJONES01", "");
 		assert(resp.getStatus()==UKRDCIndexManagerResponse.FAIL);
 		assert(resp.getMessage().contains("Incomplete parameters"));
 	}
@@ -197,8 +201,7 @@ public class UKRDCIndexManagerUnlinkSystemTest extends UKRDCIndexManagerBaseTest
 	@Test
 	public void testUnlinkValidationPersonId() throws MpiException {
 		UKRDCIndexManager im = new UKRDCIndexManager();
-		MasterRecord testMr = new MasterRecord();
-		UKRDCIndexManagerResponse resp = im.unlink(0, 1, testMr, "NJONES01", "DESC");
+		UKRDCIndexManagerResponse resp = im.unlink(0, 1, "NJONES01", "DESC");
 		assert(resp.getStatus()==UKRDCIndexManagerResponse.FAIL);
 		assert(resp.getMessage().contains("Incomplete parameters"));
 	}
@@ -206,8 +209,7 @@ public class UKRDCIndexManagerUnlinkSystemTest extends UKRDCIndexManagerBaseTest
 	@Test
 	public void testUnlinkValidationMasterId() throws MpiException {
 		UKRDCIndexManager im = new UKRDCIndexManager();
-		MasterRecord testMr = new MasterRecord();
-		UKRDCIndexManagerResponse resp = im.unlink(1, 0, testMr, "NJONES01", "DESC");
+		UKRDCIndexManagerResponse resp = im.unlink(1, 0, "NJONES01", "DESC");
 		assert(resp.getStatus()==UKRDCIndexManagerResponse.FAIL);
 		assert(resp.getMessage().contains("Incomplete parameters"));
 	}
