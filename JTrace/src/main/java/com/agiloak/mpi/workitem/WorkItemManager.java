@@ -117,6 +117,41 @@ public class WorkItemManager {
 		
 	}
 	
+	/**
+	 * OVERLOAD to use int for workItemId and status - String interface should be deprecated
+	 * Update the Work Item using the id as the key. Certain values are not updateable as they are intrinsic
+	 * to the WorkItem (personId, masterId, type). Last updated date will automatically be updated
+	 *
+	 * @param workItemId REQUIRED - The id of the WorkItem being updated. This must be a valid integer and must exist in the database.
+	 * @param status REQUIRED - The new status of the WorkItem {@link WorkItemStatus} - must be a valid status
+	 * @param updateDesc REQUIRED - Description of the work item update
+	 * @param updatedBy REQUIRED - Who is updating the item
+	 * @return The WorkItemManagerResponse containing status information and the WorkItem following the update
+	 */
+	public WorkItemManagerResponse update(int workItemId, int status, String updateDesc, String updatedBy) {
+
+		WorkItemManagerResponse resp = new WorkItemManagerResponse();
+		Connection conn = null;
+		try {
+			try {
+				conn = SimpleConnectionManager.getConnection();
+				// API BUSINESS START
+				WorkItem workItem = updateInternal(conn, workItemId, status, updateDesc, updatedBy);
+				resp.setStatus(WorkItemManagerResponse.SUCCESS);
+				resp.setWorkItem(workItem);
+				// API BUSINESS END
+				conn.commit();
+			} catch (Exception ex) {
+				SimpleConnectionManager.rollback(conn, ex);
+			} finally {
+				SimpleConnectionManager.closeConnection(conn);
+			}
+		} catch (Exception ex) {
+			resp = getErrorResponse(ex);
+		}
+		return resp;
+		
+	}
 	private WorkItem updateInternal(Connection conn, int workItemId, int status, String updateDesc, String updatedBy) throws MpiException {
 
 		logger.debug("Updating Work Item");

@@ -83,11 +83,6 @@ public class UKRDCIndexManager {
 	
 	protected void unlinkInternal(Connection conn, int personId, int masterId, String user, String reason) throws MpiException {
 
-		if (personId==0 || masterId==0 || reason==null || reason.length()==0 || user==null || user.length()==0 ) { 
-			logger.error("Incomplete parameters for unlink");
-			throw new MpiException("Incomplete parameters for unlink");
-		}
-		
 		LinkRecord link = LinkRecordDAO.find(conn, masterId, personId);
 		
 		if (link==null) {
@@ -99,27 +94,16 @@ public class UKRDCIndexManager {
 		am.create(conn, Audit.LINK_DELETED, personId, masterId, reason);
 	}
 
-	protected void resetMaster(Connection conn, int masterId, String user, String reason) throws MpiException {
+	protected void resetMaster(Connection conn, MasterRecord master, String user, String reason) throws MpiException {
 
-		if (masterId==0 || reason==null || reason.length()==0 || user==null || user.length()==0 ) { 
-			logger.error("Incomplete parameters for master record reset");
-			throw new MpiException("Incomplete parameters for master record reset");
-		}
-		
-		MasterRecord dbMaster = MasterRecordDAO.get(conn, masterId);
-		if (dbMaster==null) {
-			logger.error("Master Record does not exist");
-			throw new MpiException("Master Record does not exists");
-		}
-		
 		// Get last linked patient
-		List<LinkRecord> links = LinkRecordDAO.findByMaster(conn, masterId);
+		List<LinkRecord> links = LinkRecordDAO.findByMaster(conn, master.getId());
 		
 		// Delete if records remain linked
 		if (links.size()==0) {
-			MasterRecordDAO.delete(conn, masterId);
+			MasterRecordDAO.delete(conn, master.getId());
 			AuditManager am = new AuditManager();
-			am.create(conn, Audit.MASTER_RECORD_DELETED_REDUNDANT_ADMIN, -1, masterId, reason);
+			am.create(conn, Audit.MASTER_RECORD_DELETED_REDUNDANT_ADMIN, -1, master.getId(), reason);
 		} else {
 			// findByMaster is ordered so the first is the latest
 			LinkRecord latestLink = links.get(0);
@@ -131,18 +115,18 @@ public class UKRDCIndexManager {
 			}
 			
 			// reset demographics from incoming record
-			dbMaster.setGender(lastLinkedPerson.getGender());
-			dbMaster.setDateOfBirth(lastLinkedPerson.getDateOfBirth());
-			dbMaster.setGivenName(lastLinkedPerson.getGivenName());
-			dbMaster.setSurname(lastLinkedPerson.getSurname());
+			master.setGender(lastLinkedPerson.getGender());
+			master.setDateOfBirth(lastLinkedPerson.getDateOfBirth());
+			master.setGivenName(lastLinkedPerson.getGivenName());
+			master.setSurname(lastLinkedPerson.getSurname());
 			
 			// reset status
-			dbMaster.setStatus(MasterRecord.OK);
-			dbMaster.setEffectiveDate(new Date());
+			master.setStatus(MasterRecord.OK);
+			master.setEffectiveDate(new Date());
 			
-			MasterRecordDAO.update(conn, dbMaster);
+			MasterRecordDAO.update(conn, master);
 			AuditManager am = new AuditManager();
-			am.create(conn, Audit.MASTER_RECORD_UPDATED, -1, masterId, reason);
+			am.create(conn, Audit.MASTER_RECORD_UPDATED, -1, master.getId(), reason);
 		}
 			
 		
@@ -354,7 +338,6 @@ public class UKRDCIndexManager {
 	 * Allow manual unlinking of records and optionally reset of Master Demographics
 	 * @param patientId
 	 * @param masterId
-	 * @param master -(optional) master record with demographics to be updated
 	 * @param user - user requesting the update
 	 * @param reason - reason for the update
 	 */
@@ -751,7 +734,7 @@ public class UKRDCIndexManager {
 	 * 
 	 * @param person
 	 */
-	private NationalIdentity createUKRDCLink(Connection conn, Person person) throws MpiException {
+	protected NationalIdentity createUKRDCLink(Connection conn, Person person) throws MpiException {
 
 		logger.debug("createUKRDCLink");
 
