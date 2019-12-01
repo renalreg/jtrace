@@ -79,6 +79,9 @@ public class UKRDCIndexManager {
 		link.setLinkType(LinkRecord.MANUAL_TYPE);
 		LinkRecordDAO.create(conn, link);
 		
+		AuditManager am = new AuditManager();
+		am.create(conn, Audit.MANUAL_LINK, personId, masterId, linkDesc, user);
+		
 	}
 	
 	protected void unlinkInternal(Connection conn, int personId, int masterId, String user, String reason) throws MpiException {
@@ -91,7 +94,7 @@ public class UKRDCIndexManager {
 		}
 		LinkRecordDAO.delete(conn, link);
 		AuditManager am = new AuditManager();
-		am.create(conn, Audit.LINK_DELETED, personId, masterId, reason);
+		am.create(conn, Audit.MANUAL_UNLINK, personId, masterId, reason, user);
 	}
 
 	protected void resetMaster(Connection conn, MasterRecord master, String user, String reason) throws MpiException {
@@ -103,7 +106,7 @@ public class UKRDCIndexManager {
 		if (links.size()==0) {
 			MasterRecordDAO.delete(conn, master.getId());
 			AuditManager am = new AuditManager();
-			am.create(conn, Audit.MASTER_RECORD_DELETED_REDUNDANT_ADMIN, -1, master.getId(), reason);
+			am.create(conn, Audit.MASTER_RECORD_DELETED_REDUNDANT, -1, master.getId(), reason, user);
 		} else {
 			// findByMaster is ordered so the first is the latest
 			LinkRecord latestLink = links.get(0);
@@ -126,7 +129,7 @@ public class UKRDCIndexManager {
 			
 			MasterRecordDAO.update(conn, master);
 			AuditManager am = new AuditManager();
-			am.create(conn, Audit.MASTER_RECORD_UPDATED, -1, master.getId(), reason);
+			am.create(conn, Audit.MASTER_RECORD_UPDATED, lastLinkedPerson.getId(), master.getId(), reason, user);
 		}
 			
 		
@@ -836,7 +839,7 @@ public class UKRDCIndexManager {
 									attr.put("NationalIdType", natId.getType());
 									attr.put("NationalId", natId.getId());
 
-									am.create(conn, Audit.NEW_MATCH_THROUGH_NATIONAL_ID, person.getId(), ukrdcMaster.getId(),"Matched By National Id", attr);
+									am.create(conn, Audit.NEW_MATCH_THROUGH_NATIONAL_ID, person.getId(), ukrdcMaster.getId(),"Matched By National Id", null, attr);
 
 									linked = true;
 									break; //Only want to link once
@@ -870,7 +873,7 @@ public class UKRDCIndexManager {
 				attr.put("NationalIdType", NationalIdentity.UKRDC_TYPE);
 				attr.put("NationalId", ukrdcMaster.getNationalId());
 
-				am.create(conn, Audit.NO_MATCH_ASSIGN_NEW, person.getId(), ukrdcMaster.getId(), "UKRDC Number Allocated", attr);
+				am.create(conn, Audit.NO_MATCH_ASSIGN_NEW, person.getId(), ukrdcMaster.getId(), "UKRDC Number Allocated", null, attr);
 
 				logger.debug("Linking to the new master record");
 				// and link this record to it

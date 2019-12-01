@@ -192,7 +192,7 @@ public class WorkItemManager {
 			attr.put("UpdatedBy", workItem.getUpdatedBy());
 			attr.put("UpdateDesc", workItem.getUpdateDesc());
 			AuditManager am = new AuditManager();
-			am.create(conn, Audit.WORK_ITEM_CREATED, workItem.getPersonId(), workItem.getMasterId(), "WI UPDATED", attr);
+			am.create(conn, Audit.WORK_ITEM_UPDATED, workItem.getPersonId(), workItem.getMasterId(), "WI UPDATED", updatedBy, attr);
 		}
 		
 		return workItem;
