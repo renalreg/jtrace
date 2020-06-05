@@ -40,38 +40,57 @@ public class PersonDAO {
 			rs = preparedStatement.executeQuery();
 			
 			if (rs.next()){
-				person = new Person();
-				person.setId(rs.getInt("id"));
-				person.setOriginator(rs.getString("originator"));
-				person.setLocalId(rs.getString("localid"));
-				person.setLocalIdType(rs.getString("localidtype"));
-
-				person.setPrimaryId(rs.getString("nationalid"));
-				person.setPrimaryIdType(rs.getString("nationalidtype"));
-
-				person.setDateOfBirth(rs.getTimestamp("dateofbirth"));
-				person.setGender(rs.getString("gender"));
-				person.setDateOfDeath(rs.getTimestamp("dateofdeath"));
-
-				person.setGivenName(rs.getString("givenname"));
-				person.setOtherGivenNames(rs.getString("othergivennames"));
-				person.setSurname(rs.getString("surname"));
-				person.setPrevSurname(rs.getString("prevsurname"));
-				person.setTitle(rs.getString("title"));
-
-				person.setPostcode(rs.getString("postcode"));
-				person.setStreet(rs.getString("street"));
-
-				person.setStdSurname(rs.getString("stdsurname"));
-				person.setStdGivenName(rs.getString("stdgivenname"));
-				person.setStdPrevSurname(rs.getString("stdprevsurname"));
-				person.setStdPostcode(rs.getString("stdpostcode"));
+				person = buildPersonRecord(rs);
+			}
 			
-				person.setSkipDuplicateCheck(rs.getBoolean("skipduplicatecheck"));
+		} catch (Exception e) {
+			logger.error("Failure querying Person.",e);
+			throw new MpiException("Person read failed. "+e.getMessage());
+		} finally {
 
-				person.setLastUpdated(rs.getTimestamp("lastupdated"));
-				person.setCreationDate(rs.getTimestamp("creationdate"));
+			if (rs != null) {
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing resultset.",e);
+					throw new MpiException("Person read failed. "+e.getMessage());
+				}
+			}
+			
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					logger.error("Failure closing prepared statement.",e);
+					throw new MpiException("Person read failed. "+e.getMessage());
+				}
+			}
+		}
+		
+		return person;
 
+	}
+
+	public static Person get(Connection conn, int id) throws MpiException {
+
+		logger.debug("Starting");
+
+		String findSQL = "select * from person where id = ?";
+		
+		PreparedStatement preparedStatement = null;
+		ResultSet rs = null;
+		
+		Person person = null;
+		
+		try {
+
+			preparedStatement = conn.prepareStatement(findSQL);
+			preparedStatement.setInt(1, id);
+
+			rs = preparedStatement.executeQuery();
+			
+			if (rs.next()){
+				person = buildPersonRecord(rs);
 			}
 			
 		} catch (Exception e) {
@@ -367,5 +386,55 @@ public class PersonDAO {
 		preparedStatement.setBoolean(15, person.isSkipDuplicateCheck());
 		
 	}
+
+	private static Person buildPersonRecord(ResultSet rs) throws MpiException {
+
+		logger.debug("Starting");
+
+		Person person = null;
+		try {
+
+			person = new Person();
+			person.setId(rs.getInt("id"));
+			person.setOriginator(rs.getString("originator"));
+			person.setLocalId(rs.getString("localid"));
+			person.setLocalIdType(rs.getString("localidtype"));
+
+			person.setPrimaryId(rs.getString("nationalid"));
+			person.setPrimaryIdType(rs.getString("nationalidtype"));
+
+			person.setDateOfBirth(rs.getTimestamp("dateofbirth"));
+			person.setGender(rs.getString("gender"));
+			person.setDateOfDeath(rs.getTimestamp("dateofdeath"));
+
+			person.setGivenName(rs.getString("givenname"));
+			person.setOtherGivenNames(rs.getString("othergivennames"));
+			person.setSurname(rs.getString("surname"));
+			person.setPrevSurname(rs.getString("prevsurname"));
+			person.setTitle(rs.getString("title"));
+
+			person.setPostcode(rs.getString("postcode"));
+			person.setStreet(rs.getString("street"));
+
+			person.setStdSurname(rs.getString("stdsurname"));
+			person.setStdGivenName(rs.getString("stdgivenname"));
+			person.setStdPrevSurname(rs.getString("stdprevsurname"));
+			person.setStdPostcode(rs.getString("stdpostcode"));
+		
+			person.setSkipDuplicateCheck(rs.getBoolean("skipduplicatecheck"));
+
+			person.setLastUpdated(rs.getTimestamp("lastupdated"));
+			person.setCreationDate(rs.getTimestamp("creationdate"));
+
+
+		} catch (Exception e) {
+			logger.error("Failure querying Person.",e);
+			throw new MpiException("Failure querying Person. "+e.getMessage());
+		} 
+		
+		return person;
+
+	}
+	
 	
 }

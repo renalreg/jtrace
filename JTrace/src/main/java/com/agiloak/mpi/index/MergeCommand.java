@@ -42,7 +42,7 @@ public class MergeCommand extends APICommand {
 			attr.put("SuperceedingUKRDC", superceeding.getNationalId());
 			attr.put("SupercededUKRDC", superceded.getNationalId());
 			AuditManager am = new AuditManager();
-			am.create(conn, Audit.UKRDC_MERGE, link.getPersonId(), superceedingId, "UKRDC Merge", attr);
+			am.create(conn, Audit.UKRDC_MERGE, link.getPersonId(), superceedingId, "UKRDC Merge", null, attr);
 			
 		}
 		// 3 - MASTER RECORD

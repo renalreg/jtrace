@@ -56,7 +56,7 @@ public class AuditTest {
 	public void testCreateAndRead1() throws MpiException {
 		AuditManager am = new AuditManager();
 				
-		Audit audit = am.create(conn, Audit.NO_MATCH_ASSIGN_NEW, 100001, 100001, "test");
+		Audit audit = am.create(conn, Audit.NO_MATCH_ASSIGN_NEW, 100001, 100001, "test", "user");
 		List<Audit> audits = AuditDAO.findByPerson(conn, 100001);
 		assert(audits.size()==1);
 		
@@ -66,6 +66,7 @@ public class AuditTest {
 		assert(audit2.getType()==audit.getType());
 		assert(audit2.getDescription().equals(audit.getDescription()));
 		assert(audit2.getLastUpdated().compareTo(audit.getLastUpdated())==0);
+		assert(audit2.getUpdatedBy().equals(audit.getUpdatedBy()));
 
 	}
 	@Test
@@ -75,7 +76,7 @@ public class AuditTest {
 		attr.put("TestK1", "TestV1");
 		attr.put("TestK2", "TestV2");
 		
-		Audit audit = am.create(conn, Audit.NO_MATCH_ASSIGN_NEW, 100002, 1, "test", attr);
+		Audit audit = am.create(conn, Audit.NO_MATCH_ASSIGN_NEW, 100002, 1, "test", "user", attr);
 		List<Audit> audits = AuditDAO.findByPerson(conn, 100002);
 		assert(audits.size()==1);
 		
@@ -84,6 +85,7 @@ public class AuditTest {
 		assert(audit2.getMasterId()==audit.getMasterId());
 		assert(audit2.getType()==audit.getType());
 		assert(audit2.getDescription().equals(audit.getDescription()));
+		assert(audit2.getUpdatedBy().equals(audit.getUpdatedBy()));
 		assert(audit2.getLastUpdated().compareTo(audit.getLastUpdated())==0);
 		assert(audit2.getAttributes().size()==2);
 		assert(audit2.getAttributes().get("TestK1").equals("TestV1"));
@@ -95,7 +97,7 @@ public class AuditTest {
 	public void testCreateAndRead2() throws MpiException {
 		AuditManager am = new AuditManager();
 
-		Audit audit = am.create(conn, Audit.NEW_MATCH_THROUGH_NATIONAL_ID, 100003, 1, "test");
+		Audit audit = am.create(conn, Audit.NEW_MATCH_THROUGH_NATIONAL_ID, 100003, 1, "test", "user");
 		List<Audit> audits = AuditDAO.findByPerson(conn, 100003);
 		assert(audits.size()==1);
 		
@@ -104,6 +106,7 @@ public class AuditTest {
 		assert(audit2.getMasterId()==audit.getMasterId());
 		assert(audit2.getType()==audit.getType());
 		assert(audit2.getDescription().equals(audit.getDescription()));
+		assert(audit2.getUpdatedBy().equals(audit.getUpdatedBy()));
 		assert(audit2.getLastUpdated().compareTo(audit.getLastUpdated())==0);
 	}
 
@@ -111,7 +114,7 @@ public class AuditTest {
 	public void testCreateAndRead3() throws MpiException {
 		AuditManager am = new AuditManager();
 
-		Audit audit = am.create(conn, Audit.UKRDC_MERGE, 100004, 1, "test");
+		Audit audit = am.create(conn, Audit.UKRDC_MERGE, 100004, 1, "test", "user");
 		List<Audit> audits = AuditDAO.findByPerson(conn, 100004);
 		assert(audits.size()==1);
 		
@@ -120,6 +123,7 @@ public class AuditTest {
 		assert(audit2.getMasterId()==audit.getMasterId());
 		assert(audit2.getType()==audit.getType());
 		assert(audit2.getDescription().equals(audit.getDescription()));
+		assert(audit2.getUpdatedBy().equals(audit.getUpdatedBy()));
 		assert(audit2.getLastUpdated().compareTo(audit.getLastUpdated())==0);
 	}
 
@@ -127,34 +131,34 @@ public class AuditTest {
 	public void testCreateNoPerson() throws MpiException {
 		AuditManager am = new AuditManager();
 		exception.expect(MpiException.class);
-		am.create(conn, Audit.NO_MATCH_ASSIGN_NEW,0,1,"test");
+		am.create(conn, Audit.NO_MATCH_ASSIGN_NEW,0,1,"test","user");
 	}
 
 	@Test
 	public void testCreateNoMaster() throws MpiException {
 		AuditManager am = new AuditManager();
 		exception.expect(MpiException.class);
-		am.create(conn, Audit.NO_MATCH_ASSIGN_NEW,1,0,"test");
+		am.create(conn, Audit.NO_MATCH_ASSIGN_NEW,1,0,"test","user");
 	}
 	@Test
 	public void testCreateNullDesc() throws MpiException {
 		AuditManager am = new AuditManager();
 		exception.expect(MpiException.class);
-		am.create(conn, Audit.NO_MATCH_ASSIGN_NEW,1,2,null);
+		am.create(conn, Audit.NO_MATCH_ASSIGN_NEW,1,2,null,"user");
 	}
 
 	@Test
 	public void testCreateEmptyDesc() throws MpiException {
 		AuditManager am = new AuditManager();
 		exception.expect(MpiException.class);
-		am.create(conn, Audit.NO_MATCH_ASSIGN_NEW,1,3,"");
+		am.create(conn, Audit.NO_MATCH_ASSIGN_NEW,1,3,"","user");
 	}
 	
 	@Test
 	public void testDelete() throws MpiException {
 		AuditManager am = new AuditManager();
-		am.create(conn, Audit.NEW_MATCH_THROUGH_NATIONAL_ID, 100005, 1, "test");
-		am.create(conn, Audit.NO_MATCH_ASSIGN_NEW, 100005, 2, "test2");
+		am.create(conn, Audit.NEW_MATCH_THROUGH_NATIONAL_ID, 100005, 1, "test", "user");
+		am.create(conn, Audit.NO_MATCH_ASSIGN_NEW, 100005, 2, "test2","user");
 		List<Audit> audits = AuditDAO.findByPerson(conn, 100005);
 		assert(audits.size()==2);
 		

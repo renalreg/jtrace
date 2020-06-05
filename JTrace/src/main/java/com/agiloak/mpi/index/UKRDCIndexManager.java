@@ -1,7 +1,6 @@
 package com.agiloak.mpi.index;
 
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -11,12 +10,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.agiloak.mpi.MpiException;
-import com.agiloak.mpi.SimpleConnectionManager;
 import com.agiloak.mpi.audit.Audit;
 import com.agiloak.mpi.audit.AuditManager;
 import com.agiloak.mpi.audit.persistence.AuditDAO;
@@ -82,8 +79,62 @@ public class UKRDCIndexManager {
 		link.setLinkType(LinkRecord.MANUAL_TYPE);
 		LinkRecordDAO.create(conn, link);
 		
+		AuditManager am = new AuditManager();
+		am.create(conn, Audit.MANUAL_LINK, personId, masterId, linkDesc, user);
+		
 	}
 	
+	protected void unlinkInternal(Connection conn, int personId, int masterId, String user, String reason) throws MpiException {
+
+		LinkRecord link = LinkRecordDAO.find(conn, masterId, personId);
+		
+		if (link==null) {
+			logger.error("Link Record does not exist");
+			throw new MpiException("Link Record does not exists");
+		}
+		LinkRecordDAO.delete(conn, link);
+		AuditManager am = new AuditManager();
+		am.create(conn, Audit.MANUAL_UNLINK, personId, masterId, reason, user);
+	}
+
+	protected void resetMaster(Connection conn, MasterRecord master, String user, String reason) throws MpiException {
+
+		// Get last linked patient
+		List<LinkRecord> links = LinkRecordDAO.findByMaster(conn, master.getId());
+		
+		// Delete if records remain linked
+		if (links.size()==0) {
+			MasterRecordDAO.delete(conn, master.getId());
+			AuditManager am = new AuditManager();
+			am.create(conn, Audit.MASTER_RECORD_DELETED_REDUNDANT, -1, master.getId(), reason, user);
+		} else {
+			// findByMaster is ordered so the first is the latest
+			LinkRecord latestLink = links.get(0);
+			Person lastLinkedPerson = PersonDAO.get(conn, latestLink.getPersonId());
+			
+			if (lastLinkedPerson==null) {
+				logger.error("Linked Person Record does not exist");
+				throw new MpiException("Linked Person Record does not exists");
+			}
+			
+			// reset demographics from incoming record
+			master.setGender(lastLinkedPerson.getGender());
+			master.setDateOfBirth(lastLinkedPerson.getDateOfBirth());
+			master.setGivenName(lastLinkedPerson.getGivenName());
+			master.setSurname(lastLinkedPerson.getSurname());
+			
+			// reset status
+			master.setStatus(MasterRecord.OK);
+			master.setEffectiveDate(new Date());
+			
+			MasterRecordDAO.update(conn, master);
+			AuditManager am = new AuditManager();
+			am.create(conn, Audit.MASTER_RECORD_UPDATED, lastLinkedPerson.getId(), master.getId(), reason, user);
+		}
+			
+		
+	}
+
 	/**
 	 * Search for a UKRDC Identity for these patient details.
 	 * @param psr
@@ -282,6 +333,19 @@ public class UKRDCIndexManager {
 
 	public UKRDCIndexManagerResponse merge(int superceedingId, int supercededId) {
 		MergeCommand cmd = new MergeCommand(superceedingId, supercededId);
+		UKRDCIndexManagerResponse resp = cmd.executeAPICommand(this);
+		return resp;		
+	}
+
+	/**
+	 * Allow manual unlinking of records and optionally reset of Master Demographics
+	 * @param patientId
+	 * @param masterId
+	 * @param user - user requesting the update
+	 * @param reason - reason for the update
+	 */
+	public UKRDCIndexManagerResponse unlink(int personId, int masterId, String user, String reason) {
+		UnlinkCommand cmd = new UnlinkCommand(personId, masterId, user, reason);
 		UKRDCIndexManagerResponse resp = cmd.executeAPICommand(this);
 		return resp;		
 	}
@@ -673,7 +737,7 @@ public class UKRDCIndexManager {
 	 * 
 	 * @param person
 	 */
-	private NationalIdentity createUKRDCLink(Connection conn, Person person) throws MpiException {
+	protected NationalIdentity createUKRDCLink(Connection conn, Person person) throws MpiException {
 
 		logger.debug("createUKRDCLink");
 
@@ -775,7 +839,7 @@ public class UKRDCIndexManager {
 									attr.put("NationalIdType", natId.getType());
 									attr.put("NationalId", natId.getId());
 
-									am.create(conn, Audit.NEW_MATCH_THROUGH_NATIONAL_ID, person.getId(), ukrdcMaster.getId(),"Matched By National Id", attr);
+									am.create(conn, Audit.NEW_MATCH_THROUGH_NATIONAL_ID, person.getId(), ukrdcMaster.getId(),"Matched By National Id", null, attr);
 
 									linked = true;
 									break; //Only want to link once
@@ -809,7 +873,7 @@ public class UKRDCIndexManager {
 				attr.put("NationalIdType", NationalIdentity.UKRDC_TYPE);
 				attr.put("NationalId", ukrdcMaster.getNationalId());
 
-				am.create(conn, Audit.NO_MATCH_ASSIGN_NEW, person.getId(), ukrdcMaster.getId(), "UKRDC Number Allocated", attr);
+				am.create(conn, Audit.NO_MATCH_ASSIGN_NEW, person.getId(), ukrdcMaster.getId(), "UKRDC Number Allocated", null, attr);
 
 				logger.debug("Linking to the new master record");
 				// and link this record to it
