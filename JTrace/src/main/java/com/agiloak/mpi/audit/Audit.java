@@ -24,6 +24,12 @@ public class Audit {
 
 	// PIDXREF
 	public final static int NEW_PIDXREF = 31;
+	
+	// ADMIN AUDITS
+	public final static int MANUAL_UNLINK = 41;
+	public final static int MASTER_RECORD_UPDATED = 42;
+	public final static int MASTER_RECORD_DELETED_REDUNDANT = 43;
+	public final static int MANUAL_LINK = 44;
 
 	Gson gson = new Gson();
 
@@ -36,12 +42,13 @@ public class Audit {
 		this.attributes = attributes;
 	}
 	
-	public Audit(int type, int personId, int masterId, String desc, NationalIdentity mainNationalIdentity, Map<String,String>  attributes) {
+	public Audit(int type, int personId, int masterId, String desc, NationalIdentity mainNationalIdentity, String updatedBy, Map<String,String>  attributes) {
 		this.type = type;
 		this.personId = personId;
 		this.masterId = masterId;
 		this.description = desc;
 		this.lastUpdated = new Date();
+		this.updatedBy = updatedBy;
 		this.mainNationalIdentity = mainNationalIdentity;
 		this.attributes = attributes;
 	}

@@ -429,7 +429,7 @@ public class LinkRecordDAO {
 
 		logger.debug("Starting");
 
-		String findSQL = "select * from linkrecord where masterid = ? ";
+		String findSQL = "select * from linkrecord where masterid = ? order by id desc";
 		
 		PreparedStatement preparedStatement = null;
 		ResultSet rs = null;

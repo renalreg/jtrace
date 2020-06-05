@@ -26,7 +26,7 @@ public class AuditManager {
 	
 	private final static Logger logger = LoggerFactory.getLogger(AuditManager.class);
 	
-	public Audit create(Connection conn, int type, int personId, int masterId, String desc, Map<String,String> attributes) throws MpiException {
+	public Audit create(Connection conn, int type, int personId, int masterId, String desc, String updatedBy, Map<String,String> attributes) throws MpiException {
 
 		if ( personId==0 ) {
 			throw new MpiException("Person Id must be provided");
@@ -41,7 +41,7 @@ public class AuditManager {
 		
 		NationalIdentity mainNationalId = getMainNationalIdentity(conn, personId);
 		
-		Audit audit = new Audit(type, personId, masterId, desc, mainNationalId, attributes);
+		Audit audit = new Audit(type, personId, masterId, desc, mainNationalId, updatedBy, attributes);
 		AuditDAO.create(conn, audit);
 			
 		return audit;
@@ -49,9 +49,9 @@ public class AuditManager {
 	}
 	
 	// Convenience method when no attributes
-	public Audit create(Connection conn, int type, int personId, int masterId, String desc) throws MpiException {
+	public Audit create(Connection conn, int type, int personId, int masterId, String desc, String updatedBy) throws MpiException {
 
-		return create(conn, type, personId, masterId, desc, null);		
+		return create(conn, type, personId, masterId, desc, updatedBy, null);		
 	}
 	
 	private NationalIdentity getMainNationalIdentity(Connection conn, int personId) throws MpiException {

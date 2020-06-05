@@ -196,7 +196,7 @@ public class UKRDCIndexManagerLinkSystemTest extends UKRDCIndexManagerBaseTest {
 	public void testLinkValidationDesc2() throws MpiException {
 		UKRDCIndexManager im = new UKRDCIndexManager();
 		// LT1-2D - No Desc
-		UKRDCIndexManagerResponse resp = im.link(1,1, "NJONES01", 1, null);
+		UKRDCIndexManagerResponse resp = im.link(1,1, "NJONES01", 1, "");
 		assert(resp.getStatus()==UKRDCIndexManagerResponse.FAIL);
 		assert(resp.getMessage().contains("Incomplete parameters"));
 	}
