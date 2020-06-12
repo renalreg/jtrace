@@ -540,6 +540,7 @@ public class UKRDCIndexManager {
 
 		logger.debug("*********Processing person record:"+person);
 		NationalIdentity ukrdcId = null;
+		boolean nationalIdSetChanged = false;
 		
 		if (person.getEffectiveDate()==null) {
 			person.setEffectiveDate(new Date());
@@ -596,6 +597,7 @@ public class UKRDCIndexManager {
 					if (!found) {
 						// TEST:UT4-2 [CHI record]
 						logger.debug("A national link record on the database is not on this inbound record - delete the link");
+						nationalIdSetChanged = true;
 						// The Link on the database is not in the new record so delete the old link. If no other links to this master then delete the master
 						LinkRecordDAO.delete(conn, link);
 						List<LinkRecord> remainingLinks = LinkRecordDAO.findByMaster(conn, master.getId());
@@ -622,12 +624,20 @@ public class UKRDCIndexManager {
 				if (!processed.contains(natId.getType())) {
 					// TEST:UT4-1
 					// TEST:UT4-2
+					nationalIdSetChanged = true;
 					createNationalIdLinks(conn, person, natId.getId(), natId.getType());
 				}
 			}			
 			
 			// Update the UKRDC link
-			ukrdcId = updateUKRDCLink(conn, person, storedPerson);
+			if (nationalIdSetChanged) {
+//				ukrdcId = createUKRDCLink(conn, person);
+				System.out.println("NationalIdSetChanged");
+				ukrdcId = updateUKRDCLink(conn, person, storedPerson);			
+			} else {
+				System.out.println("NationalIdSet NOT Changed");
+				ukrdcId = updateUKRDCLink(conn, person, storedPerson);			
+			}
 			
 		} else {
 			logger.debug("NEW RECORD");

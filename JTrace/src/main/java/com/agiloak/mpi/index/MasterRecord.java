@@ -140,5 +140,8 @@ public class MasterRecord {
 		this.effectiveDate = effectiveDate;
 		return this;
 	}
+	public NationalIdentity getNationalIdentity() {
+		return new NationalIdentity(nationalIdType, nationalId);
+	}
 	
 }

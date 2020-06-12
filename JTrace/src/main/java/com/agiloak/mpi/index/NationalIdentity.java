@@ -47,4 +47,20 @@ public class NationalIdentity {
 		return this;
 	}
 	
+	@Override
+    public boolean equals(Object o) { 
+        if (o == this) { 
+            return true; 
+        } 
+        if (!(o instanceof NationalIdentity)) { 
+            return false; 
+        } 
+        NationalIdentity c = (NationalIdentity) o;
+        if (type.equals(c.type) && id.equals(c.id)) return true;
+        return false; 
+    } 
+	public String toString() {
+		return "["+type+"]["+id+"]";
+	}
+	
 }
