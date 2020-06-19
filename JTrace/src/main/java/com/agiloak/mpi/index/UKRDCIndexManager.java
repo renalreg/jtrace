@@ -631,11 +631,8 @@ public class UKRDCIndexManager {
 			
 			// Update the UKRDC link
 			if (nationalIdSetChanged) {
-//				ukrdcId = createUKRDCLink(conn, person);
-				System.out.println("NationalIdSetChanged");
-				ukrdcId = updateUKRDCLink(conn, person, storedPerson);			
+				ukrdcId = createUKRDCLink(conn, person);
 			} else {
-				System.out.println("NationalIdSet NOT Changed");
 				ukrdcId = updateUKRDCLink(conn, person, storedPerson);			
 			}
 			
@@ -722,17 +719,8 @@ public class UKRDCIndexManager {
 				logger.debug("Primary Id has changed - delete the link and re-add");
 				// If primary id is different
 				// Drop the prior link
-				LinkRecordDAO.delete(conn, masterLink);
-				// And if no links remain to the master, drop the master
-				List<LinkRecord> remainingLinks = LinkRecordDAO.findByMaster(conn, ukrdcMaster.getId());
-				if (remainingLinks.size() == 0) {
-					// TEST:UT3-1 
-					logger.debug("Master has no remaining links so delete");
-					MasterRecordDAO.delete(conn, ukrdcMaster);
-				} else {
-					// TEST:UT3-2
-					logger.debug("Master has remaining linked records so will not be deleted");
-				}
+				deleteUKRDCLink(conn, masterLink);
+
 				// Create the UKRDC link as for a new person
 				ukrdcIdentity = createUKRDCLink(conn, person);
 			}
@@ -811,11 +799,18 @@ public class UKRDCIndexManager {
 		} else {
 			logger.debug("No Primary Id found on the incoming record");
 			// No Primary id on the incoming record - try to match using another national id to corroborate
-			
+		
 			// For each national id on this record
 			MasterRecord master = null;
 			MasterRecord ukrdcMaster = null;
 			boolean linked = false;
+
+			// First Check if this is linked to a UKRDC master - UKRDC reassessment when national ids change for the inbound record
+			LinkRecord existingUKRDCLink = LinkRecordDAO.findByPersonAndType(conn, person.getId(), NationalIdentity.UKRDC_TYPE);
+			if (existingUKRDCLink != null) {
+				ukrdcMaster = MasterRecordDAO.get(conn, existingUKRDCLink.getMasterId());
+			}
+			
 			for (NationalIdentity natId : person.getNationalIds()) {
 				
 				// get the master for this national id (e.g. NHS Number)
@@ -836,28 +831,44 @@ public class UKRDCIndexManager {
 								
 								// If found - we have identified a Person linked to a UKRDC Number AND by National Id to the incoming Person
 								//            Does the incoming Person verify against the UKRDC Master
-								ukrdcMaster = MasterRecordDAO.get(conn, ukrdcLink.getMasterId());
-								boolean verified = verifyMatch(person, ukrdcMaster);
+								MasterRecord candidateUkrdcMaster = MasterRecordDAO.get(conn, ukrdcLink.getMasterId());
+								boolean verified = verifyMatch(person, candidateUkrdcMaster);
 								if (verified) {
-									logger.debug("Linking to the found and verified master record");
-									LinkRecord newLink = new LinkRecord(ukrdcMaster.getId(), person.getId());
-									LinkRecordDAO.create(conn, newLink);
-									
-									// Audit the creation of the new UKRDC Number
-									AuditManager am = new AuditManager();
-									Map<String,String> attr = new HashMap<String, String>();
-									attr.put("NationalIdType", natId.getType());
-									attr.put("NationalId", natId.getId());
+									// Only link to one potential UKRDC, but warn if there is more than one verified potential match
+									if (linked) {
+										logger.debug("Link to additional verified UKRDC Match");
+										WorkItemManager wim = new WorkItemManager();
+										Map<String,String> attributes = new HashMap<String, String>();
+										attributes.put("Type", natId.getType());
+										attributes.put("Id", natId.getId());
+										wim.create(conn, WorkItemType.TYPE_MULTIPLE_UKRDC_MATCH, person.getId(), candidateUkrdcMaster.getId(),
+												 "Additional verified UKRDC Link (see masterId) implied (see attributes)", attributes);
+									} else {
+										logger.debug("Linking to the found and verified master record");
+										
+										if (existingUKRDCLink != null) {
+											deleteUKRDCLink(conn, existingUKRDCLink);
+										}
+										LinkRecord newLink = new LinkRecord(candidateUkrdcMaster.getId(), person.getId());
+										LinkRecordDAO.create(conn, newLink);
+										
+										// Audit the creation of the new UKRDC Number
+										AuditManager am = new AuditManager();
+										Map<String,String> attr = new HashMap<String, String>();
+										attr.put("NationalIdType", natId.getType());
+										attr.put("NationalId", natId.getId());
 
-									am.create(conn, Audit.NEW_MATCH_THROUGH_NATIONAL_ID, person.getId(), ukrdcMaster.getId(),"Matched By National Id", null, attr);
+										am.create(conn, Audit.NEW_MATCH_THROUGH_NATIONAL_ID, person.getId(), candidateUkrdcMaster.getId(),"Matched By National Id", null, attr);
 
-									linked = true;
-									break; //Only want to link once
+										ukrdcMaster = candidateUkrdcMaster;
+										linked = true;
+										break; //Only want to link once
+									}
 								} else {
 									logger.debug("Link to potential UKRDC Match not verified");
 									WorkItemManager wim = new WorkItemManager();
-									Map<String,String> attributes = getVerifyAttributes(person, ukrdcMaster);
-									wim.create(conn, WorkItemType.TYPE_INFERRED_LINK_NOT_VERIFIED_PRIMARY, person.getId(), ukrdcMaster.getId(), "Link to Inferred PrimaryId not verified", attributes);
+									Map<String,String> attributes = getVerifyAttributes(person, candidateUkrdcMaster);
+									wim.create(conn, WorkItemType.TYPE_INFERRED_LINK_NOT_VERIFIED_PRIMARY, person.getId(), candidateUkrdcMaster.getId(), "Link to Inferred PrimaryId not verified", attributes);
 								}
 							}
 						}
@@ -865,8 +876,8 @@ public class UKRDCIndexManager {
 				}
 			}		
 			
-			// If the record was not linked then allocate
-			if (!linked) {
+			// If the record was not linked (or already allocated) then allocate
+			if (!linked && existingUKRDCLink == null) {
 				logger.debug("No link found - allocating a new UKRDC Number");
 				
 				String ukrdcId = MasterRecordDAO.allocate(conn);
@@ -897,6 +908,29 @@ public class UKRDCIndexManager {
 		return ukrdcIdentity;
 		
 	}
+
+	/**
+	 * Checks for and links to a master record. If none found then one may be created
+	 * 
+	 * @param person
+	 */
+	private void deleteUKRDCLink(Connection conn, LinkRecord link) throws MpiException {
+
+		logger.debug("deleteUKRDCLink");
+		LinkRecordDAO.delete(conn, link);
+		// And if no links remain to the master, drop the master
+		List<LinkRecord> remainingLinks = LinkRecordDAO.findByMaster(conn, link.getMasterId());
+		if (remainingLinks.size() == 0) {
+			// TEST:UT3-1 
+			MasterRecord master = MasterRecordDAO.get(conn, link.getMasterId());
+			logger.debug("Master has no remaining links so delete");
+			MasterRecordDAO.delete(conn, master);
+		} else {
+			// TEST:UT3-2
+			logger.debug("Master has remaining linked records so will not be deleted");
+		}
+	}
+
 	
 	/**
 	 * Checks for and links to a master record. If none found then one may be created

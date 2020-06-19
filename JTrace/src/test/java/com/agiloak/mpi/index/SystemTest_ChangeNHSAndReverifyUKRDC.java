@@ -57,7 +57,9 @@ public class SystemTest_ChangeNHSAndReverifyUKRDC extends UKRDCIndexManagerBaseT
 		// VERIFY UPDATE - UKRDC
 		assert(ukrdc1_A != null);
 		assert(ukrdc1.equals(ukrdc1_A));
-		
+
+		// VERIFY WORKITEMS AND AUDIT? - TODO
+
 		// VERIFY UPDATE - NHS
 		Person person1 = PersonDAO.findByLocalId(conn, MR, LOCAL1, p1.getOriginator());
 		assert(getNationalIdentity(conn, person1, NationalIdentity.NHS_TYPE).equals(NHS2));
@@ -78,7 +80,7 @@ public class SystemTest_ChangeNHSAndReverifyUKRDC extends UKRDCIndexManagerBaseT
 		
 		String testId = "2";
 		
-		logger.debug("************* test1ChangeNHSAndReverifyUKRDC ****************");
+		logger.debug("************* test2ChangeNHSAndReverifyUKRDC ****************");
 
 		String originator = testSuite+testId;
 		String idBase = originator+"000";
@@ -128,7 +130,7 @@ public class SystemTest_ChangeNHSAndReverifyUKRDC extends UKRDCIndexManagerBaseT
 	public void test3ChangeNHSNotCHI() throws MpiException {
 		String testId = "3";
 		
-		logger.debug("************* test1ChangeNHSAndReverifyUKRDC ****************");
+		logger.debug("************* test3ChangeNHSNotCHI ****************");
 
 		String originator = testSuite+testId;
 		String idBase = originator+"000";
@@ -153,7 +155,9 @@ public class SystemTest_ChangeNHSAndReverifyUKRDC extends UKRDCIndexManagerBaseT
 		
 		// UPDATE NHS Number
 		p1.setNationalIds(new ArrayList<NationalIdentity>());
+		p1.addNationalId(CHI1);
 		p1.addNationalId(NHS2);
+
 		NationalIdentity ukrdc1_A = store(p1);
 		
 		// VERIFY UPDATE - UKRDC
@@ -178,12 +182,12 @@ public class SystemTest_ChangeNHSAndReverifyUKRDC extends UKRDCIndexManagerBaseT
 
 	// P1 - Linked to NHS1 will create UKRDC 1
 	// P2 - Linked to CHI1 will create UKRDC 2
-	// P3 - Linked to NHS1 and CHI1, will link to ....
+	// P3 - Linked to NHS1 and CHI1, will link to .... UKRDC1 and warn for 2
 	@Test
 	public void test4ConflictingLinks() throws MpiException {
 		String testId = testSuite+"4";
 		
-		logger.debug("************* test1ChangeNHSAndReverifyUKRDC ****************");
+		logger.debug("************* test4ConflictingLinks ****************");
 
 		String originator1 = testId+"1";
 		String originator2 = testId+"2";
@@ -223,16 +227,15 @@ public class SystemTest_ChangeNHSAndReverifyUKRDC extends UKRDCIndexManagerBaseT
 		assert(isPersonLinkedToMaster(conn, person3, CHI1));
 		assert(isPersonLinkedToMaster(conn, person3, NHS1));
 		assert(isPersonLinkedToMaster(conn, person3, ukrdc1));
-		assert(isPersonLinkedToMaster(conn, person3, ukrdc2));
+		assert(!isPersonLinkedToMaster(conn, person3, ukrdc2));
 		assert(isPersonLinkedToMaster(conn, person3, ukrdc3));
-		System.out.println(ukrdc1);
-		System.out.println(ukrdc2);
-		System.out.println(ukrdc3);
+		assert(ukrdc3.equals(ukrdc1));
 		
 		// UPDATE - No Nat ID change
 		p1.setGivenName("Adam");
 		NationalIdentity ukrdc1_A = store(p1);
-
+		assert(ukrdc1_A != null);
+		assert(ukrdc1_A.equals(ukrdc1));
 		
 	}
 
