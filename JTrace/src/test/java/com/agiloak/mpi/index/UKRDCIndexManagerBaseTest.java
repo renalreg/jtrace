@@ -16,12 +16,15 @@ import com.agiloak.mpi.index.persistence.MasterRecordDAO;
 import com.agiloak.mpi.index.persistence.PersonDAO;
 import com.agiloak.mpi.trace.persistence.TraceDAO;
 import com.agiloak.mpi.workitem.persistence.WorkItemDAO;
+import java.util.Date;
 
 public class UKRDCIndexManagerBaseTest {
 
 	private final static Logger logger = LoggerFactory.getLogger(UKRDCIndexManagerBaseTest.class);
 	public static SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
 	public static Connection conn = null;
+
+	protected final static String MR = "MR";
 
 	protected static java.util.Date getDate(String sDate) {
 		
@@ -45,6 +48,38 @@ public class UKRDCIndexManagerBaseTest {
 		deleteAll(conn, "audit");
 		miscTestSQL(conn, "ALTER SEQUENCE jtrace.ukrdc_id RESTART WITH 500000000;");
 		miscTestSQL(conn, "ALTER SEQUENCE jtrace.patient_id RESTART WITH 1000000000;");
+	}
+
+	public static Person createPerson(String local, String originator, Date dob, String surname, String given, String gender, NationalIdentity nhs) throws MpiException {
+		Person person = new Person().setDateOfBirth(dob).setSurname(surname).setGivenName(given).setGender(gender);
+		person.setPostcode("CH1 6LB").setStreet("Townfield Lane");
+		person.setLocalId(local).setLocalIdType("MR").setOriginator(originator);
+		if (nhs != null) {
+			person.addNationalId(nhs);
+		}
+		return person;
+	}
+	
+	// Get the singular link of a person to a national id type 
+	public static NationalIdentity getNationalIdentity(Connection conn, Person person, String nationaltype) throws MpiException {
+		LinkRecord link = LinkRecordDAO.findByPersonAndType(conn, person.getId(), nationaltype);
+		if (link==null) return new NationalIdentity("",""); // return an invalid entry rather than null - easier for the assertion in the calling test
+		
+		MasterRecord master = MasterRecordDAO.get(conn, link.getMasterId());
+		if (master == null) return null;
+		return master.getNationalIdentity();
+	}
+	
+	// Check link of a person to a master record. Asking the same question as getNationalIdentity in a different way to verify integrity
+	public static boolean isPersonLinkedToMaster(Connection conn, Person person, NationalIdentity natId) throws MpiException {
+		MasterRecord master = MasterRecordDAO.findByNationalId(conn, natId.getId(), natId.getType());
+		if (master==null) return false;
+
+		List<LinkRecord> links = LinkRecordDAO.findByMaster(conn, master.getId());
+		for (LinkRecord link : links) {
+			if (link.getPersonId() == person.getId()) return true;
+		}
+		return false;
 	}
 
 	public static void deleteAll(Connection conn, String tableName) throws MpiException {

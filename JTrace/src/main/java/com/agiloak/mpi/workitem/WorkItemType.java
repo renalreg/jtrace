@@ -12,5 +12,6 @@ public interface WorkItemType {
 	public static final int TYPE_MULTIPLE_NATID_LINKS_FROM_ORIGINATOR = 8;
 
 	public static final int TYPE_XREF_MATCHED_NOT_VERIFIED = 9;
+	public static final int TYPE_MULTIPLE_UKRDC_MATCH = 10;
 
 }
