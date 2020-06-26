@@ -749,7 +749,10 @@ public class UKRDCIndexManager {
 			if (master != null) {
 				
 				logger.debug("Master found for this Primary id. MASTERID:"+master.getId());
-				// a master record exists for this Primary id
+				// Is the person already linked to this primary?
+				LinkRecord linkToUKRDC = LinkRecordDAO.find(conn, master.getId(), person.getId());
+				if (linkToUKRDC != null) return new NationalIdentity(master.getNationalId());
+
 				// Verify that the details match
 				if (verifyMatch(person, master)) {
 					logger.debug("Record verified - creating link");
