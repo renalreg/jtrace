@@ -1,5 +1,3 @@
-DROP TABLE IF EXISTS jtrace.person;
-
 CREATE TABLE jtrace.person
 (
   id SERIAL UNIQUE,
@@ -30,7 +28,10 @@ WITH (
   OIDS=FALSE
 );
 
+CREATE UNIQUE INDEX ix_person_mrn ON jtrace.person (originator, localid, localidtype);
+
 ALTER TABLE jtrace.person OWNER TO ukrdc;
 
 GRANT ALL PRIVILEGES ON TABLE jtrace.person to ukrdc;
 
+GRANT ALL PRIVILEGES ON SEQUENCE jtrace.person_id_seq to ukrdc;
