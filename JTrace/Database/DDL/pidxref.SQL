@@ -1,5 +1,3 @@
-DROP TABLE IF EXISTS jtrace.pidxref;
-
 CREATE TABLE jtrace.pidxref
 (
   id serial NOT NULL,
@@ -18,3 +16,5 @@ ALTER TABLE jtrace.pidxref OWNER TO ukrdc;
 ALTER TABLE jtrace.pidxref
     ADD CONSTRAINT pidxref_compound UNIQUE (sendingfacility, sendingextract, localid);
 GRANT ALL PRIVILEGES ON TABLE jtrace.pidxref to ukrdc;
+
+GRANT ALL PRIVILEGES ON SEQUENCE jtrace.pidxref_id_seq to ukrdc;
