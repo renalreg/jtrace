@@ -13,7 +13,7 @@ CREATE TABLE jtrace.workitem
     status integer NOT NULL,
     lastupdated timestamp NOT NULL DEFAULT Now(),
     creationdate timestamp without time zone NOT NULL DEFAULT Now(),
-    updatedBy character varying(20) ,
+    updatedBy character varying(320),
     updatedesc character varying(100),
     CONSTRAINT workitem_pkey PRIMARY KEY (id)
 )

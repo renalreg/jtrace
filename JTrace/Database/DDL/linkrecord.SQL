@@ -9,8 +9,8 @@ CREATE TABLE jtrace.linkrecord
   masterid integer NOT NULL,
   linktype integer NOT NULL,
   linkcode integer NOT NULL,
-  linkdesc character varying(200) ,
-  updatedBy character varying(20) ,
+  linkdesc character varying(200),
+  updatedBy character varying(320),
   lastupdated timestamp without time zone NOT NULL default now(),
   creationdate timestamp without time zone NOT NULL default now()
 )
