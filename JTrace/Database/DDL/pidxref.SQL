@@ -6,7 +6,7 @@ CREATE TABLE jtrace.pidxref
   lastupdated timestamp without time zone NOT NULL DEFAULT Now(),
   sendingfacility character varying(7) NOT NULL,
   sendingextract character varying(6) NOT NULL,
-  localid character varying(17) NOT NULL
+  localid character varying(50) NOT NULL
 )
 WITH (
   OIDS=FALSE
