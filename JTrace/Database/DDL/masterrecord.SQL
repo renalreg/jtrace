@@ -9,7 +9,7 @@ CREATE TABLE jtrace.masterrecord
     gender character varying(2) COLLATE pg_catalog."default",
     givenname character varying(60) COLLATE pg_catalog."default",
     surname character varying(60) COLLATE pg_catalog."default",
-    nationalid character(10) COLLATE pg_catalog."default" NOT NULL,
+    nationalid character varying(50) COLLATE pg_catalog."default" NOT NULL,
     nationalidtype character(5) COLLATE pg_catalog."default" NOT NULL,
     status int NOT NULL,
     effectivedate timestamp without time zone NOT NULL,
