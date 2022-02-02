@@ -151,17 +151,19 @@ public class UKRDCIndexManagerLinkSystemTest extends UKRDCIndexManagerBaseTest {
 
 		// LT1-1 - Link to UKRDC
 		// LT1-3 - Deletes prior link
-		// FORCE ERROR ON LINK - MAKE THE updatedBy > 20
-		UKRDCIndexManagerResponse resp = im.link(p2.getId(), ukrdcMaster.getId(), "1234567890123456789012345", 1, "Verified with Saughall Medical Centre.");
+		// FORCE ERROR ON LINK - MAKE THE updatedBy string longer than the max length
+		String updatedByString = new String(new char[321]).replace('\0', 'a');
+		UKRDCIndexManagerResponse resp = im.link(p2.getId(), ukrdcMaster.getId(), updatedByString, 1,
+				"Verified with Saughall Medical Centre.");
 		// VERIFY
-		assert(resp.getStatus()==UKRDCIndexManagerResponse.FAIL);
+		assert (resp.getStatus() == UKRDCIndexManagerResponse.FAIL);
 		LinkRecord newLink = LinkRecordDAO.find(conn, ukrdcMaster.getId(), p2.getId());
-		assert(newLink==null);
+		assert (newLink == null);
 		// LT1-4 - Deletes prior link
 		MasterRecord mr = MasterRecordDAO.get(conn, allocatedMr.getId());
-		assert(mr!=null);
+		assert (mr != null);
 		LinkRecord oldLink = LinkRecordDAO.find(conn, allocatedMr.getId(), p2.getId());
-		assert(oldLink!=null);
+		assert (oldLink != null);
 
 	}
 	
