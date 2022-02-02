@@ -18,7 +18,6 @@ CREATE SCHEMA "jtrace"
 GRANT ALL ON SCHEMA "jtrace" TO ukrdc;
 
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA jtrace TO ukrdc;
-
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA jtrace TO ukrdc;
 
-ALTER ROLE ukrdc SET search_path TO extract, jtrace;
+ALTER DATABASE "JTRACE" SET search_path TO "$user",jtrace;
