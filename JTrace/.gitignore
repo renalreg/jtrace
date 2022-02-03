@@ -1,6 +1,0 @@
-/target/
-/target/**
-/target/maven-archiver/**
-/target/maven-status/**
-/target/surefire-reports/**
-/javadoc/
