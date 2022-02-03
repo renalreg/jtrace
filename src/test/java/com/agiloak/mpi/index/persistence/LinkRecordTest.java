@@ -171,16 +171,27 @@ public class LinkRecordTest {
 
 	@Test
 	public void testFindByPersonAndType() throws MpiException {
-		int personToTest = 8;
+		// Create Person
+		Person person = new Person();
+		person.setOriginator("TORG1").setLocalId("TST.I.P.LRT.FBPAT").setLocalIdType("MR");
+		person.setTitle("MR").setGivenName("NICK").setSurname("JONES");
+		person.setDateOfBirth(new Date());
+		person.setGender("1");
+		PersonDAO.create(conn, person);
+
+		// Create Master Record
 		MasterRecord mr = new MasterRecord();
 		mr.setNationalId(RR1).setNationalIdType(UKRDC_TYPE);
 		mr.setDateOfBirth(new Date());
 		mr.setEffectiveDate(new Date());
 		MasterRecordDAO.create(conn, mr);
-		LinkRecord lr = new LinkRecord(mr.getId(),personToTest);
+
+		// Create Link Record
+		LinkRecord lr = new LinkRecord(mr.getId(), person.getId());
 		LinkRecordDAO.create(conn, lr);
 		
-		LinkRecord link = LinkRecordDAO.findByPersonAndType(conn, personToTest, UKRDC_TYPE);
+		// Test finding Link Record by person and type
+		LinkRecord link = LinkRecordDAO.findByPersonAndType(conn, person.getId(), UKRDC_TYPE);
 		System.out.println("=========BEGIN TEST DEBUG=========");
 		System.out.println("lr.getId()");
 		System.out.println(lr.getId());
