@@ -32,11 +32,11 @@ Uniquely identified by personid and masterid.
 To find all records for a UKRDC record you would need a query such as:
 
 ```sql
-select \* from jtrace.person p, jtrace.linkrecord lr, jtrace.masterrecord mr
+select * from jtrace.person p, jtrace.linkrecord lr, jtrace.masterrecord mr
 where lr.masterid = mr.id
 and lr.personid = p.id
-and mr.nationalid = \'RR3000001\'
-and mr.nationalidtype = \' UKRDC \'
+and mr.nationalid = 'RR3000001'
+and mr.nationalidtype = ' UKRDC '
 ```
 
 ## Relationship between Masters
@@ -602,9 +602,9 @@ Taken from the javadocs
 
 ```java
 public WorkItem update( int workItemId,
-                        int status,
-                        java.lang.String updateDesc,
-                        java.lang.String updatedBy)
+                        int status,
+                        java.lang.String updateDesc,
+                        java.lang.String updatedBy)
                     throws com.agiloak.mpi.MpiException
 ```
 
