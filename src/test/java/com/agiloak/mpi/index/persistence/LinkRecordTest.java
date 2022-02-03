@@ -181,6 +181,12 @@ public class LinkRecordTest {
 		LinkRecordDAO.create(conn, lr);
 		
 		LinkRecord link = LinkRecordDAO.findByPersonAndType(conn, personToTest, UKRDC_TYPE);
+		System.out.println("=========BEGIN TEST DEBUG=========");
+		System.out.println("lr.getId()");
+		System.out.println(lr.getId());
+		System.out.println("link.getId()");
+		System.out.println(link.getId());
+		System.out.println("=========END TEST DEBUG=========");
 		assert(lr.getId()==link.getId());
 	}
 
