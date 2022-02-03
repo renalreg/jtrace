@@ -171,50 +171,68 @@ public class LinkRecordTest {
 
 	@Test
 	public void testFindByPersonAndType() throws MpiException {
-		int personToTest = 8;
+		// Create Person
+		Person person = new Person();
+		person.setOriginator("TORG1").setLocalId("TST.I.P.LRT.FBPAT").setLocalIdType("MR");
+		person.setTitle("MR").setGivenName("NICK").setSurname("JONES");
+		person.setDateOfBirth(new Date());
+		person.setGender("1");
+		PersonDAO.create(conn, person);
+
+		// Create Master Record
 		MasterRecord mr = new MasterRecord();
 		mr.setNationalId(RR1).setNationalIdType(UKRDC_TYPE);
 		mr.setDateOfBirth(new Date());
 		mr.setEffectiveDate(new Date());
 		MasterRecordDAO.create(conn, mr);
-		LinkRecord lr = new LinkRecord(mr.getId(),personToTest);
+
+		// Create Link Record
+		LinkRecord lr = new LinkRecord(mr.getId(), person.getId());
 		LinkRecordDAO.create(conn, lr);
 		
-		LinkRecord link = LinkRecordDAO.findByPersonAndType(conn, personToTest, UKRDC_TYPE);
+		// Test finding Link Record by person and type
+		LinkRecord link = LinkRecordDAO.findByPersonAndType(conn, person.getId(), UKRDC_TYPE);
 		assert(lr.getId()==link.getId());
 	}
 
 	@Test
 	public void testCountByMasterAndOriginator() throws MpiException {
-		
+		// Create Person 1
 		Person person1 = new Person();
-		person1.setOriginator("TORG1").setLocalId("TST1000001").setLocalIdType("MR");
+		person1.setOriginator("TORG1").setLocalId("TST.I.P.LRT.CBMAO.1").setLocalIdType("MR");
 		person1.setTitle("MR").setGivenName("NICK").setSurname("JONES");
 		person1.setDateOfBirth(new Date());
 		person1.setGender("1");
 		PersonDAO.create(conn, person1);
 
+		// Create Person 2
 		Person person2 = new Person();
-		person2.setOriginator("TORG1").setLocalId("TST1000002").setLocalIdType("MR");
+		person2.setOriginator("TORG1").setLocalId("TST.I.P.LRT.CBMAO.2").setLocalIdType("MR");
 		person2.setTitle("MR").setGivenName("NICK").setSurname("JONES");
 		person2.setDateOfBirth(new Date());
 		person2.setGender("1");
 		PersonDAO.create(conn, person2);
 
+		// Create Master Record
 		MasterRecord mr = new MasterRecord();
 		mr.setNationalId(RR2).setNationalIdType(UKRDC_TYPE);
 		mr.setDateOfBirth(new Date());
 		mr.setEffectiveDate(new Date());
 		MasterRecordDAO.create(conn, mr);
-		LinkRecord lr = new LinkRecord(mr.getId(),person1.getId());
+
+		// Create Link Record 1
+		LinkRecord lr = new LinkRecord(mr.getId(), person1.getId());
 		LinkRecordDAO.create(conn, lr);
 		
+		// Test counting Link Records by master and originator
 		int count = LinkRecordDAO.countByMasterAndOriginator(conn, mr.getId(), "TORG1");
 		assert(count==1);
 	
+		// Create Link Record 2
 		lr = new LinkRecord(mr.getId(),person2.getId());
 		LinkRecordDAO.create(conn, lr);
 		
+		// Test counting Link Records by master and originator
 		count = LinkRecordDAO.countByMasterAndOriginator(conn, mr.getId(), "TORG1");
 		assert(count==2);
 
