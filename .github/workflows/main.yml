@@ -1,9 +1,12 @@
-name: Test and Build
+name: Test and Publish
 
-on: [push]
+on:
+  push:
+  release:
+    types: [published]
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
 
     services:
@@ -39,15 +42,30 @@ jobs:
           for s in ${JTRACE_DDL}/*.SQL; do echo "Running script ${s}"; psql -h localhost -p 5432 -U postgres JTRACE -f $s; done
 
       - name: Build with Maven
-        run: mvn -B package
+        run: mvn test
 
-      - name: Publish to GitHub Packages Apache Maven
-        run: mvn deploy
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
+  build:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Build with Maven
+        run: mvn -DskipTests -B package
 
       - uses: actions/upload-artifact@v2
         with:
           name: Package
           path: target/*.jar
           retention-days: 30
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: test
+
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+
+    steps:
+      - name: Publish to GitHub Packages Apache Maven
+        run: mvn deploy
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
