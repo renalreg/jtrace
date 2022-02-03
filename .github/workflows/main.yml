@@ -41,7 +41,7 @@ jobs:
           psql -h localhost -p 5432 -U postgres -f ${JTRACE_DDL}/JTRACE.DDL
           for s in ${JTRACE_DDL}/*.SQL; do echo "Running script ${s}"; psql -h localhost -p 5432 -U postgres JTRACE -f $s; done
 
-      - name: Build with Maven
+      - name: Test with Maven
         run: mvn test
 
   build:
@@ -57,10 +57,11 @@ jobs:
           java-version: '8'
           distribution: 'zulu'
 
-      - name: Build with Maven
+      - name: Package with Maven
         run: mvn -DskipTests --batch-mode package
 
       - uses: actions/upload-artifact@v2
+        if: ${{ github.event_name != 'pull_request' }}
         with:
           name: Package
           path: target/*.jar
