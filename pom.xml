@@ -1,9 +1,18 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.agiloak.mpi</groupId>
-	<artifactId>JTrace</artifactId>
-	<version>1.4.2-FINAL</version>
+	<artifactId>jtrace</artifactId>
+	<version>1.4.2</version>
 	<name>JTrace</name>
+
+	<distributionManagement>
+		<repository>
+			<id>github</id>
+			<name>GitHub renalreg Apache Maven Packages</name>
+			<url>https://maven.pkg.github.com/renalreg/jtrace</url>
+		</repository>
+	</distributionManagement>
+
 	<dependencies>
 		<dependency>
 			<groupId>commons-codec</groupId>

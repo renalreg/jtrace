@@ -1,9 +1,13 @@
-name: Test and Build
+name: Test and Publish
 
-on: [push]
+on:
+  push:
+  pull_request:
+  release:
+    types: [published]
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
 
     services:
@@ -38,11 +42,48 @@ jobs:
           psql -h localhost -p 5432 -U postgres -f ${JTRACE_DDL}/JTRACE.DDL
           for s in ${JTRACE_DDL}/*.SQL; do echo "Running script ${s}"; psql -h localhost -p 5432 -U postgres JTRACE -f $s; done
 
-      - name: Build with Maven
-        run: mvn install
+      - name: Test with Maven
+        run: mvn test
+
+  build:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v2
+        with:
+          java-version: '8'
+          distribution: 'zulu'
+
+      - name: Package with Maven
+        run: mvn -DskipTests --batch-mode package
 
       - uses: actions/upload-artifact@v2
+        if: ${{ github.event_name != 'pull_request' }}
         with:
           name: Package
           path: target/*.jar
           retention-days: 30
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: test
+
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v2
+        with:
+          java-version: '8'
+          distribution: 'zulu'
+
+      - name: Publish to GitHub Packages Apache Maven
+        run: mvn -DskipTests --batch-mode deploy
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
