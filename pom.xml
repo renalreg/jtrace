@@ -8,7 +8,7 @@
 	<distributionManagement>
 		<repository>
 			<id>github</id>
-			<name>GitHub renalreg Apache Maven Packages</name>
+			<name>GitHub renalreg/jtrace Apache Maven Packages</name>
 			<url>https://maven.pkg.github.com/renalreg/jtrace</url>
 		</repository>
 	</distributionManagement>
