@@ -1,10 +1,14 @@
 # Change
 
-Updated 3rd Jan 2022 to 1.4.2
+Updated 5th June 2020 to 1.4.1
 
 ## Main Changes
 
-No changes to specification. All changes since 1.4.1 are to the database schema, increasing character limits in various fields. See https://github.com/renalreg/jtrace/releases/tag/v1.4.2
+1.  Change to linking on change of NHS Number
+    1.  Section 5.6 - Update
+    1.  Section 5.8 - Create UKRDC Links
+    1.  Section 5.10 - Update UKRDC links
+    1.  Section 5.11 - Delete UKRDC Link
 
 
 # EMPI Data Structures
