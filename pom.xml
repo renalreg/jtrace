@@ -5,14 +5,6 @@
 	<version>1.4.2</version>
 	<name>JTrace</name>
 
-	<distributionManagement>
-		<repository>
-			<id>github</id>
-			<name>GitHub renalreg Apache Maven Packages</name>
-			<url>https://maven.pkg.github.com/renalreg/jtrace</url>
-		</repository>
-	</distributionManagement>
-
 	<dependencies>
 		<dependency>
 			<groupId>commons-codec</groupId>
