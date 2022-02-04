@@ -25,6 +25,7 @@ To set up/reset the database, run the following commands in a terminal window:
 
 ```
 export PGPASSWORD=postgres
+createuser -h localhost -p 5432 -U postgres ukrdc
 psql -h localhost -p 5432 -U postgres -f Database/DDL/JTRACE.DDL
 for s in Database/DDL/*.SQL; do echo "Running script ${s}"; psql -h localhost -p 5432 -U postgres JTRACE -f $s; done
 mvn test
