@@ -2,9 +2,9 @@
 
 EMPI extension for Mirth Connect, used in the UKRDC
 
-## Packages and Builds
+## Packages and Downloads
 
-Tagged releases are published to the GitHub Package Registry.
+Latest .jar files and dependency installation instructions can be found on the [GitHub Package Registry](https://github.com/renalreg/jtrace/packages/1232844).
 
 Every commit to this repository will be built and stored as an artifact for 30 days. 
 This is to allow for easy access to the latest builds for testing purposes.
