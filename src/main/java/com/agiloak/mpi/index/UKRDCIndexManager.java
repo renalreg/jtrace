@@ -212,7 +212,7 @@ public class UKRDCIndexManager {
 
 	protected void validateInternal(Person person) throws MpiException {
 		
-		if (person.getPrimaryIdType()!=null && person.getPrimaryIdType() != NationalIdentity.UKRDC_TYPE) {
+		if (person.getPrimaryIdType()!=null && !person.getPrimaryIdType().equals(NationalIdentity.UKRDC_TYPE)) {
 			logger.error("If provided, the primaryIdType must be UKRDC");
 			throw new MpiException("Invalid primary id type");
 		}
@@ -427,9 +427,10 @@ public class UKRDCIndexManager {
 					Audit audit = new Audit(Audit.NEW_PIDXREF, potentialMatch.getId(), matchedMaster.getId(), "PIDXREF Match", attributes);
 					AuditDAO.create(conn, audit);
 					pid = newXref.getPid();
-					
-					// Don't process any more potential matches or we will get multiple links to the same PID
-					break;
+
+					// The PIDXREF has been created. Do not process other national
+					// identifiers, or they can attempt to insert the same compound key.
+					return pid;
 
 				} else {
 					if ( !person.getGender().equals(potentialMatch.getGender()) ) attributes.put("Gender", person.getGender()+":"+potentialMatch.getGender());
@@ -644,7 +645,12 @@ public class UKRDCIndexManager {
 			person.setStdPostcode(NormalizationManager.getStandardPostcode(person.getPostcode()));
 			
 			// Store the record
-			PersonDAO.create(conn, person);
+			boolean created = PersonDAO.create(conn, person);
+			if (!created) {
+				// Another transaction created this source record first. Re-enter the
+				// normal update path now that the winning row is visible.
+				return createOrUpdate(conn, person);
+			}
 			
 			// Link to other national identifiers as required
 			for (NationalIdentity natId : person.getNationalIds()) {

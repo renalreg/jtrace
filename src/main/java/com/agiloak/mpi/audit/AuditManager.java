@@ -59,7 +59,8 @@ public class AuditManager {
 		NationalIdentity mainNationalIdentity = getMainNationalIdentity(conn, personId, NationalIdentity.NHS_TYPE);
 		if (mainNationalIdentity==null) mainNationalIdentity = getMainNationalIdentity(conn, personId, NationalIdentity.CHI_TYPE);
 		if (mainNationalIdentity==null) mainNationalIdentity = getMainNationalIdentity(conn, personId, NationalIdentity.HSC_TYPE);
-		
+		if (mainNationalIdentity==null) mainNationalIdentity = getMainNationalIdentity(conn, personId, NationalIdentity.UKRR_UID_TYPE);
+
 		// If none of the main ids are present, just get the first NI on the person
 		if (mainNationalIdentity==null) mainNationalIdentity = getFirstNationalIdentity(conn, personId);
 		

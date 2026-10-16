@@ -77,7 +77,7 @@ public class PidXREFDAO extends NumberAllocatingDAO {
 	}
 
 
-	public static void create(Connection conn, PidXREF xref) throws MpiException {
+	public static boolean create(Connection conn, PidXREF xref) throws MpiException {
 
 		logger.debug("Starting");
 		
@@ -88,7 +88,8 @@ public class PidXREFDAO extends NumberAllocatingDAO {
 
 		String insertSQL = "Insert into pidxref "+
 				"(pid, sendingFacility, sendingExtract, localId)"+
-				" values (?,?,?,?)";
+				" values (?,?,?,?)"+
+				" on conflict (sendingfacility, sendingextract, localid) do nothing";
 		
 		PreparedStatement preparedStatement = null;
 		
@@ -102,6 +103,15 @@ public class PidXREFDAO extends NumberAllocatingDAO {
 
 			int affectedRows = preparedStatement.executeUpdate();
 			logger.debug("Affected Rows:"+affectedRows);
+			if (affectedRows == 0) {
+				PidXREF existing = findByLocalId(conn, xref.getSendingFacility(), xref.getSendingExtract(), xref.getLocalId());
+				if (existing == null) {
+					throw new SQLException("PIDXREF conflict occurred but existing row was not found");
+				}
+				xref.setId(existing.getId()).setPid(existing.getPid())
+					.setCreationDate(existing.getCreationDate()).setLastUpdated(existing.getLastUpdated());
+				return false;
+			}
 			
 		    try (ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
 	            if (generatedKeys.next()) {
@@ -131,6 +141,7 @@ public class PidXREFDAO extends NumberAllocatingDAO {
 				}
 			}
 		}
+		return true;
 
 	}
 
