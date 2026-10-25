@@ -205,7 +205,7 @@ public class PersonDAO {
 
 	}
 
-	public static void create(Connection conn, Person person) throws MpiException {
+	public static boolean create(Connection conn, Person person) throws MpiException {
 
 		logger.debug("Starting");
 
@@ -223,7 +223,8 @@ public class PersonDAO {
 	            " ?,?,?,?,?,?,"+
 	            " ?,?,?,"+
 	            " NULL, NULL,?,?,?,"+
-				" ?,?,?)";
+				" ?,?,?)"+
+				" on conflict (originator, localid, localidtype) do nothing";
 		
 		PreparedStatement preparedStatement = null;
 		
@@ -237,6 +238,14 @@ public class PersonDAO {
 
 			int affectedRows = preparedStatement.executeUpdate();
 			logger.debug("Affected Rows:"+affectedRows);
+			if (affectedRows == 0) {
+				Person existing = findByLocalId(conn, person.getLocalIdType(), person.getLocalId(), person.getOriginator());
+				if (existing == null) {
+					throw new SQLException("Person conflict occurred but existing row was not found");
+				}
+				person.setId(existing.getId()).setCreationDate(existing.getCreationDate()).setLastUpdated(existing.getLastUpdated());
+				return false;
+			}
 			
 		    try (ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
 	            if (generatedKeys.next()) {
@@ -263,9 +272,9 @@ public class PersonDAO {
 					logger.error("Failure closing Prepared Statement:",e);
 					throw new MpiException("Person create failed. "+e.getMessage());
 				}
-			}
-
+				}
 		}
+		return true;
 
 	}
 

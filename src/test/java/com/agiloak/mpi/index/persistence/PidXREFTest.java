@@ -6,10 +6,7 @@ import java.sql.SQLException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import static org.hamcrest.CoreMatchers.containsString;
 
 import com.agiloak.mpi.MpiException;
 import com.agiloak.mpi.SimpleConnectionManager;
@@ -18,9 +15,6 @@ import com.agiloak.mpi.index.TestIds;
 
 public class PidXREFTest extends JTraceTest {
 	
-	@Rule
-	public final ExpectedException exception = ExpectedException.none();
-
 	public static Connection conn = null;
 	@Before
 	public void openConnection()  throws MpiException {
@@ -138,11 +132,12 @@ public class PidXREFTest extends JTraceTest {
 		assert(pidx.getCreationDate()!=null);
 		assert(pidx.getLastUpdated()!=null);
 
-		// Creating a record with the same details should error
+		// Creating a record with the same details should reuse the existing row
 		PidXREF pidx2 = new PidXREF(TestIds.FACILITY_PIDX, TestIds.EXTRACT_TEST1, TestIds.TEST_LOCALID_4);
-		exception.expect(MpiException.class);
-		exception.expectMessage(containsString("PidXREF insert failed"));
-		PidXREFDAO.create(conn, pidx2);
+		boolean created = PidXREFDAO.create(conn, pidx2);
+		assert(!created);
+		assert(pidx2.getId()==pidx.getId());
+		assert(pidx2.getPid().equals(pidx.getPid()));
 	}
 
 	@Test

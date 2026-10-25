@@ -6,6 +6,7 @@ public class NationalIdentity {
 	public static final String CHI_TYPE = "CHI";
 	public static final String HSC_TYPE = "HSC";
 	public static final String UKRR_TYPE = "UKRR";
+	public static final String UKRR_UID_TYPE = "UKRR_UID";
 	public static final String SRR_TYPE = "SRR";
 	public static final String NHSBT_TYPE = "NHSBT";
 	public static final String RADAR_TYPE = "RADAR";
