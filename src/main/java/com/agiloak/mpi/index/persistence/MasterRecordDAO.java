@@ -177,13 +177,14 @@ public class MasterRecordDAO {
 
 	}
 
-	public static void create(Connection conn, MasterRecord master) throws MpiException {
+	public static boolean create(Connection conn, MasterRecord master) throws MpiException {
 
 		logger.debug("Starting");
 
 		String insertSQL = "Insert into masterrecord "+
 				"(dateofbirth, gender, givenname, surname, nationalid, nationalidtype, status, effectivedate)"+
-				" values (?,?,?,?,?,?,?,?)";
+				" values (?,?,?,?,?,?,?,?)"+
+				" on conflict (nationalid, nationalidtype) do nothing";
 		
 		PreparedStatement preparedStatement = null;
 		
@@ -194,6 +195,24 @@ public class MasterRecordDAO {
 
 			int affectedRows = preparedStatement.executeUpdate();
 			logger.debug("Affected Rows:"+affectedRows);
+			if (affectedRows == 0) {
+				MasterRecord existing = findByNationalId(conn, master.getNationalId(), master.getNationalIdType());
+				if (existing == null) {
+					throw new SQLException("MasterRecord conflict occurred but existing row was not found");
+				}
+				master.setId(existing.getId())
+					.setCreationDate(existing.getCreationDate())
+					.setLastUpdated(existing.getLastUpdated())
+					.setNationalId(existing.getNationalId())
+					.setNationalIdType(existing.getNationalIdType())
+					.setDateOfBirth(existing.getDateOfBirth())
+					.setGender(existing.getGender())
+					.setGivenName(existing.getGivenName())
+					.setSurname(existing.getSurname())
+					.setStatus(existing.getStatus())
+					.setEffectiveDate(existing.getEffectiveDate());
+				return false;
+			}
 			
 		    try (ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
 	            if (generatedKeys.next()) {
@@ -222,6 +241,7 @@ public class MasterRecordDAO {
 				}
 			}
 		}
+		return true;
 
 	}
 
