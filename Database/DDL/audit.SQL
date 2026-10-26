@@ -8,7 +8,7 @@ CREATE TABLE jtrace.audit
     type integer NOT NULL,
     description character varying(100) NOT NULL,
     attributes character varying(1024),
-    mainnationalid character varying(10),
+    mainnationalid character varying(50),
     mainnationalidtype character varying(5),
     lastupdated timestamp NOT NULL,
     updatedBy character varying(320),

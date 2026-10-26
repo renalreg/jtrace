@@ -31,7 +31,14 @@ public abstract class APICommand {
 		}
 	}
 	private void rollback(Connection conn, Exception ex) throws Exception {
-		conn.rollback();
+		if (conn != null) {
+			try {
+				conn.rollback();
+			} catch (SQLException rollbackException) {
+				logger.error("Failure rolling back transaction", rollbackException);
+				ex.addSuppressed(rollbackException);
+			}
+		}
 		throw ex;
 	}
 	private Connection getConnection() throws Exception {
@@ -42,7 +49,11 @@ public abstract class APICommand {
 	private UKRDCIndexManagerResponse getErrorResponse(Exception ex) {
 		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
 		resp.setStatus(UKRDCIndexManagerResponse.FAIL);
-		resp.setMessage(ex.getMessage());
+		String message = ex.getMessage();
+		if (message == null || message.length() == 0) {
+			message = ex.getClass().getName();
+		}
+		resp.setMessage(message);
 		resp.setStackTrace(ExceptionUtils.getStackTrace(ex));
 		return resp;
 	}
