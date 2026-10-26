@@ -10,7 +10,7 @@ CREATE TABLE jtrace.masterrecord
     givenname character varying(60) COLLATE pg_catalog."default",
     surname character varying(60) COLLATE pg_catalog."default",
     nationalid character varying(50) COLLATE pg_catalog."default" NOT NULL,
-    nationalidtype character(10) COLLATE pg_catalog."default" NOT NULL,
+    nationalidtype character varying(10) COLLATE pg_catalog."default" NOT NULL,
     status int NOT NULL,
     effectivedate timestamp without time zone NOT NULL,
     CONSTRAINT masterrecord_nationalid_key UNIQUE (nationalid, nationalidtype)
