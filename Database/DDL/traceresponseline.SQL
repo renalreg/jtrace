@@ -4,15 +4,15 @@ DROP TABLE IF EXISTS jtrace.traceresponseline;
 
 CREATE TABLE jtrace.traceresponseline
 (
-  traceid character(36) NOT NULL,
+  traceid character varying(36) NOT NULL,
   personid integer NOT NULL,
   weight double precision,
   givenname character varying(50),
   othergivennames character varying(50),
   surname character varying(50),
   prevsurname character varying(50),
-  gender character(2),
-  postcode character(10),
+  gender character varying(2),
+  postcode character varying(10),
   dateofbirth date,
   street character varying(50),
   longname character varying(100),
