@@ -34,9 +34,7 @@ public class NormalizationManager {
 		String std = value.toUpperCase();
 		String norm = surnames.getProperty(std,std);
 		norm = norm.trim();
-		Soundex a = new Soundex();
-		String soundex = a.encode(norm);
-		return soundex;
+		return getSoundex(norm, "surname");
 	}
 	
 	public static String getStandardGivenName(String value){
@@ -45,9 +43,17 @@ public class NormalizationManager {
 		String std = value.toUpperCase();
 		String norm = givenNames.getProperty(std,std);
 		norm = norm.trim();
-		Soundex a = new Soundex();
-		String soundex = a.encode(norm);
-		return soundex;
+		return getSoundex(norm, "given name");
+	}
+
+	private static String getSoundex(String value, String field) {
+		try {
+			return new Soundex().encode(value);
+		} catch (IllegalArgumentException e) {
+			// Unsupported characters should disable phonetic matching, not reject the record.
+			logger.warn("Unable to generate Soundex for {}", field);
+			return "";
+		}
 	}
 
 	public static String getStandardPostcode(String value){

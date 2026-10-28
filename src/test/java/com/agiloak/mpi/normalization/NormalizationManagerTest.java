@@ -13,6 +13,9 @@ public class NormalizationManagerTest extends TestCase {
 
 		std = NormalizationManager.getStandardGivenName("");
 		assert(std.equals(""));
+
+		assertEquals("", NormalizationManager.getStandardGivenName("\u00D4"));
+		assertEquals("", NormalizationManager.getStandardSurname("\u00D4"));
 	}
 
 	public void testSimilarity() {
