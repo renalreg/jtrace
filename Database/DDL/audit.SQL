@@ -9,7 +9,7 @@ CREATE TABLE jtrace.audit
     description character varying(100) NOT NULL,
     attributes character varying(1024),
     mainnationalid character varying(50),
-    mainnationalidtype character varying(5),
+    mainnationalidtype character varying(10),
     lastupdated timestamp NOT NULL,
     updatedBy character varying(320),
     CONSTRAINT audit_pkey PRIMARY KEY (id)
