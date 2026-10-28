@@ -11,7 +11,7 @@ CREATE TABLE jtrace.audit
     mainnationalid character varying(50),
     mainnationalidtype character varying(10),
     lastupdated timestamp NOT NULL,
-    updatedBy character varying(320),
+    updatedBy character varying(20),
     CONSTRAINT audit_pkey PRIMARY KEY (id)
 )
 WITH (
