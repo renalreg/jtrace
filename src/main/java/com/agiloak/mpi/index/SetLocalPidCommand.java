@@ -17,6 +17,7 @@ public class SetLocalPidCommand extends APICommand {
 	public UKRDCIndexManagerResponse execute(UKRDCIndexManager im, Connection conn) throws Exception {
 		
 		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
+		person.getResolvedValidationWorkItemIds().clear();
 
 		im.standardise(person);
 
@@ -27,6 +28,7 @@ public class SetLocalPidCommand extends APICommand {
 			resp.setMessage("FAILED TO MATCH DURING UPDATE - SEE WORK ITEMS");
 		} else {
 			resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
+			im.stageSourceWorkItemClosures(conn, person, sendingFacility, sendingExtract);
 			resp.setPid(pid);
 		}
 		

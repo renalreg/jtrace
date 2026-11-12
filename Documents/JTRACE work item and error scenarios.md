@@ -30,6 +30,18 @@ The detailed verification rules are implemented in `UKRDCIndexManager.verifyMatc
 
 Work-item creation is part of the current JTRACE transaction. If the surrounding API operation subsequently fails and rolls back, the work item is rolled back with it.
 
+### Automatic Closure On Reprocessing
+
+Successful EMPI storage closes existing OPEN work items only when their conditions have been rechecked and resolved. WIP and CLOSED items are left unchanged. Closures use `JTRACE_AUTO`, record an automatic-closure note, and create a work-item-update audit entry in the storage transaction. A rollback also rolls back closures and their audit entries.
+
+- Types 1, 2, 4, 5, 6 and 7: the incoming person now verifies against the linked master. The check uses the master's demographics before storage updates them.
+- Type 3: inferred matching is rechecked and the candidate now verifies, or is no longer an inferred candidate.
+- Type 8: duplicate checking is enabled and no other counted person from the originator is linked to the master. Skipping duplicate checking does not resolve an existing item.
+- Type 9: match using the exact sending facility, sending extract and unconsolidated MRN attributes, not the shared placeholder person ID. Successful PID matching stages closure only if that item's national identifier no longer produces a demographic mismatch. Closure is deferred until EMPI storage succeeds using the same `Person` request. An independent successful match through another identifier does not resolve a remaining mismatch.
+- Type 10: inferred matching is rechecked and no more than one distinct verified UKRDC master remains. Multiple identifiers corroborating one master do not count as a conflict.
+
+Items for unverified conditions or missing source attributes are not closed speculatively. Master INVESTIGATE flags are not automatically reset. New occurrences of an issue create a new item rather than reusing its closed history; active-item matching includes type, person, master and, for type 9, the source attributes.
+
 ## Explicit Errors
 
 ### Person Validation

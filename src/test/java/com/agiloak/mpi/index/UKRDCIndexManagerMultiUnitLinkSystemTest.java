@@ -54,6 +54,7 @@ public class UKRDCIndexManagerMultiUnitLinkSystemTest extends UKRDCIndexManagerB
 		p1.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p1.setLocalId(local1).setLocalIdType("MR").setOriginator(orig1);
 		p1.addNationalId(new NationalIdentity(NationalIdentity.NHS_TYPE,nhsNo));
+		p1.addNationalId(new NationalIdentity("HSC", "MUST900002"));
 		UKRDCIndexManagerResponse resp = im.store(p1);
 		NationalIdentity natId1 = resp.getNationalIdentity();
 		// VERIFY
@@ -66,7 +67,7 @@ public class UKRDCIndexManagerMultiUnitLinkSystemTest extends UKRDCIndexManagerB
 		MasterRecord master = MasterRecordDAO.findByNationalId(conn, natId1.getId(), NationalIdentity.UKRDC_TYPE);
 		assert(master!=null);
 		List<LinkRecord> links = LinkRecordDAO.findByPerson(conn, person.getId());
-		assert(links.size()==2);
+		assert(links.size()==3);
 		List<WorkItem> items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==0);
 
@@ -75,6 +76,7 @@ public class UKRDCIndexManagerMultiUnitLinkSystemTest extends UKRDCIndexManagerB
 		p2.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p2.setLocalId(local2).setLocalIdType("MR").setOriginator(orig2);
 		p2.addNationalId(new NationalIdentity(NationalIdentity.NHS_TYPE,nhsNo));
+		p2.addNationalId(new NationalIdentity("HSC", "MUST900002"));
 		UKRDCIndexManagerResponse resp2 = im.store(p2);
 		NationalIdentity natId2 = resp2.getNationalIdentity();
 		// VERIFY 
@@ -86,7 +88,7 @@ public class UKRDCIndexManagerMultiUnitLinkSystemTest extends UKRDCIndexManagerB
 		master = MasterRecordDAO.findByNationalId(conn, natId2.getId(), NationalIdentity.UKRDC_TYPE);
 		assert(master!=null);
 		links = LinkRecordDAO.findByPerson(conn, person.getId());
-		assert(links.size()==2);
+		assert(links.size()==3);
 		items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==0);
 		
@@ -95,6 +97,7 @@ public class UKRDCIndexManagerMultiUnitLinkSystemTest extends UKRDCIndexManagerB
 		p3.setPostcode("CH1 6LB").setStreet("Townfield Lane");
 		p3.setLocalId(local3).setLocalIdType("MR").setOriginator(orig3);
 		p3.addNationalId(new NationalIdentity(NationalIdentity.NHS_TYPE,nhsNo));
+		p3.addNationalId(new NationalIdentity("HSC", "MUST900002"));
 		UKRDCIndexManagerResponse resp3 = im.store(p3);
 		NationalIdentity natId3 = resp3.getNationalIdentity();
 		// VERIFY 
@@ -106,7 +109,7 @@ public class UKRDCIndexManagerMultiUnitLinkSystemTest extends UKRDCIndexManagerB
 		master = MasterRecordDAO.findByNationalId(conn, natId3.getId(), NationalIdentity.UKRDC_TYPE);
 		assert(master!=null);
 		links = LinkRecordDAO.findByPerson(conn, person.getId());
-		assert(links.size()==2);
+		assert(links.size()==3);
 		items = WorkItemDAO.findByPerson(conn, person.getId());
 		assert(items.size()==0);
 

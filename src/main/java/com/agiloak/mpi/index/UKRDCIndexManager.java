@@ -7,8 +7,10 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +24,9 @@ import com.agiloak.mpi.index.persistence.MasterRecordDAO;
 import com.agiloak.mpi.index.persistence.PersonDAO;
 import com.agiloak.mpi.index.persistence.PidXREFDAO;
 import com.agiloak.mpi.normalization.NormalizationManager;
+import com.agiloak.mpi.workitem.WorkItem;
 import com.agiloak.mpi.workitem.WorkItemManager;
+import com.agiloak.mpi.workitem.WorkItemStatus;
 import com.agiloak.mpi.workitem.WorkItemType;
 
 public class UKRDCIndexManager {
@@ -516,9 +520,9 @@ public class UKRDCIndexManager {
 					WorkItemManager wim = new WorkItemManager();
 					int personToLog = person.getId();
 					if (personToLog==0) personToLog = 999999999; // Person is not known at this point
-					wim.create(conn, WorkItemType.TYPE_XREF_MATCHED_NOT_VERIFIED, personToLog, matchedMaster.getId(), "Person matched by facility, extract and national id - not matched by demographics", attributes);
+					WorkItem workItem = wim.create(conn, WorkItemType.TYPE_XREF_MATCHED_NOT_VERIFIED, personToLog, matchedMaster.getId(), "Person matched by facility, extract and national id - not matched by demographics", attributes);
 
-					outcome = "REJECT";
+					outcome = "REJECT:"+workItem.getType();
 				}
 				
 			}
@@ -532,11 +536,86 @@ public class UKRDCIndexManager {
 		return outcome;
 	}
 	
-	/**
-	 *  Created for the UKRDC this is a combined createOrUpdate. This method updates the person, the master (as appropriate) and the link records ( as appropriate)
-	 *  
-	 * @param person
-	 */
+	protected void stageSourceWorkItemClosures(Connection conn, Person person, String facility, String extract) throws MpiException {
+		for (WorkItem item : new WorkItemManager().findBySource(conn, facility, extract, person.getUnconsolidatedLocalId())) {
+			if (item.getStatus() != WorkItemStatus.STATUS_OPEN) continue;
+			boolean mismatchRemains = false;
+			MasterRecord master = MasterRecordDAO.get(conn, item.getMasterId());
+			if (master != null) {
+				for (NationalIdentity identity : person.getNationalIds()) {
+					if (!nationalIdMatch(master.getNationalId(), identity.getId(), master.getNationalIdType(), identity.getType())) continue;
+					for (Person candidate : PidXREFDAO.FindByNationalIdAndFacility(conn, facility, extract, identity.getType(), identity.getId())) {
+						// A successful match elsewhere does not resolve this identifier's mismatch.
+						if (matchDobParts(person.getDateOfBirth(), candidate.getDateOfBirth()) != 3
+								|| !person.getGender().equals(candidate.getGender())
+								|| !person.getSurname().equals(candidate.getSurname())
+								|| !person.getGivenName().equals(candidate.getGivenName())) {
+							mismatchRemains = true;
+							break;
+						}
+					}
+				}
+			}
+			if (!mismatchRemains) person.getResolvedValidationWorkItemIds().add(item.getId());
+		}
+	}
+
+	protected List<Integer> findResolvedWorkItems(Connection conn, Person person) throws MpiException {
+		List<Integer> resolved = new ArrayList<Integer>();
+		Person storedPerson = PersonDAO.findByLocalId(conn, person.getLocalIdType(), person.getLocalId(), person.getOriginator());
+		if (storedPerson == null) return resolved;
+		List<WorkItem> items = new WorkItemManager().findByPerson(conn, storedPerson.getId());
+		if (items.isEmpty()) return resolved;
+		validateInternal(person);
+		standardise(person);
+		Set<Integer> linkedMasters = new HashSet<Integer>();
+		for (LinkRecord link : LinkRecordDAO.findByPerson(conn, storedPerson.getId())) {
+			linkedMasters.add(link.getMasterId());
+		}
+
+		Set<Integer> candidates = new HashSet<Integer>();
+		Set<Integer> verifiedCandidates = new HashSet<Integer>();
+		boolean inferredLinksChecked = person.getPrimaryId() == null || person.getPrimaryIdType() == null;
+		if (inferredLinksChecked) {
+			for (NationalIdentity identity : person.getNationalIds()) {
+				MasterRecord nationalMaster = MasterRecordDAO.findByNationalId(conn, identity.getId(), identity.getType());
+				if (nationalMaster == null) continue;
+				for (LinkRecord link : LinkRecordDAO.findByMaster(conn, nationalMaster.getId())) {
+					if (link.getPersonId() == storedPerson.getId()) continue;
+					LinkRecord ukrdcLink = LinkRecordDAO.findByPersonAndType(conn, link.getPersonId(), NationalIdentity.UKRDC_TYPE);
+					if (ukrdcLink != null && candidates.add(ukrdcLink.getMasterId())) {
+						MasterRecord candidate = MasterRecordDAO.get(conn, ukrdcLink.getMasterId());
+						if (candidate != null && verifyMatch(person, candidate)) verifiedCandidates.add(candidate.getId());
+					}
+				}
+			}
+		}
+
+		// Check against the original masters before storage can replace their demographics.
+		for (WorkItem item : items) {
+			if (item.getStatus() != WorkItemStatus.STATUS_OPEN) continue;
+			int type = item.getType();
+			int masterId = item.getMasterId();
+			if (type == WorkItemType.TYPE_MULTIPLE_UKRDC_MATCH) {
+				if (inferredLinksChecked && verifiedCandidates.size() <= 1) resolved.add(item.getId());
+			} else if (type == WorkItemType.TYPE_INFERRED_LINK_NOT_VERIFIED_PRIMARY) {
+				if (inferredLinksChecked && (!candidates.contains(masterId) || verifiedCandidates.contains(masterId))) resolved.add(item.getId());
+			} else if (type == WorkItemType.TYPE_MULTIPLE_NATID_LINKS_FROM_ORIGINATOR) {
+				if (!person.isSkipDuplicateCheck() && linkedMasters.contains(masterId)
+						&& LinkRecordDAO.countByMasterAndOriginatorExcludingPid(conn, masterId, person.getOriginator(), storedPerson.getId()) == 0) {
+					resolved.add(item.getId());
+				}
+			} else if (type >= WorkItemType.TYPE_STALE_DEMOGS_NOT_VERIFIED_PRIMARY
+					&& type <= WorkItemType.TYPE_DEMOGS_NOT_VERIFIED_AFTER_NATIONAL_UPDATE
+					&& linkedMasters.contains(masterId)) {
+				MasterRecord master = MasterRecordDAO.get(conn, masterId);
+				if (master != null && verifyMatch(person, master)) resolved.add(item.getId());
+			}
+		}
+		return resolved;
+	}
+
+	/** Updates the person, masters and links as appropriate for the incoming record. */
 	protected NationalIdentity createOrUpdate(Connection conn, Person person) throws MpiException {
 
 		logger.debug("*********Processing person record:"+person);
@@ -813,6 +892,7 @@ public class UKRDCIndexManager {
 			MasterRecord master = null;
 			MasterRecord ukrdcMaster = null;
 			boolean linked = false;
+			Set<Integer> evaluatedMasterIds = new HashSet<Integer>();
 
 			// First Check if this is linked to a UKRDC master - UKRDC reassessment when national ids change for the inbound record
 			LinkRecord existingUKRDCLink = LinkRecordDAO.findByPersonAndType(conn, person.getId(), NationalIdentity.UKRDC_TYPE);
@@ -837,6 +917,8 @@ public class UKRDCIndexManager {
 							LinkRecord ukrdcLink = LinkRecordDAO.findByPersonAndType(conn, link.getPersonId(), NationalIdentity.UKRDC_TYPE);
 							
 							if (ukrdcLink != null) {
+								// Several identifiers or people may corroborate the same UKRDC master.
+								if (!evaluatedMasterIds.add(ukrdcLink.getMasterId())) continue;
 								
 								// If found - we have identified a Person linked to a UKRDC Number AND by National Id to the incoming Person
 								//            Does the incoming Person verify against the UKRDC Master
@@ -850,6 +932,8 @@ public class UKRDCIndexManager {
 										Map<String,String> attributes = new HashMap<String, String>();
 										attributes.put("Type", natId.getType());
 										attributes.put("Id", natId.getId());
+										attributes.put("SelectedUKRDCId", ukrdcMaster.getNationalId());
+										attributes.put("ConflictingUKRDCId", candidateUkrdcMaster.getNationalId());
 										wim.create(conn, WorkItemType.TYPE_MULTIPLE_UKRDC_MATCH, person.getId(), candidateUkrdcMaster.getId(),
 												 "Additional verified UKRDC Link (see masterId) implied (see attributes)", attributes);
 									} else {
@@ -871,7 +955,6 @@ public class UKRDCIndexManager {
 
 										ukrdcMaster = candidateUkrdcMaster;
 										linked = true;
-										break; //Only want to link once
 									}
 								} else {
 									logger.debug("Link to potential UKRDC Match not verified");

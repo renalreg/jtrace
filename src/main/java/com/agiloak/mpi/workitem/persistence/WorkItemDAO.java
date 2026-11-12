@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import com.agiloak.mpi.MpiException;
 import com.agiloak.mpi.workitem.WorkItem;
+import com.agiloak.mpi.workitem.WorkItemType;
 
 public class WorkItemDAO {
 	
@@ -82,7 +83,7 @@ public class WorkItemDAO {
 		workItem.setLastUpdated(new Timestamp(System.currentTimeMillis()));
 		String updateSQL = "update workitem "
 				+"set status =?, lastupdated=?, updatedby=?, updatedesc=? "
-				+"where personid=? and masterid=?"; 
+				+"where id=?";
 		
 		PreparedStatement preparedStatement = null;
 		
@@ -93,8 +94,7 @@ public class WorkItemDAO {
 			preparedStatement.setTimestamp(2, workItem.getLastUpdated());
 			preparedStatement.setString(3, workItem.getUpdatedBy());
 			preparedStatement.setString(4, workItem.getUpdateDesc());
-			preparedStatement.setInt(5, workItem.getPersonId());
-			preparedStatement.setInt(6, workItem.getMasterId());
+			preparedStatement.setInt(5, workItem.getId());
 
 			int affectedRows = preparedStatement.executeUpdate();
 			logger.debug("Affected Rows:"+affectedRows);
@@ -188,10 +188,18 @@ public class WorkItemDAO {
 	}	
 	
 	public static WorkItem get(Connection conn, int id) throws MpiException {
+		return get(conn, id, false);
+	}
+
+	public static WorkItem getForUpdate(Connection conn, int id) throws MpiException {
+		return get(conn, id, true);
+	}
+
+	private static WorkItem get(Connection conn, int id, boolean forUpdate) throws MpiException {
 
 		logger.debug("Starting");
 		
-		String findSQL = "select * from workitem where id = ? ";
+		String findSQL = "select * from workitem where id = ? " + (forUpdate ? "for update" : "");
 		
 		PreparedStatement preparedStatement = null;
 		ResultSet rs = null;
@@ -247,6 +255,40 @@ public class WorkItemDAO {
 		
 		return workItem;
 
+	}
+
+	public static List<WorkItem> findBySource(Connection conn, String sf, String se, String mrn) throws MpiException {
+		List<WorkItem> workItems = new ArrayList<WorkItem>();
+		if (sf == null || se == null || mrn == null) {
+			return workItems;
+		}
+		String findSQL = "select * from workitem where type = ?"
+				+ " and attributes::json ->> 'SF' = ?"
+				+ " and attributes::json ->> 'SE' = ?"
+				+ " and attributes::json ->> 'MRN' = ?";
+		try (PreparedStatement statement = conn.prepareStatement(findSQL)) {
+			statement.setInt(1, WorkItemType.TYPE_XREF_MATCHED_NOT_VERIFIED);
+			statement.setString(2, sf);
+			statement.setString(3, se);
+			statement.setString(4, mrn);
+			try (ResultSet rs = statement.executeQuery()) {
+				while (rs.next()) {
+					WorkItem item = new WorkItem(rs.getInt("type"), rs.getInt("personid"), rs.getInt("masterid"),
+							rs.getString("description"), rs.getString("attributes"));
+					item.setId(rs.getInt("id"));
+					item.setStatus(rs.getInt("status"));
+					item.setCreationDate(rs.getTimestamp("creationdate"));
+					item.setLastUpdated(rs.getTimestamp("lastupdated"));
+					item.setUpdatedBy(rs.getString("updatedby"));
+					item.setUpdateDesc(rs.getString("updatedesc"));
+					workItems.add(item);
+				}
+			}
+		} catch (SQLException e) {
+			logger.error("Failure querying WorkItem by source.", e);
+			throw new MpiException("Failure querying WorkItem by source. " + e.getMessage());
+		}
+		return workItems;
 	}
 
 	public static List<WorkItem> findByPerson(Connection conn, int personId) throws MpiException {
