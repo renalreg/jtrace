@@ -1,6 +1,7 @@
 package com.agiloak.mpi.workitem;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,7 +66,26 @@ public class WorkItemManager {
 		}
 		logger.debug("New Work Item");
 		
-		WorkItem workItem = WorkItemDAO.findByPersonAndMaster(conn, personId, masterId);
+		WorkItem workItem = null;
+		for (WorkItem existing : WorkItemDAO.findByPerson(conn, personId)) {
+			if (existing.getMasterId() != masterId || existing.getType() != type
+					|| (existing.getStatus() != WorkItemStatus.STATUS_OPEN
+							&& existing.getStatus() != WorkItemStatus.STATUS_WIP)) {
+				continue;
+			}
+			if (type == WorkItemType.TYPE_XREF_MATCHED_NOT_VERIFIED) {
+				Map<String, String> source = existing.getAttributes();
+				if (attributes == null || source == null
+						|| attributes.get("SF") == null || attributes.get("SE") == null || attributes.get("MRN") == null
+						|| !attributes.get("SF").equals(source.get("SF"))
+						|| !attributes.get("SE").equals(source.get("SE"))
+						|| !attributes.get("MRN").equals(source.get("MRN"))) {
+					continue;
+				}
+			}
+			workItem = existing;
+			break;
+		}
 		if (workItem == null) {
 			workItem = new WorkItem(type, personId, masterId, desc, attributes);
 			WorkItemDAO.create(conn, workItem);
@@ -152,6 +172,24 @@ public class WorkItemManager {
 		return resp;
 		
 	}
+	/** Close only an OPEN item, leaving transaction completion to the caller. */
+	public void closeAutomatically(Connection conn, int workItemId) throws MpiException {
+		try {
+			if (conn.getAutoCommit()) {
+				throw new MpiException("Automatic closure requires a transaction");
+			}
+		} catch (SQLException e) {
+			throw new MpiException("Cannot check transaction: " + e.getMessage());
+		}
+		// Hold the row lock through the status check, audited update and caller's commit.
+		WorkItem workItem = WorkItemDAO.getForUpdate(conn, workItemId);
+		if (workItem != null && workItem.getStatus() == WorkItemStatus.STATUS_OPEN) {
+			updateInternal(conn, workItemId, WorkItemStatus.STATUS_CLOSED,
+					"Closed automatically after successful reprocessing; original condition no longer applies.",
+					"JTRACE_AUTO");
+		}
+	}
+
 	private WorkItem updateInternal(Connection conn, int workItemId, int status, String updateDesc, String updatedBy) throws MpiException {
 
 		logger.debug("Updating Work Item");
@@ -212,6 +250,11 @@ public class WorkItemManager {
 
 		return WorkItemDAO.findByPerson(conn, personId);
 		
+	}
+
+	/** Find type 9 items for a complete source identity, regardless of person ID or status. */
+	public List<WorkItem> findBySource(Connection conn, String sf, String se, String mrn) throws MpiException {
+		return WorkItemDAO.findBySource(conn, sf, se, mrn);
 	}
 
 	/**
