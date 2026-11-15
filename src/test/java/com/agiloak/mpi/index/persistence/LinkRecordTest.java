@@ -1,5 +1,7 @@
 package com.agiloak.mpi.index.persistence;
 
+import static org.junit.Assert.assertEquals;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Date;
@@ -126,8 +128,9 @@ public class LinkRecordTest {
 		List<LinkRecord> links = LinkRecordDAO.findByPerson(conn, personToTest);
 		assert(links.size()==1);
 		
-		List<LinkRecord> links2 =LinkRecordDAO.findByPerson(conn, 99);
-		assert(links2.size()==0);
+		// Generated person IDs are positive; do not depend on an unused sequence value.
+		List<LinkRecord> links2 = LinkRecordDAO.findByPerson(conn, -1);
+		assertEquals(0, links2.size());
 	}
 
 	@Test
