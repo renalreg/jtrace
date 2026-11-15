@@ -1,0 +1,27 @@
+Verdict: The six original concerns are resolved or answered. The response document says its fixes weren't run, so I ran them. All of the PR's tests pass, and my end-to-end reproductions now behave correctly. Nothing I found blocks the merge. Three checks remain, listed under "Still to check".
+
+Original concerns
+#	Concern	Status at 982cfd0	Evidence
+1	Types 2 and 4 close on the next unchanged message	Fixed	Both stay open while the other linked person still conflicts. Type 4 closes once B's details are corrected to agree with A.
+2	Type 3 (and possibly type 10) close without re-linking	Fixed	Type 3 stays open while B is still on a separate UKRDC number. Type 10 stays open when the person's own UKRDC master stops verifying (the old head closed it).
+3	UKRDCIndexManagerMergeSystemTest fails (CI)	Fixed	Both tests pass and now assert types 3, 4 and 8.
+4	Type 9 closing needs the same Person object	Fixed	Closing now uses the persisted PID-to-MRN mapping (PIDXREF), and a freshly built Person closes the item. Write and lookup both use getUnconsolidatedLocalId().
+5	getLocalPID failure message changed	Kept on purpose	The new wording was requested. Deployed channels and alerts still need checking (the response agrees).
+6	Slow type 9 lookup	Fixed	The lookup runs once per store, filters to OPEN items in SQL, and uses the new partial index (checked with EXPLAIN).
+
+Still to check
+1.	Type 9 needs the original MRN at store() time. The store request must carry the PID as localId and the original MRN as unconsolidatedLocalId. Without the MRN, the item stays open. That is the safe direction: it never closes wrongly. The Mirth channels aren't in this repo, so I can't confirm the response's statement that the normal path keeps the same Person. The PID-migration path, which the response says rebuilds the Person, should be checked to make sure it sets unconsolidatedLocalId.
+2.	Message text. Check the deployed channels, alert rules and monitoring for the old ...SEE WORK ITEMS text before release. setLocalPID still uses the old wording, so the two messages now differ.
+3.	Fragile test. LinkRecordTest.testNoFindByPerson hard-codes person ID 99 and expects it to have no links. The PR's extra test rows shift the ID sequence, so in my full run 99 became a real person from UpdateRecordSystemTest and the test failed. It passes in isolation on every branch. Whether CI hits it depends on test-class order. Fix: use an ID that can't exist, such as -1.
+
+How this was tested
+•	Full suite with Java assert on (as Maven's surefire runs it) against PostgreSQL 16, on the PR head and on the PR merged onto current master (a22b9db). The merge is clean.
+•	Results: 
+o	All PR tests pass: 12 closure tests, 9 persistence tests and the 2 merge tests.
+o	LinkRecordTest fails as described in "Still to check", point 3.
+o	The same three failures as before still appear on the base commit: MasterRecordTest.testCreateDupl and two timestamp assertions in UKRDCIndexManagerUpdateRecordSystemTest.
+•	End-to-end scenarios through the public API, run on the base commit, the old PR head and the new PR head: 
+o	type 2, 3 and 4 conflicts and their later correction
+o	type 10, including the selected master no longer verifying
+o	type 9 with the same Person, a freshly built Person, and no MRN on the store request
+•	The new workitem_open_source index builds from the DDL, and EXPLAIN shows the new lookup using it. I didn't run the CREATE INDEX CONCURRENTLY upgrade script against existing data.
