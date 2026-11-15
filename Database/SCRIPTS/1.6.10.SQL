@@ -1,6 +1,8 @@
 -- Data Repo version 1.6.10
 -- JTrace version 1.3.8
 -- 26/11/2019
+-- Historical prerequisite: this predates JTrace 1.4.2 despite its filename.
+-- Do not run after the 1.4.x migrations or on a fresh schema built from DDL.
 
 -- Link record
 

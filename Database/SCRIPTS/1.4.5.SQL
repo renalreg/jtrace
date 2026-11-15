@@ -1,53 +1,40 @@
 -- JTrace version 1.4.5
 -- Convert fixed-width character fields to VARCHAR and remove padding.
 
-BEGIN;
-
-UPDATE jtrace.masterrecord
-   SET nationalidtype = rtrim(nationalidtype);
-
-UPDATE jtrace.tracerequest
-   SET traceid = rtrim(traceid),
-       tracetype = rtrim(tracetype),
-       nameswap = rtrim(nameswap),
-       localid = rtrim(localid),
-       localidtype = rtrim(localidtype),
-       gender = rtrim(gender),
-       postcode = rtrim(postcode);
-
-UPDATE jtrace.traceresponse
-   SET traceid = rtrim(traceid),
-       tracestarttime = rtrim(tracestarttime),
-       traceendtime = rtrim(traceendtime),
-       status = rtrim(status);
-
-UPDATE jtrace.traceresponseline
-   SET traceid = rtrim(traceid),
-       gender = rtrim(gender),
-       postcode = rtrim(postcode);
-
-ALTER TABLE jtrace.masterrecord
-    ALTER COLUMN nationalidtype TYPE character varying(5)
-    USING rtrim(nationalidtype);
-
-ALTER TABLE jtrace.tracerequest
-    ALTER COLUMN traceid TYPE character varying(36) USING rtrim(traceid),
-    ALTER COLUMN tracetype TYPE character varying(10) USING rtrim(tracetype),
-    ALTER COLUMN nameswap TYPE character varying(1) USING rtrim(nameswap),
-    ALTER COLUMN localid TYPE character varying(10) USING rtrim(localid),
-    ALTER COLUMN localidtype TYPE character varying(5) USING rtrim(localidtype),
-    ALTER COLUMN gender TYPE character varying(2) USING rtrim(gender),
-    ALTER COLUMN postcode TYPE character varying(10) USING rtrim(postcode);
-
-ALTER TABLE jtrace.traceresponse
-    ALTER COLUMN traceid TYPE character varying(36) USING rtrim(traceid),
-    ALTER COLUMN tracestarttime TYPE character varying(23) USING rtrim(tracestarttime),
-    ALTER COLUMN traceendtime TYPE character varying(23) USING rtrim(traceendtime),
-    ALTER COLUMN status TYPE character varying(10) USING rtrim(status);
-
-ALTER TABLE jtrace.traceresponseline
-    ALTER COLUMN traceid TYPE character varying(36) USING rtrim(traceid),
-    ALTER COLUMN gender TYPE character varying(2) USING rtrim(gender),
-    ALTER COLUMN postcode TYPE character varying(10) USING rtrim(postcode);
-
-COMMIT;
+-- Preserve existing wider/unlimited definitions while removing CHAR padding.
+-- USING trims during conversion; UPDATE on a CHAR column would just pad it again.
+DO $$
+DECLARE
+    field record;
+    existing_width integer;
+    target_type text;
+BEGIN
+    FOR field IN SELECT * FROM (VALUES
+        ('masterrecord', 'nationalidtype', 50),
+        ('tracerequest', 'traceid', 36),
+        ('tracerequest', 'tracetype', 10),
+        ('tracerequest', 'nameswap', 1),
+        ('tracerequest', 'localid', 10),
+        ('tracerequest', 'localidtype', 5),
+        ('tracerequest', 'gender', 2),
+        ('tracerequest', 'postcode', 10),
+        ('traceresponse', 'traceid', 36),
+        ('traceresponse', 'tracestarttime', 23),
+        ('traceresponse', 'traceendtime', 23),
+        ('traceresponse', 'status', 10),
+        ('traceresponseline', 'traceid', 36),
+        ('traceresponseline', 'gender', 2),
+        ('traceresponseline', 'postcode', 10)
+    ) AS fields(table_name, column_name, minimum_width)
+    LOOP
+        SELECT character_maximum_length INTO STRICT existing_width
+          FROM information_schema.columns
+         WHERE table_schema = 'jtrace'
+           AND table_name = field.table_name AND column_name = field.column_name;
+        target_type := CASE WHEN existing_width IS NULL THEN 'character varying'
+            ELSE format('character varying(%s)', greatest(existing_width, field.minimum_width)) END;
+        EXECUTE format('ALTER TABLE jtrace.%I ALTER COLUMN %I TYPE %s USING rtrim(%I::text)',
+            field.table_name, field.column_name, target_type, field.column_name);
+    END LOOP;
+END;
+$$;
