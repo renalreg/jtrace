@@ -252,9 +252,14 @@ public class WorkItemManager {
 		
 	}
 
-	/** Find type 9 items for a complete source identity, regardless of person ID or status. */
+	/** Find OPEN type 9 items for a complete source identity, regardless of person ID. */
 	public List<WorkItem> findBySource(Connection conn, String sf, String se, String mrn) throws MpiException {
 		return WorkItemDAO.findBySource(conn, sf, se, mrn);
+	}
+
+	/** Find OPEN type 9 items for the persisted sources of a consolidated PID and exact raw MRN. */
+	public List<WorkItem> findOpenByPidAndLocalId(Connection conn, String pid, String localId) throws MpiException {
+		return WorkItemDAO.findOpenByPidAndLocalId(conn, pid, localId);
 	}
 
 	/**

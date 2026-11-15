@@ -17,7 +17,6 @@ public class GetLocalPidCommand extends APICommand {
 	public UKRDCIndexManagerResponse execute(UKRDCIndexManager im, Connection conn) throws Exception {
 		
 		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
-		person.getResolvedValidationWorkItemIds().clear();
 
 		im.standardise(person);
 		String outcome = im.getLocalPIDInternal(conn, person, sendingFacility, sendingExtract);
@@ -30,7 +29,6 @@ public class GetLocalPidCommand extends APICommand {
 			resp.setMessage("GET LOCAL PID RETURNED NO OUTCOME");
 		} else {
 			resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
-			im.stageSourceWorkItemClosures(conn, person, sendingFacility, sendingExtract);
 			resp.setPid(outcome);
 		}
 		

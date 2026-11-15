@@ -17,8 +17,8 @@ public class StoreCommand extends APICommand {
 		
 		UKRDCIndexManagerResponse resp = new UKRDCIndexManagerResponse();
 		List<Integer> resolvedItems = im.findResolvedWorkItems(conn, person);
+		resolvedItems.addAll(im.findResolvedSourceWorkItems(conn, person));
 		NationalIdentity natId = im.createOrUpdate(conn, person);
-		resolvedItems.addAll(person.getResolvedValidationWorkItemIds());
 		WorkItemManager workItems = new WorkItemManager();
 		for (Integer id : resolvedItems) {
 			workItems.closeAutomatically(conn, id);

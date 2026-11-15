@@ -16,12 +16,6 @@ public class Person {
 	private String localId;
 	private String localIdType;
 	private String originator;
-	// Validation and storage are separate transactions; defer closures until storage succeeds.
-	private final List<Integer> resolvedValidationWorkItemIds = new ArrayList<Integer>();
-
-	List<Integer> getResolvedValidationWorkItemIds() {
-		return resolvedValidationWorkItemIds;
-	}
 
 	private String primaryId;
 	private String primaryIdType;

@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import com.agiloak.mpi.MpiException;
 import com.agiloak.mpi.workitem.WorkItem;
+import com.agiloak.mpi.workitem.WorkItemStatus;
 import com.agiloak.mpi.workitem.WorkItemType;
 
 public class WorkItemDAO {
@@ -262,15 +263,16 @@ public class WorkItemDAO {
 		if (sf == null || se == null || mrn == null) {
 			return workItems;
 		}
-		String findSQL = "select * from workitem where type = ?"
+		String findSQL = "select * from workitem where type = ? and status = ?"
 				+ " and attributes::json ->> 'SF' = ?"
 				+ " and attributes::json ->> 'SE' = ?"
 				+ " and attributes::json ->> 'MRN' = ?";
 		try (PreparedStatement statement = conn.prepareStatement(findSQL)) {
 			statement.setInt(1, WorkItemType.TYPE_XREF_MATCHED_NOT_VERIFIED);
-			statement.setString(2, sf);
-			statement.setString(3, se);
-			statement.setString(4, mrn);
+			statement.setInt(2, WorkItemStatus.STATUS_OPEN);
+			statement.setString(3, sf);
+			statement.setString(4, se);
+			statement.setString(5, mrn);
 			try (ResultSet rs = statement.executeQuery()) {
 				while (rs.next()) {
 					WorkItem item = new WorkItem(rs.getInt("type"), rs.getInt("personid"), rs.getInt("masterid"),
@@ -287,6 +289,42 @@ public class WorkItemDAO {
 		} catch (SQLException e) {
 			logger.error("Failure querying WorkItem by source.", e);
 			throw new MpiException("Failure querying WorkItem by source. " + e.getMessage());
+		}
+		return workItems;
+	}
+
+	public static List<WorkItem> findOpenByPidAndLocalId(Connection conn, String pid, String localId) throws MpiException {
+		List<WorkItem> workItems = new ArrayList<WorkItem>();
+		if (pid == null || pid.isEmpty() || localId == null || localId.isEmpty()) {
+			return workItems;
+		}
+		String findSQL = "select w.* from workitem w where w.type = ? and w.status = ?"
+				+ " and w.attributes::json ->> 'MRN' = ?"
+				+ " and exists (select 1 from pidxref x where x.pid = ? and x.localid = ?"
+				+ " and x.sendingfacility = w.attributes::json ->> 'SF'"
+				+ " and x.sendingextract = w.attributes::json ->> 'SE')";
+		try (PreparedStatement statement = conn.prepareStatement(findSQL)) {
+			statement.setInt(1, WorkItemType.TYPE_XREF_MATCHED_NOT_VERIFIED);
+			statement.setInt(2, WorkItemStatus.STATUS_OPEN);
+			statement.setString(3, localId);
+			statement.setString(4, pid);
+			statement.setString(5, localId);
+			try (ResultSet rs = statement.executeQuery()) {
+				while (rs.next()) {
+					WorkItem item = new WorkItem(rs.getInt("type"), rs.getInt("personid"), rs.getInt("masterid"),
+							rs.getString("description"), rs.getString("attributes"));
+					item.setId(rs.getInt("id"));
+					item.setStatus(rs.getInt("status"));
+					item.setCreationDate(rs.getTimestamp("creationdate"));
+					item.setLastUpdated(rs.getTimestamp("lastupdated"));
+					item.setUpdatedBy(rs.getString("updatedby"));
+					item.setUpdateDesc(rs.getString("updatedesc"));
+					workItems.add(item);
+				}
+			}
+		} catch (SQLException e) {
+			logger.error("Failure querying open WorkItems by PID and local ID.", e);
+			throw new MpiException("Failure querying open WorkItems by PID and local ID. " + e.getMessage());
 		}
 		return workItems;
 	}

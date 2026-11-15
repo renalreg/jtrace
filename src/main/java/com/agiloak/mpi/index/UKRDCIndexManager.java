@@ -418,7 +418,7 @@ public class UKRDCIndexManager {
 				Map<String,String> attributes = new HashMap<String, String>();
 				attributes.put("SF", sendingFacility);
 				attributes.put("SE", sendingExtract);
-				attributes.put("MRN", person.getLocalId());
+				attributes.put("MRN", person.getUnconsolidatedLocalId());
 
 				if (matched) {
 					
@@ -454,7 +454,7 @@ public class UKRDCIndexManager {
 
 		// If no matches found, this record has not been seen by the EMPI before and no local link is found so it will be allocated a new PID and linked to it
 		if (!matchesFound) {
-			PidXREF newXref = new PidXREF(sendingFacility, sendingExtract, person.getLocalId()); 
+			PidXREF newXref = new PidXREF(sendingFacility, sendingExtract, person.getUnconsolidatedLocalId());
 			PidXREFDAO.create(conn, newXref);
 			pid = newXref.getPid();
 		}
@@ -511,7 +511,7 @@ public class UKRDCIndexManager {
 					Map<String,String> attributes = new HashMap<String, String>();
 					attributes.put("SF", sendingFacility);
 					attributes.put("SE", sendingExtract);
-					attributes.put("MRN", person.getLocalId());
+					attributes.put("MRN", person.getUnconsolidatedLocalId());
 					if ( !person.getGender().equals(potentialMatch.getGender()) ) attributes.put("Gender", person.getGender()+":"+potentialMatch.getGender());
 					if ( !person.getSurname().equals(potentialMatch.getSurname()) ) attributes.put("Surname", person.getSurname()+":"+potentialMatch.getSurname());
 					if ( !person.getGivenName().equals(potentialMatch.getGivenName()) ) attributes.put("GivenName", person.getGivenName()+":"+potentialMatch.getGivenName());
@@ -536,9 +536,15 @@ public class UKRDCIndexManager {
 		return outcome;
 	}
 	
-	protected void stageSourceWorkItemClosures(Connection conn, Person person, String facility, String extract) throws MpiException {
-		for (WorkItem item : new WorkItemManager().findBySource(conn, facility, extract, person.getUnconsolidatedLocalId())) {
-			if (item.getStatus() != WorkItemStatus.STATUS_OPEN) continue;
+	protected List<Integer> findResolvedSourceWorkItems(Connection conn, Person person) throws MpiException {
+		List<Integer> resolved = new ArrayList<Integer>();
+		List<WorkItem> items = new WorkItemManager().findOpenByPidAndLocalId(conn, person.getLocalId(), person.getUnconsolidatedLocalId());
+		if (items.isEmpty()) return resolved;
+		validateInternal(person);
+		standardise(person);
+		for (WorkItem item : items) {
+			String facility = item.getAttributes().get("SF");
+			String extract = item.getAttributes().get("SE");
 			boolean mismatchRemains = false;
 			MasterRecord master = MasterRecordDAO.get(conn, item.getMasterId());
 			if (master != null) {
@@ -556,8 +562,9 @@ public class UKRDCIndexManager {
 					}
 				}
 			}
-			if (!mismatchRemains) person.getResolvedValidationWorkItemIds().add(item.getId());
+			if (!mismatchRemains) resolved.add(item.getId());
 		}
+		return resolved;
 	}
 
 	protected List<Integer> findResolvedWorkItems(Connection conn, Person person) throws MpiException {
@@ -569,9 +576,12 @@ public class UKRDCIndexManager {
 		validateInternal(person);
 		standardise(person);
 		Set<Integer> linkedMasters = new HashSet<Integer>();
+		Integer linkedUkrdcMaster = null;
 		for (LinkRecord link : LinkRecordDAO.findByPerson(conn, storedPerson.getId())) {
 			linkedMasters.add(link.getMasterId());
 		}
+		LinkRecord ukrdcLink = LinkRecordDAO.findByPersonAndType(conn, storedPerson.getId(), NationalIdentity.UKRDC_TYPE);
+		if (ukrdcLink != null) linkedUkrdcMaster = ukrdcLink.getMasterId();
 
 		Set<Integer> candidates = new HashSet<Integer>();
 		Set<Integer> verifiedCandidates = new HashSet<Integer>();
@@ -582,9 +592,9 @@ public class UKRDCIndexManager {
 				if (nationalMaster == null) continue;
 				for (LinkRecord link : LinkRecordDAO.findByMaster(conn, nationalMaster.getId())) {
 					if (link.getPersonId() == storedPerson.getId()) continue;
-					LinkRecord ukrdcLink = LinkRecordDAO.findByPersonAndType(conn, link.getPersonId(), NationalIdentity.UKRDC_TYPE);
-					if (ukrdcLink != null && candidates.add(ukrdcLink.getMasterId())) {
-						MasterRecord candidate = MasterRecordDAO.get(conn, ukrdcLink.getMasterId());
+					LinkRecord candidateLink = LinkRecordDAO.findByPersonAndType(conn, link.getPersonId(), NationalIdentity.UKRDC_TYPE);
+					if (candidateLink != null && candidates.add(candidateLink.getMasterId())) {
+						MasterRecord candidate = MasterRecordDAO.get(conn, candidateLink.getMasterId());
 						if (candidate != null && verifyMatch(person, candidate)) verifiedCandidates.add(candidate.getId());
 					}
 				}
@@ -597,9 +607,11 @@ public class UKRDCIndexManager {
 			int type = item.getType();
 			int masterId = item.getMasterId();
 			if (type == WorkItemType.TYPE_MULTIPLE_UKRDC_MATCH) {
-				if (inferredLinksChecked && verifiedCandidates.size() <= 1) resolved.add(item.getId());
+				if (inferredLinksChecked && (verifiedCandidates.isEmpty()
+						|| (verifiedCandidates.size() == 1 && verifiedCandidates.contains(linkedUkrdcMaster)))) resolved.add(item.getId());
 			} else if (type == WorkItemType.TYPE_INFERRED_LINK_NOT_VERIFIED_PRIMARY) {
-				if (inferredLinksChecked && (!candidates.contains(masterId) || verifiedCandidates.contains(masterId))) resolved.add(item.getId());
+				if (inferredLinksChecked && (!candidates.contains(masterId)
+						|| (verifiedCandidates.contains(masterId) && linkedMasters.contains(masterId)))) resolved.add(item.getId());
 			} else if (type == WorkItemType.TYPE_MULTIPLE_NATID_LINKS_FROM_ORIGINATOR) {
 				if (!person.isSkipDuplicateCheck() && linkedMasters.contains(masterId)
 						&& LinkRecordDAO.countByMasterAndOriginatorExcludingPid(conn, masterId, person.getOriginator(), storedPerson.getId()) == 0) {
@@ -609,7 +621,19 @@ public class UKRDCIndexManager {
 					&& type <= WorkItemType.TYPE_DEMOGS_NOT_VERIFIED_AFTER_NATIONAL_UPDATE
 					&& linkedMasters.contains(masterId)) {
 				MasterRecord master = MasterRecordDAO.get(conn, masterId);
-				if (master != null && verifyMatch(person, master)) resolved.add(item.getId());
+				if (master == null || !verifyMatch(person, master)) continue;
+				boolean peersVerify = true;
+				if (type == WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_PRIMARY
+						|| type == WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL) {
+					// A failed claim may already have overwritten the master with this person's details.
+					for (Person peer : PersonDAO.findByMasterId(conn, masterId)) {
+						if (peer.getId() != storedPerson.getId() && !verifyMatch(person, new MasterRecord(peer))) {
+							peersVerify = false;
+							break;
+						}
+					}
+				}
+				if (peersVerify) resolved.add(item.getId());
 			}
 		}
 		return resolved;

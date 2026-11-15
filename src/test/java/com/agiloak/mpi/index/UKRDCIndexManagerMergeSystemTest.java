@@ -1,5 +1,10 @@
 package com.agiloak.mpi.index;
 
+import static org.junit.Assert.assertEquals;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -18,6 +23,7 @@ import com.agiloak.mpi.index.persistence.LinkRecordDAO;
 import com.agiloak.mpi.index.persistence.MasterRecordDAO;
 import com.agiloak.mpi.index.persistence.PersonDAO;
 import com.agiloak.mpi.workitem.WorkItem;
+import com.agiloak.mpi.workitem.WorkItemType;
 import com.agiloak.mpi.workitem.persistence.WorkItemDAO;
 
 public class UKRDCIndexManagerMergeSystemTest extends UKRDCIndexManagerBaseTest {
@@ -82,7 +88,13 @@ public class UKRDCIndexManagerMergeSystemTest extends UKRDCIndexManagerBaseTest 
 		Person person2 = PersonDAO.findByLocalId(conn, p2.getLocalIdType(), p2.getLocalId(), p2.getOriginator());
 		assert(person2!=null);
 		List<WorkItem> items2 = WorkItemDAO.findByPerson(conn, person2.getId());
-		assert(items2.size()==2);
+		assertEquals(3, items2.size());
+		List<Integer> types = new ArrayList<Integer>();
+		for (WorkItem item : items2) types.add(item.getType());
+		Collections.sort(types);
+		assertEquals(Arrays.asList(WorkItemType.TYPE_INFERRED_LINK_NOT_VERIFIED_PRIMARY,
+				WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL,
+				WorkItemType.TYPE_MULTIPLE_NATID_LINKS_FROM_ORIGINATOR), types);
 		MasterRecord mr2 = MasterRecordDAO.findByNationalId(conn, natId2.getId(), NationalIdentity.UKRDC_TYPE);
 		assert(mr2!=null);
 
@@ -139,7 +151,13 @@ public class UKRDCIndexManagerMergeSystemTest extends UKRDCIndexManagerBaseTest 
 		Person person2 = PersonDAO.findByLocalId(conn, p2.getLocalIdType(), p2.getLocalId(), p2.getOriginator());
 		assert(person2!=null);
 		List<WorkItem> items2 = WorkItemDAO.findByPerson(conn, person2.getId());
-		assert(items2.size()==2);
+		assertEquals(3, items2.size());
+		List<Integer> types = new ArrayList<Integer>();
+		for (WorkItem item : items2) types.add(item.getType());
+		Collections.sort(types);
+		assertEquals(Arrays.asList(WorkItemType.TYPE_INFERRED_LINK_NOT_VERIFIED_PRIMARY,
+				WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL,
+				WorkItemType.TYPE_MULTIPLE_NATID_LINKS_FROM_ORIGINATOR), types);
 		MasterRecord mr2 = MasterRecordDAO.findByNationalId(conn, natId2.getId(), NationalIdentity.UKRDC_TYPE);
 		assert(mr2!=null);
 

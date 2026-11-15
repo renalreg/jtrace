@@ -1,0 +1,57 @@
+AI response
+
+Verdict: The type 10 fix works, but the PR isn't ready to merge. The automatic closing marks types 2, 3 and 4 as resolved while the problem still exists, and CI will fail.
+1. Types 2 and 4 close on the next unchanged message (high)
+
+findResolvedWorkItems, lines 608–612.
+
+When a claimed link fails verification, storage still copies that person's demographics onto the master (lines 864 and 1061). On the person's next message, the pre-check compares them against that master, finds a match, and closes the item. The other people on that NHS or UKRDC number still don't match.
+
+    Reproduced: B shares A's NHS number with different details. The type 4 item closes on B's next unchanged message, and A still doesn't verify.
+    Fix: Don't close types 2 and 4 automatically, or check the person against the other people linked to the master.
+
+2. Type 3 closes without re-linking (high)
+
+findResolvedWorkItems, line 602.
+
+The item closes once the person matches the candidate master. But a demographics-only update never re-runs inferred matching, so the person isn't moved onto that master.
+
+    Reproduced: B corrects their DOB to match A. Both of B's items close, A and B stay on different UKRDC numbers, and nothing is left open to flag it.
+    Fix: Close only if the candidate is no longer inferred, or the person is actually linked to it.
+    Possibly also type 10 (line 600, not reproduced): it doesn't check that the one remaining match is the master the person is linked to.
+
+3. CI will fail (blocks merge)
+
+UKRDCIndexManagerMergeSystemTest, lines 85 and 142.
+
+The new duplicate check (WorkItemManager.create, lines 70–74) includes the type. A type 8 item that used to be folded into the type 4 item is now recorded separately, so the test gets 3 items instead of 2. Surefire turns Java assert on by default, so both tests fail.
+
+    Fix: If this is intended, update the test to expect 3 items.
+
+4. Type 9 closing needs the same Person object (medium)
+
+Closures are carried on the Person object from getLocalPID/setLocalPID through to store().
+
+    Reproduced: if the channel builds a new Person for store(), the item silently stays open.
+    Also: the item is written with getLocalId() (lines 421, 514) but looked up with getUnconsolidatedLocalId() (line 540).
+    Fix: Check how the Mirth channel calls these, and use the same field for writing and lookup.
+
+5. getLocalPID failure message changed (low to medium)
+
+GetLocalPidCommand, line 27.
+
+The message changed from ...SEE WORK ITEMS to ...SEE WORK ITEM TYPE: 9. Check that no Mirth filter or alert matches on the old text.
+6. Slow type 9 lookup (low)
+
+WorkItemDAO.findBySource, lines 260–268.
+
+Every successful PID call reads every type 9 row, open or closed, and parses it as JSON. There's no index on workitem.
+
+    Fix: Add and status = 1 to the query, and optionally an index.
+
+What works
+
+    Type 10 fix: no more false type 10 when two national IDs point to the same UKRDC number.
+    WorkItemDAO.update now updates by id: before, updating one item changed every item with the same person and master.
+    Type 9 duplicate check is now per source, and a failed store rolls back its closures.
+    New tests and merge: all 14 new tests pass, and the PR merges cleanly onto master.

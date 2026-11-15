@@ -36,7 +36,7 @@ public class UKRDCIndexManagerConditionAwareClosureTest {
     private Connection conn;
     private final UKRDCIndexManager im = new UKRDCIndexManager();
     private final WorkItemManager workItems = new WorkItemManager();
-    private static final String FACILITY = "CLOSURE_TEST";
+    private static final String FACILITY = "CLSR";
     private static final String EXTRACT = "SOURCE";
 
     @BeforeClass
@@ -108,6 +108,7 @@ public class UKRDCIndexManagerConditionAwareClosureTest {
         link(peer, chi);
         link(stored, nhs);
         link(stored, chi);
+        link(stored, ukrdc);
         Person inbound = person("inbound").addNationalId(nhs.getNationalIdentity())
                 .addNationalId(chi.getNationalIdentity());
         WorkItem old = workItems.create(conn, WorkItemType.TYPE_MULTIPLE_UKRDC_MATCH,
@@ -172,43 +173,175 @@ public class UKRDCIndexManagerConditionAwareClosureTest {
     }
 
     @Test
-    public void placeholderClosureIsSourceIsolatedAndDeferredUntilSuccessfulStore() throws Exception {
+    public void claimedLinksStayOpenWhenMasterReflectsInboundButPeerStillConflicts() throws Exception {
+        for (int type : Arrays.asList(WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_PRIMARY,
+                WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_NATIONAL)) {
+            Person stored = storedPerson("claim" + type);
+            Person peer = person("peer" + type).setDateOfBirth(Date.valueOf("1991-07-19"))
+                    .setGivenName("ROBERT").setSurname("SMITH");
+            assertTrue(PersonDAO.create(conn, peer));
+            MasterRecord claimed = master(type == WorkItemType.TYPE_CLAIMED_LINK_NOT_VERIFIED_PRIMARY
+                    ? NationalIdentity.UKRDC_TYPE : "NHS", "CLOSURE_CLAIM_" + type);
+            link(stored, claimed);
+            link(peer, claimed);
+            WorkItem item = workItems.create(conn, type, stored.getId(), claimed.getId(),
+                    "Master already overwritten by B; peer A still disagrees");
+            Person inbound = person(stored.getLocalId());
+
+            assertTrue("The overwritten master alone must not justify closure", im.verifyMatch(inbound, claimed));
+            assertFalse(im.verifyMatch(inbound, new MasterRecord(peer)));
+            assertFalse(im.findResolvedWorkItems(conn, inbound).contains(item.getId()));
+            assertEquals(WorkItemStatus.STATUS_OPEN, WorkItemDAO.get(conn, item.getId()).getStatus());
+
+            peer.setDateOfBirth(inbound.getDateOfBirth()).setGivenName(inbound.getGivenName())
+                    .setSurname(inbound.getSurname());
+            PersonDAO.update(conn, peer);
+            assertEquals(Collections.singletonList(item.getId()), im.findResolvedWorkItems(conn, inbound));
+            assertEquals("Planning is read-only", WorkItemStatus.STATUS_OPEN,
+                    WorkItemDAO.get(conn, item.getId()).getStatus());
+        }
+    }
+
+    @Test
+    public void verifiedTypeThreeCandidateRequiresActualLinkOrCandidateRemoval() throws Exception {
+        Person stored = storedPerson("inbound");
+        Person peer = storedPerson("peer");
         MasterRecord nhs = master("NHS", "CLOSURE_NHS_1");
-        Person inbound = person("consolidated");
+        MasterRecord candidate = master(NationalIdentity.UKRDC_TYPE, "CLOSURE_UKRDC_1");
+        link(peer, nhs);
+        link(peer, candidate);
+        Person inbound = person("inbound").addNationalId(nhs.getNationalIdentity());
+        WorkItem item = workItems.create(conn, WorkItemType.TYPE_INFERRED_LINK_NOT_VERIFIED_PRIMARY,
+                stored.getId(), candidate.getId(), "Corrected demographics but not linked");
+
+        assertTrue(im.verifyMatch(inbound, candidate));
+        assertTrue(im.findResolvedWorkItems(conn, inbound).isEmpty());
+        assertEquals(WorkItemStatus.STATUS_OPEN, WorkItemDAO.get(conn, item.getId()).getStatus());
+        assertEquals("An identifier no longer claimed removes the inferred candidate",
+                Collections.singletonList(item.getId()), im.findResolvedWorkItems(conn, person("inbound")));
+
+        link(stored, candidate);
+        assertEquals(Collections.singletonList(item.getId()), im.findResolvedWorkItems(conn, inbound));
+    }
+
+    @Test
+    public void soleVerifiedTypeTenCandidateMustBeCurrentLinkedMaster() throws Exception {
+        Person stored = storedPerson("inbound");
+        Person peer = storedPerson("peer");
+        MasterRecord nhs = master("NHS", "CLOSURE_NHS_1");
+        MasterRecord candidate = master(NationalIdentity.UKRDC_TYPE, "CLOSURE_UKRDC_1");
+        MasterRecord current = master(NationalIdentity.UKRDC_TYPE, "CLOSURE_UKRDC_2");
+        link(peer, nhs);
+        link(peer, candidate);
+        WorkItem item = workItems.create(conn, WorkItemType.TYPE_MULTIPLE_UKRDC_MATCH,
+                stored.getId(), candidate.getId(), "Only one verified candidate, not yet linked");
+        Person inbound = person("inbound").addNationalId(nhs.getNationalIdentity());
+
+        assertTrue(im.verifyMatch(inbound, candidate));
+        assertTrue("No current link is not resolution", im.findResolvedWorkItems(conn, inbound).isEmpty());
+        link(stored, current);
+        assertTrue("A different current UKRDC master is not resolution",
+                im.findResolvedWorkItems(conn, inbound).isEmpty());
+        assertEquals(WorkItemStatus.STATUS_OPEN, WorkItemDAO.get(conn, item.getId()).getStatus());
+
+        Person unverified = person("inbound").setDateOfBirth(Date.valueOf("1991-07-19"))
+                .setGivenName("ROBERT").setSurname("SMITH").addNationalId(nhs.getNationalIdentity());
+        assertFalse(im.verifyMatch(unverified, candidate));
+        assertEquals("No verified candidates resolves the multiple-match condition",
+                Collections.singletonList(item.getId()), im.findResolvedWorkItems(conn, unverified));
+
+        LinkRecordDAO.delete(conn, new LinkRecord(current.getId(), stored.getId()));
+        link(stored, candidate);
+        assertEquals(Collections.singletonList(item.getId()), im.findResolvedWorkItems(conn, inbound));
+    }
+
+    @Test
+    public void persistedMappingClosesPlaceholderOnFreshStoreWithoutPidCommands() throws Exception {
+        MasterRecord nhs = master("NHS", "CLOSURE_NHS_1");
+        Person inbound = person("9000001");
         inbound.setUnconsolidatedLocalId("001");
+        assertTrue(PidXREFDAO.create(conn, new PidXREF(FACILITY, EXTRACT, "001")
+                .setPid(inbound.getLocalId())));
         WorkItem matching = sourceItem(999999999, nhs.getId(), FACILITY, EXTRACT, "001");
         WorkItem otherFacility = sourceItem(999999999, nhs.getId(), "OTHER", EXTRACT, "001");
         WorkItem otherExtract = sourceItem(999999999, nhs.getId(), FACILITY, "OTHER", "001");
         WorkItem otherMrn = sourceItem(999999999, nhs.getId(), FACILITY, EXTRACT, "1");
-        WorkItem consolidatedMrn = sourceItem(999999999, nhs.getId(), FACILITY, EXTRACT, "consolidated");
+        WorkItem consolidatedMrn = sourceItem(999999999, nhs.getId(), FACILITY, EXTRACT, "9000001");
+        assertTrue(PidXREFDAO.create(conn, new PidXREF("OTHER", EXTRACT, "001").setPid("9000002")));
         MasterRecord otherMaster = master("CHI", "CLOSURE_CHI_1");
         WorkItem wip = sourceItem(999999999, otherMaster.getId(), FACILITY, EXTRACT, "001");
         wip.setStatus(WorkItemStatus.STATUS_WIP);
         WorkItemDAO.update(conn, wip);
+        WorkItem closed = sourceItem(999999999, -1, FACILITY, EXTRACT, "001");
+        closed.setStatus(WorkItemStatus.STATUS_CLOSED);
+        WorkItemDAO.update(conn, closed);
+        WorkItem otherType = workItems.create(conn, WorkItemType.TYPE_MULTIPLE_UKRDC_MATCH,
+                999999999, nhs.getId(), "Same source attributes, different type", matching.getAttributes());
 
-        im.stageSourceWorkItemClosures(conn, inbound, FACILITY, EXTRACT);
-
-        assertEquals(Collections.singletonList(matching.getId()), inbound.getResolvedValidationWorkItemIds());
-        assertTrue(person("another").getResolvedValidationWorkItemIds().isEmpty());
+        assertEquals(Collections.singletonList(matching.getId()), im.findResolvedSourceWorkItems(conn, inbound));
+        assertTrue(im.findResolvedSourceWorkItems(conn, person("9000002")).isEmpty());
         assertEquals(WorkItemStatus.STATUS_OPEN, WorkItemDAO.get(conn, matching.getId()).getStatus());
-        UKRDCIndexManagerResponse response = new StoreCommand(inbound).execute(im, conn);
+        Person reconstructed = person("9000001");
+        reconstructed.setUnconsolidatedLocalId("001");
+        UKRDCIndexManagerResponse response = new StoreCommand(reconstructed).execute(im, conn);
         assertEquals(UKRDCIndexManagerResponse.SUCCESS, response.getStatus());
         assertEquals(WorkItemStatus.STATUS_CLOSED, WorkItemDAO.get(conn, matching.getId()).getStatus());
-        for (WorkItem unrelated : Arrays.asList(otherFacility, otherExtract, otherMrn, consolidatedMrn)) {
+        for (WorkItem unrelated : Arrays.asList(otherFacility, otherExtract, otherMrn, consolidatedMrn, otherType)) {
             assertEquals("Other sources must remain open", WorkItemStatus.STATUS_OPEN,
                     WorkItemDAO.get(conn, unrelated.getId()).getStatus());
         }
         assertEquals(WorkItemStatus.STATUS_WIP, WorkItemDAO.get(conn, wip.getId()).getStatus());
+        assertEquals(WorkItemStatus.STATUS_CLOSED, WorkItemDAO.get(conn, closed.getId()).getStatus());
+    }
+
+    @Test
+    public void sourceClosureRequiresMappingForBothFinalPidAndOriginalMrn() throws Exception {
+        WorkItem item = sourceItem(999999999, -1, FACILITY, EXTRACT, "001");
+        Person inbound = person("9000001");
+        inbound.setUnconsolidatedLocalId("001");
+        assertTrue(im.findResolvedSourceWorkItems(conn, inbound).isEmpty());
+        assertTrue(PidXREFDAO.create(conn, new PidXREF(FACILITY, EXTRACT, "001").setPid("9000002")));
+        assertTrue("Matching source with another PID must not close", im.findResolvedSourceWorkItems(conn, inbound).isEmpty());
+        assertTrue(PidXREFDAO.create(conn, new PidXREF(FACILITY, EXTRACT, "002").setPid("9000001")));
+        assertTrue("Matching PID with another MRN must not close", im.findResolvedSourceWorkItems(conn, inbound).isEmpty());
+        assertEquals(WorkItemStatus.STATUS_OPEN, WorkItemDAO.get(conn, item.getId()).getStatus());
+    }
+
+    @Test
+    public void restoredFinalIdentifiersKeepSourceMismatchOpenBeforeStoreOverwritesCandidate() throws Exception {
+        Person stored = person("9000001").setDateOfBirth(Date.valueOf("1991-07-19"))
+                .setGivenName("ROBERT").setSurname("SMITH");
+        assertTrue(PersonDAO.create(conn, stored));
+        MasterRecord nhs = master("NHS", "CLOSURE_NHS_1");
+        link(stored, nhs);
+        assertTrue(PidXREFDAO.create(conn, new PidXREF(FACILITY, EXTRACT, "old_mrn").setPid("9000001")));
+        assertTrue(PidXREFDAO.create(conn, new PidXREF(FACILITY, EXTRACT, "new_mrn").setPid("9000001")));
+        WorkItem item = sourceItem(999999999, nhs.getId(), FACILITY, EXTRACT, "new_mrn");
+
+        Person migration = person("9000001");
+        migration.setUnconsolidatedLocalId("new_mrn");
+        assertEquals("Temporarily removed identifiers are not the final store input",
+                Collections.singletonList(item.getId()), im.findResolvedSourceWorkItems(conn, migration));
+
+        Person finalPerson = person("9000001").addNationalId(nhs.getNationalIdentity());
+        finalPerson.setUnconsolidatedLocalId("new_mrn");
+        assertTrue("Restored NI still identifies a conflicting persisted candidate",
+                im.findResolvedSourceWorkItems(conn, finalPerson).isEmpty());
+        assertEquals(UKRDCIndexManagerResponse.SUCCESS, new StoreCommand(finalPerson).execute(im, conn).getStatus());
+        assertEquals("Storage must not erase the evidence before deciding closure", WorkItemStatus.STATUS_OPEN,
+                WorkItemDAO.get(conn, item.getId()).getStatus());
+        assertEquals("After storage the candidate matches, demonstrating why planning must precede mutation",
+                Collections.singletonList(item.getId()), im.findResolvedSourceWorkItems(conn, finalPerson));
     }
 
     @Test
     public void successfulSecondNationalIdCannotMaskFirstMismatchUntilDemographicsAreCorrected() throws Exception {
         String facility = "CLSRNI";
         String extract = "NITEST";
-        Person badCandidate = person("9900000001").setOriginator(facility)
+        Person badCandidate = person("9900001").setOriginator(facility)
                 .setDateOfBirth(Date.valueOf("1991-07-19"))
                 .setGivenName("ROBERT").setSurname("SMITH");
-        Person goodCandidate = person("9900000002").setOriginator(facility);
+        Person goodCandidate = person("9900002").setOriginator(facility);
         assertTrue(PersonDAO.create(conn, badCandidate));
         assertTrue(PersonDAO.create(conn, goodCandidate));
         MasterRecord badNi = master("NHS", "CLOSURE_BAD_NI");
@@ -216,12 +349,13 @@ public class UKRDCIndexManagerConditionAwareClosureTest {
         link(badCandidate, badNi);
         link(goodCandidate, goodNi);
         // The lookup joins px.pid to person.localId, not to person.id.
-        assertTrue(PidXREFDAO.create(conn, new PidXREF(facility, extract, "old_bad_mrn")
+        assertTrue(PidXREFDAO.create(conn, new PidXREF(facility, extract, "old_bad")
                 .setPid(badCandidate.getLocalId())));
-        assertTrue(PidXREFDAO.create(conn, new PidXREF(facility, extract, "old_good_mrn")
+        assertTrue(PidXREFDAO.create(conn, new PidXREF(facility, extract, "old_good")
                 .setPid(goodCandidate.getLocalId())));
-        Person inbound = person("new_ni_mrn").setOriginator(facility)
+        Person inbound = person("9900003").setOriginator(facility)
                 .addNationalId(badNi.getNationalIdentity()).addNationalId(goodNi.getNationalIdentity());
+        inbound.setUnconsolidatedLocalId("new_ni_mrn");
 
         assertEquals(goodCandidate.getLocalId(), im.getLocalPIDInternal(conn, inbound, facility, extract));
         List<WorkItem> items = workItems.findBySource(conn, facility, extract,
@@ -231,40 +365,42 @@ public class UKRDCIndexManagerConditionAwareClosureTest {
         assertEquals(WorkItemType.TYPE_XREF_MATCHED_NOT_VERIFIED, badItem.getType());
         assertEquals(badNi.getId(), badItem.getMasterId());
         assertEquals(999999999, badItem.getPersonId());
+        assertEquals("new_ni_mrn", badItem.getAttributes().get("MRN"));
+        assertTrue(workItems.findBySource(conn, facility, extract, inbound.getLocalId()).isEmpty());
+        assertTrue(PidXREFDAO.create(conn, new PidXREF(facility, extract, "new_ni_mrn")
+                .setPid(goodCandidate.getLocalId())));
+        inbound.setLocalId(goodCandidate.getLocalId());
 
-        im.stageSourceWorkItemClosures(conn, inbound, facility, extract);
         assertTrue("A successful second NI must not resolve the first NI's mismatch",
-                inbound.getResolvedValidationWorkItemIds().isEmpty());
+                im.findResolvedSourceWorkItems(conn, inbound).isEmpty());
         assertEquals(WorkItemStatus.STATUS_OPEN, WorkItemDAO.get(conn, badItem.getId()).getStatus());
 
         badCandidate.setDateOfBirth(inbound.getDateOfBirth());
         PersonDAO.update(conn, badCandidate);
         // Put the successful NI first to catch closure checks that stop at any match.
         Collections.reverse(inbound.getNationalIds());
-        im.stageSourceWorkItemClosures(conn, inbound, facility, extract);
         assertTrue("Matching DOB must not mask the remaining strict name mismatch",
-                inbound.getResolvedValidationWorkItemIds().isEmpty());
+                im.findResolvedSourceWorkItems(conn, inbound).isEmpty());
         assertEquals(WorkItemStatus.STATUS_OPEN, WorkItemDAO.get(conn, badItem.getId()).getStatus());
 
         badCandidate.setGivenName(inbound.getGivenName()).setSurname(inbound.getSurname());
         PersonDAO.update(conn, badCandidate);
-        im.stageSourceWorkItemClosures(conn, inbound, facility, extract);
-        assertEquals("The same old item should stage once its own NI candidates match strictly",
-                Collections.singletonList(badItem.getId()), inbound.getResolvedValidationWorkItemIds());
-        assertEquals("Staging alone must not close the corrected item", WorkItemStatus.STATUS_OPEN,
+        assertEquals("The same old item resolves once its own NI candidates match strictly",
+                Collections.singletonList(badItem.getId()), im.findResolvedSourceWorkItems(conn, inbound));
+        assertEquals("Planning alone must not close the corrected item", WorkItemStatus.STATUS_OPEN,
                 WorkItemDAO.get(conn, badItem.getId()).getStatus());
     }
 
     @Test
-    public void failedStoreDoesNotClosePlannedOrStagedItems() throws Exception {
+    public void failedStoreDoesNotClosePersonOrSourceItems() throws Exception {
         Person stored = storedPerson("inbound");
         WorkItem planned = workItems.create(conn, WorkItemType.TYPE_MULTIPLE_UKRDC_MATCH,
                 stored.getId(), -1, "No remaining inferred candidates");
-        WorkItem staged = sourceItem(999999999, -1, FACILITY, EXTRACT, "inbound");
+        WorkItem source = sourceItem(999999999, -1, FACILITY, EXTRACT, "inbound");
         Person inbound = person("inbound");
-        im.stageSourceWorkItemClosures(conn, inbound, FACILITY, EXTRACT);
+        assertTrue(PidXREFDAO.create(conn, new PidXREF(FACILITY, EXTRACT, "inbound").setPid("inbound")));
         assertEquals(Collections.singletonList(planned.getId()), im.findResolvedWorkItems(conn, inbound));
-        assertEquals(Collections.singletonList(staged.getId()), inbound.getResolvedValidationWorkItemIds());
+        assertEquals(Collections.singletonList(source.getId()), im.findResolvedSourceWorkItems(conn, inbound));
         UKRDCIndexManager failing = new UKRDCIndexManager() {
             @Override
             protected NationalIdentity createOrUpdate(Connection connection, Person person) throws MpiException {
@@ -281,9 +417,9 @@ public class UKRDCIndexManagerConditionAwareClosureTest {
         }
         // Check before rollback as well, so rollback cannot mask premature closure.
         assertEquals(WorkItemStatus.STATUS_OPEN, WorkItemDAO.get(conn, planned.getId()).getStatus());
-        assertEquals(WorkItemStatus.STATUS_OPEN, WorkItemDAO.get(conn, staged.getId()).getStatus());
+        assertEquals(WorkItemStatus.STATUS_OPEN, WorkItemDAO.get(conn, source.getId()).getStatus());
         conn.rollback(beforeStore);
         assertEquals(WorkItemStatus.STATUS_OPEN, WorkItemDAO.get(conn, planned.getId()).getStatus());
-        assertEquals(WorkItemStatus.STATUS_OPEN, WorkItemDAO.get(conn, staged.getId()).getStatus());
+        assertEquals(WorkItemStatus.STATUS_OPEN, WorkItemDAO.get(conn, source.getId()).getStatus());
     }
 }

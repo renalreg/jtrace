@@ -24,6 +24,8 @@ import com.agiloak.mpi.MpiException;
 import com.agiloak.mpi.SimpleConnectionManager;
 import com.agiloak.mpi.audit.Audit;
 import com.agiloak.mpi.audit.persistence.AuditDAO;
+import com.agiloak.mpi.index.PidXREF;
+import com.agiloak.mpi.index.persistence.PidXREFDAO;
 import com.agiloak.mpi.workitem.persistence.WorkItemDAO;
 
 public class WorkItemManagerPersistenceTest {
@@ -111,7 +113,7 @@ public class WorkItemManagerPersistenceTest {
 		}
 		WorkItem noAttributes = manager.create(conn, TYPE, PERSON, 1, "no attributes", (Map<String, String>) null);
 		assertTrue(noAttributes.getId() != manager.create(conn, TYPE, PERSON, 1, "retry no attributes").getId());
-		assertEquals(1, manager.findBySource(conn, "A", "B", "001").size());
+		assertEquals(0, manager.findBySource(conn, "A", "B", "001").size());
 		assertEquals(0, manager.findBySource(conn, null, "B", "001").size());
 		assertEquals(0, manager.findBySource(conn, "A", null, "001").size());
 		assertEquals(0, manager.findBySource(conn, "A", "B", null).size());
@@ -119,7 +121,8 @@ public class WorkItemManagerPersistenceTest {
 		WorkItemDAO.update(conn, first);
 		WorkItem replacement = manager.create(conn, TYPE, PERSON, 1, "new condition", source("A", "B", "001"));
 		assertTrue(first.getId() != replacement.getId());
-		assertEquals(2, manager.findBySource(conn, "A", "B", "001").size());
+		assertEquals(1, manager.findBySource(conn, "A", "B", "001").size());
+		assertEquals(replacement.getId(), manager.findBySource(conn, "A", "B", "001").get(0).getId());
 	}
 
 	@Test(expected = MpiException.class)
@@ -133,12 +136,16 @@ public class WorkItemManagerPersistenceTest {
 	}
 
 	@Test
-	public void sourceLookupIncludesPlaceholderAndActualPersonsAndAllStatusesOnlyForTypeNine() throws Exception {
+	public void sourceLookupIncludesPlaceholderAndActualPersonsButOnlyOpenTypeNine() throws Exception {
 		Map<String, String> attributes = source("WORKITEM_TEST", "SOURCE", "290001");
 		WorkItem placeholder = manager.create(conn, TYPE, -1, -1, "placeholder", attributes);
 		WorkItem actual = manager.create(conn, TYPE, PERSON, 1, "actual", attributes);
-		actual.setStatus(WorkItemStatus.STATUS_CLOSED);
-		WorkItemDAO.update(conn, actual);
+		WorkItem closed = manager.create(conn, TYPE, PERSON, 2, "closed", attributes);
+		closed.setStatus(WorkItemStatus.STATUS_CLOSED);
+		WorkItemDAO.update(conn, closed);
+		WorkItem wip = manager.create(conn, TYPE, PERSON, 3, "wip", attributes);
+		wip.setStatus(WorkItemStatus.STATUS_WIP);
+		WorkItemDAO.update(conn, wip);
 		manager.create(conn, 4, PERSON, 1, "other type", attributes);
 		List<WorkItem> found = manager.findBySource(conn, "WORKITEM_TEST", "SOURCE", "290001");
 		assertEquals(2, found.size());
@@ -148,7 +155,58 @@ public class WorkItemManagerPersistenceTest {
 		}
 		assertEquals(-1, byId.get(placeholder.getId()).getPersonId());
 		assertEquals(PERSON, byId.get(actual.getId()).getPersonId());
-		assertEquals(WorkItemStatus.STATUS_CLOSED, byId.get(actual.getId()).getStatus());
+		assertEquals(WorkItemStatus.STATUS_OPEN, byId.get(actual.getId()).getStatus());
+	}
+
+	@Test
+	public void durableLookupUsesPersistedPidAndExactSourceWithoutPersonState() throws Exception {
+		String pid = "9200000001";
+		String mrn = "00290001";
+		assertTrue(PidXREFDAO.create(conn, new PidXREF("WILOOK", "A", mrn).setPid(pid)));
+		assertTrue(PidXREFDAO.create(conn, new PidXREF("WILKB", "B", mrn).setPid(pid)));
+		assertTrue(PidXREFDAO.create(conn, new PidXREF("WILOOK", "A", "290001").setPid(pid)));
+		assertTrue(PidXREFDAO.create(conn, new PidXREF("WILKOTH", "A", mrn).setPid("9200000002")));
+		Map<String, String> attributes = source("WILOOK", "A", mrn);
+		WorkItem placeholder = manager.create(conn, TYPE, -1, -1, "placeholder", attributes);
+		WorkItem actual = manager.create(conn, TYPE, PERSON, 1, "actual", source("WILKB", "B", mrn));
+		WorkItem closed = manager.create(conn, TYPE, PERSON, 2, "closed", attributes);
+		closed.setStatus(WorkItemStatus.STATUS_CLOSED);
+		WorkItemDAO.update(conn, closed);
+		WorkItem wip = manager.create(conn, TYPE, PERSON, 3, "wip", attributes);
+		wip.setStatus(WorkItemStatus.STATUS_WIP);
+		WorkItemDAO.update(conn, wip);
+		WorkItem otherMrn = manager.create(conn, TYPE, PERSON, 1, "other MRN", source("WILOOK", "A", "290001"));
+		manager.create(conn, TYPE, PERSON, 1, "other PID", source("WILKOTH", "A", mrn));
+		manager.create(conn, TYPE, PERSON, 1, "wrong facility", source("wilook", "A", mrn));
+		manager.create(conn, TYPE, PERSON, 1, "wrong extract", source("WILOOK", "B", mrn));
+		manager.create(conn, TYPE, PERSON, 1, "missing extract", source("WILOOK", null, mrn));
+		manager.create(conn, 4, PERSON, 1, "other type", attributes);
+
+		List<WorkItem> found = new WorkItemManager().findOpenByPidAndLocalId(conn, pid, mrn);
+		assertEquals(2, found.size());
+		Map<Integer, WorkItem> byId = new HashMap<Integer, WorkItem>();
+		for (WorkItem item : found) {
+			byId.put(item.getId(), item);
+			assertEquals(WorkItemStatus.STATUS_OPEN, item.getStatus());
+			assertEquals(TYPE, item.getType());
+		}
+		assertEquals(-1, byId.get(placeholder.getId()).getPersonId());
+		assertEquals(PERSON, byId.get(actual.getId()).getPersonId());
+		assertEquals(placeholder.getAttributes(), byId.get(placeholder.getId()).getAttributes());
+		assertEquals(placeholder.getCreationDate(), byId.get(placeholder.getId()).getCreationDate());
+		assertEquals(0, manager.findOpenByPidAndLocalId(conn, "9200000003", mrn).size());
+		assertEquals(0, manager.findOpenByPidAndLocalId(conn, pid, "unmapped").size());
+		assertEquals(WorkItemStatus.STATUS_OPEN, WorkItemDAO.get(conn, otherMrn.getId()).getStatus());
+		assertEquals(WorkItemStatus.STATUS_WIP, WorkItemDAO.get(conn, wip.getId()).getStatus());
+		assertEquals(WorkItemStatus.STATUS_CLOSED, WorkItemDAO.get(conn, closed.getId()).getStatus());
+	}
+
+	@Test
+	public void durableLookupReturnsNothingForMissingArgumentsWithoutQuerying() throws Exception {
+		assertTrue(manager.findOpenByPidAndLocalId(null, null, "MRN").isEmpty());
+		assertTrue(manager.findOpenByPidAndLocalId(null, "", "MRN").isEmpty());
+		assertTrue(manager.findOpenByPidAndLocalId(null, "PID", null).isEmpty());
+		assertTrue(manager.findOpenByPidAndLocalId(null, "PID", "").isEmpty());
 	}
 
 	@Test
