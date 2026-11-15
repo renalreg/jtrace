@@ -1,7 +1,7 @@
 -- Data Repo version 1.6.10
 -- JTrace version 1.3.8
 -- 26/11/2019
--- Historical prerequisite: this predates JTrace 1.4.2 despite its filename.
+-- Formerly named 1.6.10.SQL after the Data Repo version; renamed for JTrace.
 -- Do not run after the 1.4.x migrations or on a fresh schema built from DDL.
 
 -- Link record
@@ -20,12 +20,12 @@ SET DEFAULT Now();
 
 -- Person
 
-ALTER TABLE jtrace.person ADD COLUMN creationdate timestamp without time zone NOT NULL DEFAULT Now();       
+ALTER TABLE jtrace.person ADD COLUMN creationdate timestamp without time zone NOT NULL DEFAULT Now();
 ALTER TABLE jtrace.person ADD COLUMN lastupdated timestamp without time zone NOT NULL DEFAULT Now();
 
 -- Pidxref
 
-ALTER TABLE jtrace.pidxref ADD COLUMN creationdate timestamp without time zone NOT NULL DEFAULT Now();        
+ALTER TABLE jtrace.pidxref ADD COLUMN creationdate timestamp without time zone NOT NULL DEFAULT Now();
 ALTER TABLE jtrace.pidxref ADD COLUMN lastupdated timestamp without time zone NOT NULL DEFAULT Now();
 ALTER TABLE jtrace.pidxref ADD CONSTRAINT pidxref_compound UNIQUE (sendingfacility, sendingextract, localid);
 

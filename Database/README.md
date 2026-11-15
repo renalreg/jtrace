@@ -22,18 +22,18 @@ The fresh DDL already includes all migrations. Do not run historical upgrade scr
 
 ## Upgrade Order
 
-Run only the migrations not already applied to the database. The historical `1.6.10.SQL` filename refers to the **Data-Repository version**, not the JTRACE version.
+Run only the migrations not already applied to the database. The historical `1.6.10.SQL` has been renamed to `1.3.8.SQL` to match the **JTRACE version** rather than the Data-Repository version. It is the same migration, not an additional upgrade.
 
 | Order | Script | JTRACE Change |
 | --- | --- | --- |
-| 1 | `SCRIPTS/1.6.10.SQL` | JTRACE 1.3.8 (2019): timestamps, defaults and PIDXREF uniqueness. For pre-1.3.8 databases only. |
+| 1 | `SCRIPTS/1.3.8.SQL` | JTRACE 1.3.8 (2019): timestamps, defaults and PIDXREF uniqueness. For pre-1.3.8 databases only. |
 | 2 | `SCRIPTS/1.4.2.SQL` | Identifier values at least 50 characters; updated-by fields at least 320. |
 | 3 | `SCRIPTS/1.4.3.SQL` | National identifier values and audit identifier values at least 50. |
 | 4 | `SCRIPTS/1.4.5.SQL` | Convert fixed-width CHAR fields to VARCHAR and remove trailing padding. |
 | 5 | `SCRIPTS/1.4.6.SQL` | Optional index for OPEN type 9 work-item source lookup. |
 | 6 | `SCRIPTS/1.4.7.SQL` | National identifier organization/type fields at least 50, including support for `UKRR_UID`. |
 
-Do not sort all filenames numerically: that would incorrectly put the 2019 migration last. A database running JTRACE 1.4.0 should already have the 1.3.8 changes.
+The renamed scripts now follow JTRACE version order. A database running JTRACE 1.4.0 should already have the 1.3.8 changes, even if they were originally applied using the old filename.
 
 The length migrations treat their sizes as minimums. They retain wider deployed columns, and do not impose a bound on existing unlimited VARCHAR/TEXT columns. The CHAR conversion trims trailing padding while converting, rather than updating CHAR values only to have PostgreSQL pad them again. Meaningful identifier content is not truncated.
 
@@ -51,7 +51,7 @@ psql -U postgres -d JTRACE -v ON_ERROR_STOP=1 -f "Database/SCRIPTS/1.4.7.SQL"
 
 Back up the database and use a maintenance window: ALTER TABLE takes locks and CHAR-to-VARCHAR conversions may rewrite data/indexes. A trimming collision with a unique key must be investigated; the migration does not merge records or remove non-space characters to force it through. It cannot recover data already lost to an older/manual narrowing operation.
 
-Run `1.4.6.SQL` separately, **outside a transaction**, because it creates an index concurrently. The historical `1.6.10.SQL` is not rerunnable on an upgraded schema; do not apply it just because its filename appears larger.
+Run `1.4.6.SQL` separately, **outside a transaction**, because it creates an index concurrently. The historical `1.3.8.SQL` (formerly `1.6.10.SQL`) is not rerunnable on an upgraded schema; do not apply it again after the filename change.
 
 ## Width Regression Test
 
