@@ -1,0 +1,19 @@
+The purpose of the System is to assist with the processing of incoming XML files.
+
+A record (unique by SendingFacility / SendingExtract) is matched to an existing PID, or a new one is generated.
+
+A patient can have multiple records. These are grouped by UKRDCID and again the purpose of the system is to find where the patient exists in the database, or to issue a new code.
+
+Every incoming record MUST have an MRN (Medical Record Number) type identifier. While intended to be the Primary Key for the incoming record there are some occasions where they can change (such as where the LOCALHOSP type identifier is used and a patient attends multiple hospital within a Trust) in which case multiple source MRNs will match a PID. The Organizer (who issued the ID) can vary.
+
+Most records will have one or more NI (National Identifier) type identifiers. These are used to assist in the grouping of records, subject to the other demographics provided being considered a close enough match.
+
+Some of the Organizations for these are:
+
+"NHS Numbers". These are issued by the Health Care systems in England/Wales, Northern Ireland and Scotland from a common range of numbers.
+
+A patient can have one identifier of each type (NHS, CHI, HSC), it is possible for a patient to obtain more than one identifier and to be known by that older ID for a while, even if it has since been merged. An incoming record (by PID) will only contain one of each types of NI, but a patient (by UKRDCID) could have multiples of each type. This would be an error with the data but should not stop the use of the record until it is resolved.
+
+A patient can have a "UKRR" number which maps the records to those held in our UKRR database, distinct from the UKRDC database operated by this system.
+
+Most records will have a UKRR_UID type NI identifier - with the format "SendingFacility_XXXXXXXXXX". The purpose of this is to assist in a process where the patient withdraws consent to have identifiable information supplied. What happens when the patient changes their mind still needs to be addressed. There should only be one UKRR_ID per record (by PID) but where multiple records have been joined via other NIs a patient (by UKRDCID) may have multiple distinct UKRR_UID type NIs.

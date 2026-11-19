@@ -20,15 +20,16 @@ public class GetLocalPidCommand extends APICommand {
 
 		im.standardise(person);
 		String outcome = im.getLocalPIDInternal(conn, person, sendingFacility, sendingExtract);
-		if ("REJECT".equals(outcome)) {
+		if (outcome != null && outcome.startsWith("REJECT")) {
 			resp.setStatus(UKRDCIndexManagerResponse.FAIL);
-			resp.setMessage("FAILED TO MATCH DURING VALIDATION - SEE WORK ITEMS");
+			String workItemType = outcome.length() > "REJECT:".length() ? outcome.substring("REJECT:".length()) : "unknown";
+			resp.setMessage("FAILED TO MATCH DURING VALIDATION - SEE WORK ITEM TYPE: "+workItemType);
 		} else if (outcome == null) {
 			resp.setStatus(UKRDCIndexManagerResponse.FAIL);
 			resp.setMessage("GET LOCAL PID RETURNED NO OUTCOME");
 		} else {
 			resp.setStatus(UKRDCIndexManagerResponse.SUCCESS);
-			resp.setPid(outcome); 
+			resp.setPid(outcome);
 		}
 		
 		return resp;

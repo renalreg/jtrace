@@ -7,7 +7,7 @@ CREATE TABLE jtrace.person
   localid character varying(50) NOT NULL,
   localidtype character varying(10) NOT NULL,
   nationalid character varying(50),
-  nationalidtype character varying(10),
+  nationalidtype character varying(50),
   dateofbirth date NOT NULL,
   gender character varying(2) NOT NULL,
   dateofdeath date,

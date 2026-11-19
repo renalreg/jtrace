@@ -30,6 +30,19 @@ The detailed verification rules are implemented in `UKRDCIndexManager.verifyMatc
 
 Work-item creation is part of the current JTRACE transaction. If the surrounding API operation subsequently fails and rolls back, the work item is rolled back with it.
 
+### Automatic Closure On Reprocessing
+
+Successful EMPI storage closes existing OPEN work items only when their conditions have been rechecked and resolved. WIP and CLOSED items are left unchanged. Closures use `JTRACE_AUTO`, record an automatic-closure note, and create a work-item-update audit entry in the storage transaction. A rollback also rolls back closures and their audit entries.
+
+- Types 1, 5, 6 and 7: the incoming person now verifies against the linked master. The check uses the master's demographics before storage updates them.
+- Types 2 and 4: the person must also verify against every other person linked to that master. Matching the master alone is insufficient because the original failed claim may have overwritten its demographics.
+- Type 3: inferred matching is rechecked and the candidate now verifies AND the person is already linked to it, or it is no longer an inferred candidate. Demographic agreement alone does not resolve a missing link.
+- Type 8: duplicate checking is enabled and no other counted person from the originator is linked to the master. Skipping duplicate checking does not resolve an existing item.
+- Type 9: use persisted PIDXREF mappings to match the final consolidated PID and original unconsolidated MRN to OPEN source work items. Recheck each item's identifier against the final incoming national IDs and demographics before storage changes master data. A freshly constructed `Person` is supported; no in-memory validation state is required. Closure still waits until EMPI storage succeeds. An independent successful match through another identifier does not resolve a remaining mismatch.
+- Type 10: inferred matching is rechecked and either no verified candidate remains, or the sole verified candidate is the person's current UKRDC master. Multiple identifiers corroborating one master do not count as a conflict; an unperformed relink does not count as resolution.
+
+Items for unverified conditions or missing source attributes are not closed speculatively. Master INVESTIGATE flags are not automatically reset. New occurrences of an issue create a new item rather than reusing its closed history; active-item matching includes type, person, master and, for type 9, the source attributes.
+
 ## Explicit Errors
 
 ### Person Validation
@@ -54,7 +67,7 @@ The national-ID processing path also raises:
 
 These are returned as failed API responses rather than thrown `MpiException` messages:
 
-- `FAILED TO MATCH DURING VALIDATION - SEE WORK ITEMS`: local PID matching found a national-ID/XREF candidate whose demographics did not verify.
+- `FAILED TO MATCH DURING VALIDATION - SEE WORK ITEM TYPE: 9`: local PID matching found a national-ID/XREF candidate whose demographics did not verify.
 - `FAILED TO MATCH DURING UPDATE - SEE WORK ITEMS`: the same condition occurred during the update/set-PID phase.
 
 ### Search, Link, And Unlink Errors

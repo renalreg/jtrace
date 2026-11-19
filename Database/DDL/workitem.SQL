@@ -24,4 +24,8 @@ TABLESPACE pg_default;
 
 ALTER TABLE jtrace.workitem OWNER TO ukrdc;
 
-GRANT ALL PRIVILEGES ON TABLE jtrace.workitem to ukrdc;  
+GRANT ALL PRIVILEGES ON TABLE jtrace.workitem to ukrdc;
+
+CREATE INDEX workitem_open_source ON jtrace.workitem
+    ((attributes::json ->> 'MRN'), (attributes::json ->> 'SF'), (attributes::json ->> 'SE'))
+    WHERE type = 9 AND status = 1;
