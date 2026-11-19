@@ -1,5 +1,9 @@
 package com.agiloak.mpi.index.persistence;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -235,12 +239,33 @@ public class MasterRecordTest extends JTraceTest {
 		mr.setGivenName("Nick").setSurname("Jones");
 		mr.setNationalId("NHS0000002").setNationalIdType("NHS");
 		mr.setEffectiveDate(getDate("2017-08-22"));
-		MasterRecordDAO.create(conn, mr);
-		assert(true);
-		
-		// Second insert should fail
-		exception.expect(MpiException.class);
-		MasterRecordDAO.create(conn, mr);
+		assertTrue(MasterRecordDAO.create(conn, mr));
+
+		// Reuse the winning row without replacing its stored demographics or status.
+		MasterRecord duplicate = new MasterRecord();
+		duplicate.setNationalId(mr.getNationalId()).setNationalIdType(mr.getNationalIdType());
+		duplicate.setDateOfBirth(getDate("1970-01-01")).setGender("F");
+		duplicate.setGivenName("Different").setSurname("Person");
+		duplicate.setEffectiveDate(getDate("2018-01-01")).setStatus(MasterRecord.INVESTIGATE);
+		assertFalse(MasterRecordDAO.create(conn, duplicate));
+		assertEquals(mr.getId(), duplicate.getId());
+		assertEquals(mr.getNationalId(), duplicate.getNationalId());
+		assertEquals(mr.getNationalIdType(), duplicate.getNationalIdType());
+		assertEquals(mr.getCreationDate(), duplicate.getCreationDate());
+		assertEquals(mr.getLastUpdated(), duplicate.getLastUpdated());
+		assertEquals(0, mr.getDateOfBirth().compareTo(duplicate.getDateOfBirth()));
+		assertEquals(mr.getGender(), duplicate.getGender());
+		assertEquals(mr.getGivenName(), duplicate.getGivenName());
+		assertEquals(mr.getSurname(), duplicate.getSurname());
+		assertEquals(0, mr.getEffectiveDate().compareTo(duplicate.getEffectiveDate()));
+		assertEquals(mr.getStatus(), duplicate.getStatus());
+
+		MasterRecord stored = MasterRecordDAO.findByNationalId(conn, mr.getNationalId(), mr.getNationalIdType());
+		assertEquals(mr.getId(), stored.getId());
+		assertEquals(mr.getGivenName(), stored.getGivenName());
+		assertEquals(mr.getSurname(), stored.getSurname());
+		assertEquals(mr.getStatus(), stored.getStatus());
+		assertEquals(mr.getLastUpdated(), stored.getLastUpdated());
 	}
 	
 	@Test
